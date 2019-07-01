@@ -2,7 +2,7 @@ package com.configcat;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.concurrent.CompletableFuture;
+import java9.util.concurrent.CompletableFuture;
 
 /**
  * The public interface of a refresh policy which's implementors

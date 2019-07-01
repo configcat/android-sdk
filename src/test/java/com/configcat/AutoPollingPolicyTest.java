@@ -6,7 +6,7 @@ import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.util.concurrent.CompletableFuture;
+import java9.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

@@ -1,6 +1,6 @@
 package com.configcat;
 
-import java.util.concurrent.CompletableFuture;
+import java9.util.concurrent.CompletableFuture;
 
 /**
  * Describes a {@link RefreshPolicy} which fetches the latest configuration

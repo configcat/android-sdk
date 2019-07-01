@@ -3,8 +3,8 @@ package com.configcat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.Instant;
-import java.util.concurrent.CompletableFuture;
+import java.util.Date;
+import java9.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class LazyLoadingPolicy extends RefreshPolicy {
     private static final Logger LOGGER = LoggerFactory.getLogger(LazyLoadingPolicy.class);
-    private Instant lastRefreshedTime;
+    private Date lastRefreshedTime;
     private int cacheRefreshIntervalInSeconds;
     private boolean asyncRefresh;
     private final AtomicBoolean isFetching;
@@ -34,13 +34,14 @@ public class LazyLoadingPolicy extends RefreshPolicy {
         this.cacheRefreshIntervalInSeconds = builder.cacheRefreshIntervalInSeconds;
         this.isFetching = new AtomicBoolean(false);
         this.initialized = new AtomicBoolean(false);
-        this.lastRefreshedTime = Instant.MIN;
+        this.lastRefreshedTime = new Date(0L);
         this.init = new CompletableFuture<>();
     }
 
     @Override
     public CompletableFuture<String> getConfigurationJsonAsync() {
-        if(Instant.now().isAfter(lastRefreshedTime.plusSeconds(this.cacheRefreshIntervalInSeconds))) {
+        Date now = new Date();
+        if (now.after(new Date(lastRefreshedTime.getTime() + this.cacheRefreshIntervalInSeconds * 1000))) {
             boolean isInitialized = this.init.isDone();
 
             if(isInitialized && !this.isFetching.compareAndSet(false, true))
@@ -75,7 +76,7 @@ public class LazyLoadingPolicy extends RefreshPolicy {
                     }
 
                     if(!response.isFailed())
-                        this.lastRefreshedTime = Instant.now();
+                        this.lastRefreshedTime = new Date();
 
                     if(this.initialized.compareAndSet(false, true)) {
                         this.init.complete(null);

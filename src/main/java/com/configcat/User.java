@@ -46,7 +46,7 @@ public class User {
         if(key == null || key.isEmpty())
             throw new IllegalArgumentException("key is null or empty");
 
-        return this.attributes.getOrDefault(key, null);
+        return this.attributes.get(key);
     }
 
     /**

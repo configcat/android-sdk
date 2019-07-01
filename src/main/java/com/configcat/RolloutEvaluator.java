@@ -7,8 +7,17 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.codec.binary.Hex;
 import java.util.Arrays;
 import java.util.List;
+import java.util.ListIterator;
 
 class RolloutEvaluator {
+    private void trimStrings(List<String> list) {
+        ListIterator<String> it = list.listIterator();
+        while (it.hasNext()) {
+            String str = it.next();
+            it.set(str.trim());
+        }
+    }
+
     public JsonElement evaluate(JsonObject json, String key, User user) {
         if(user == null)
             return json.get("Value");
@@ -31,13 +40,13 @@ class RolloutEvaluator {
             switch (comparator) {
                 case 0:
                     List<String> inValues = Arrays.asList(comparisonValue.split(","));
-                    inValues.replaceAll(String::trim);
+                    trimStrings(inValues);
                     if(inValues.contains(userValue))
                         return value;
                     break;
                 case 1:
                     List<String> notInValues = Arrays.asList(comparisonValue.split(","));
-                    notInValues.replaceAll(String::trim);
+                    trimStrings(notInValues);
                     if(!notInValues.contains(userValue))
                         return value;
                     break;
