@@ -1,7 +1,7 @@
 package com.configcat;
 
 import java.io.Closeable;
-import java.util.concurrent.CompletableFuture;
+import java9.util.concurrent.CompletableFuture;
 
 /**
  * Defines the public interface of the {@link ConfigCatClient}.

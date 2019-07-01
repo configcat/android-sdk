@@ -6,7 +6,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.concurrent.CompletableFuture;
+import java9.util.concurrent.CompletableFuture;
 
 /**
  * This class is used by the internal {@link ConfigCache} implementation to fetch the latest configuration.
