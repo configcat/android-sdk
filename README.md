@@ -56,7 +56,7 @@ You also have to put this line into your manifest xml to enable the library acce
 ```xml
 <uses-permission android:name="android.permission.INTERNET" />
 ```
-The minimum supported sdk version is 23 (Marshmallow). Java 1.8 or later is required.
+The minimum supported android version is 23 (Marshmallow). Java 1.8 or later is required.
 
 ## Getting user specific setting values with Targeting
 Using this feature, you will be able to get different setting values for different users in your application by passing a `User Object` to the `getValue()` function.
