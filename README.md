@@ -16,7 +16,7 @@ ConfigCat is a feature flag and configuration management service that lets you s
 ### 1. Install the package
 *Gradle:*
 ```groovy
-implementation 'com.configcat:configcat-client:1.+'
+implementation 'com.configcat:configcat-android-client:1.+'
 ```
 
 ### 2. Go to <a href="https://app.configcat.com/connect" target="_blank">Connect your application</a> tab to get your *API Key*:
