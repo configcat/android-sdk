@@ -68,8 +68,7 @@ Read more about [Targeting here](https://docs.configcat.com/docs/advanced/target
 Percentage and targeted rollouts are calculated by the user object you can optionally pass to the configuration requests.
 The user object must be created with a **mandatory** identifier parameter which should uniquely identify each user:
 ```kotlin
-val user = User.newBuilder()
-        .build("#USER-IDENTIFIER#") // mandatory
+val user = User.newBuilder().build("#USER-IDENTIFIER#") // mandatory
 
 val isMyAwesomeFeatureEnabled = client.getValue(Boolean::class.javaObjectType, "isMyAwesomeFeatureEnabled", user, false)
 if(isMyAwesomeFeatureEnabled) {
