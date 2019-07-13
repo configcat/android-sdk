@@ -23,34 +23,34 @@ implementation 'com.configcat:configcat-android-client:1.+'
 ![API-KEY](https://raw.githubusercontent.com/ConfigCat/android-sdk/master/media/readme01.png  "API-KEY")
 
 ### 3. Import *com.configcat.** to your application
-```java
-import com.configcat.*;
+```kotlin
+import com.configcat.*
 ```
 
 ### 4. Create the *ConfigCat* client instance
-```java
-ConfigCatClient client = new ConfigCatClient("#YOUR-API-KEY#");
+```kotlin
+val client = new ConfigCatClient("#YOUR-API-KEY#")
 ```
 
 ### 5. Get your setting value:
-```java
-boolean isMyAwesomeFeatureEnabled = client.getValue(Boolean.class, "isMyAwesomeFeatureEnabled", false);
+```kotlin
+val isMyAwesomeFeatureEnabled = client.getValue(Boolean::class.javaObjectType, "isMyAwesomeFeatureEnabled", false)
 if(isMyAwesomeFeatureEnabled) {
-    doTheNewThing();
+    doTheNewThing()
 } else{
-    doTheOldThing();
+    doTheOldThing()
 }
 ```
 Or use the async APIs:
-```java
-client.getValueAsync(Boolean.class, "isMyAwesomeFeatureEnabled", false)
-    .thenAccept(isMyAwesomeFeatureEnabled -> {
+```kotlin
+client.getValueAsync(Boolean::class.javaObjectType, "isMyAwesomeFeatureEnabled", false)
+    .thenAccept({ isMyAwesomeFeatureEnabled ->
         if(isMyAwesomeFeatureEnabled) {
-            doTheNewThing();
-        } else{
-            doTheOldThing();
+            doTheNewThing()
+        } else {
+            doTheOldThing()
         }
-    });
+    })
 ```
 You also have to put this line into your manifest xml to enable the library access to the network.
 ```xml
@@ -67,15 +67,15 @@ Read more about [Targeting here](https://docs.configcat.com/docs/advanced/target
 ## User object
 Percentage and targeted rollouts are calculated by the user object you can optionally pass to the configuration requests.
 The user object must be created with a **mandatory** identifier parameter which should uniquely identify each user:
-```java
-User user = User.newBuilder()
-        .build("#USER-IDENTIFIER#"); // mandatory
+```kotlin
+val user = User.newBuilder()
+        .build("#USER-IDENTIFIER#") // mandatory
 
-boolean isMyAwesomeFeatureEnabled = client.getValue(Boolean.class, "isMyAwesomeFeatureEnabled", user, false);
+val isMyAwesomeFeatureEnabled = client.getValue(Boolean::class.javaObjectType, "isMyAwesomeFeatureEnabled", user, false)
 if(isMyAwesomeFeatureEnabled) {
-    doTheNewThing();
+    doTheNewThing()
 } else{
-    doTheOldThing();
+    doTheOldThing()
 }
 ```
 
