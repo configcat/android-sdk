@@ -71,13 +71,14 @@ jacoco {
 }
 
 task junit5CodeCoverageReport(type:JacocoReport){
+    dependsOn junitPlatformTest
     executionData junitPlatformTest
     sourceSets sourceSets.main
     sourceDirectories = files(project.sourceSets.main.allSource.srcDirs)
     classDirectories = files(project.sourceSets.main.output)
     reports {
         xml.enabled = true
-        xml.destination "${buildDir}/reports/jacoco/report.xml"
+        xml.destination file("${buildDir}/reports/jacoco/report.xml")
         html.enabled = false
         csv.enabled = false
     }
