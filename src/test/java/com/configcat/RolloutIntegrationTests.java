@@ -1,48 +1,37 @@
 package com.configcat;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Scanner;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+
 public class RolloutIntegrationTests {
-    private static final String APIKEY = "PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A";
 
-    private ConfigCatClient client;
-    private Scanner csvScanner;
+    @ParameterizedTest
+    @CsvSource({"testmatrix.csv,PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A","testmatrix_semantic.csv,PKDVCLf-Hq-h-kCzMp-L7Q/BAr3KgLTP0ObzKnBTo5nhA","testmatrix_number.csv,PKDVCLf-Hq-h-kCzMp-L7Q/uGyK3q9_ckmdxRyI7vjwCw"})
+    public void testMatrixTest(String file, String apiKey) throws FileNotFoundException {
 
-    @BeforeEach
-    public void setUp() throws FileNotFoundException {
-        this.client = ConfigCatClient.newBuilder()
-                .build(APIKEY);
+        ConfigCatClient client = ConfigCatClient.newBuilder()
+                .build(apiKey);
 
-        ClassLoader classLoader = getClass().getClassLoader();
-        this.csvScanner = new Scanner(new File(classLoader.getResource("testmatrix.csv").getFile()));
-    }
+        Scanner csvScanner = new Scanner(new File("src/test/resources/" + file));
 
-    @AfterEach
-    public void tearDown() throws IOException {
-        this.client.close();
-        this.csvScanner.close();
-    }
-
-    @Test
-    public void testMatrixTest() {
-
-        if(!this.csvScanner.hasNext())
+        if(!csvScanner.hasNext())
             fail();
 
-        String[] settingKeys = Arrays.stream(this.csvScanner.nextLine().split(";")).skip(4).toArray(String[]::new);
+        String[] settingKeys = Arrays.stream(csvScanner.nextLine().split(";")).skip(4).toArray(String[]::new);
         StringBuilder errors = new StringBuilder();
-        while (this.csvScanner.hasNext()) {
-            String[] testObject = this.csvScanner.nextLine().split(";");
+        while (csvScanner.hasNext()) {
+            String[] testObject = csvScanner.nextLine().split(";");
 
             User user = null;
             if(!testObject[0].isEmpty() && !testObject[0].equals("##null##"))
@@ -71,7 +60,7 @@ public class RolloutIntegrationTests {
 
             int i = 0;
             for (String settingKey: settingKeys) {
-                String value = this.client.getValue(String.class, settingKey, user, null);
+                String value = client.getValue(String.class, settingKey, user, null);
                 if(!value.toLowerCase().equals(testObject[i + 4].toLowerCase())) {
                     errors.append(String.format("Identifier: %s, Key: %s. Expected: %s, Result: %s \n", testObject[0], settingKey, testObject[i + 4], value));
                 }
