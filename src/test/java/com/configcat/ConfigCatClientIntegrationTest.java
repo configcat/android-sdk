@@ -81,6 +81,14 @@ public class ConfigCatClientIntegrationTest {
     }
 
     @Test
+    public void getDefaultValueWhenKeyNotExist() {
+        String result = String.format(TEST_JSON, "true");
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(result));
+        boolean config = this.client.getValue(Boolean.class,"nonExistingKey", false);
+        assertFalse(config);
+    }
+
+    @Test
     public void getBooleanValuePrimitive() {
         String result = String.format(TEST_JSON, "true");
         server.enqueue(new MockResponse().setResponseCode(200).setBody(result));
