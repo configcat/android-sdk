@@ -6,7 +6,7 @@ import java9.util.concurrent.CompletableFuture;
  * Describes a {@link RefreshPolicy} which fetches the latest configuration
  * over HTTP every time when a get is called on the {@link ConfigCatClient}.
  */
-public class ManualPollingPolicy extends RefreshPolicy {
+class ManualPollingPolicy extends RefreshPolicy {
        /**
      * Constructor used by the child classes.
      *
@@ -15,7 +15,6 @@ public class ManualPollingPolicy extends RefreshPolicy {
      */
     public ManualPollingPolicy(ConfigFetcher configFetcher, ConfigCache cache) {
         super(configFetcher, cache);
-        super.fetcher().setMode("m");
     }
 
     @Override

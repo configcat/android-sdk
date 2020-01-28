@@ -75,10 +75,8 @@ public class ConfigCatClientTest {
 
         ConfigCatClient cl = ConfigCatClient.newBuilder()
                 .cache(new FailingCache())
-                .refreshPolicy((f, c) -> {
-                    f.setUrl(server.url("/").toString());
-                    return new ManualPollingPolicy(f,c);
-                })
+                .mode(PollingModes.ManualPoll())
+                .baseUrl(server.url("/").toString())
                 .build(APIKEY);
 
         String result = TEST_JSON;
@@ -97,10 +95,8 @@ public class ConfigCatClientTest {
 
         ConfigCatClient cl = ConfigCatClient.newBuilder()
                 .cache(new FailingCache())
-                .refreshPolicy((f, c) -> {
-                    f.setUrl(server.url("/").toString());
-                    return AutoPollingPolicy.newBuilder().autoPollIntervalInSeconds(5).build(f, c);
-                })
+                .mode(PollingModes.AutoPoll(5))
+                .baseUrl(server.url("/").toString())
                 .build(APIKEY);
 
         server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
@@ -118,10 +114,8 @@ public class ConfigCatClientTest {
 
         ConfigCatClient cl = ConfigCatClient.newBuilder()
                 .cache(new FailingCache())
-                .refreshPolicy((f, c) -> {
-                    f.setUrl(server.url("/").toString());
-                    return LazyLoadingPolicy.newBuilder().cacheRefreshIntervalInSeconds(5).build(f, c);
-                })
+                .mode(PollingModes.LazyLoad(5))
+                .baseUrl(server.url("/").toString())
                 .build(APIKEY);
 
         server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
@@ -139,10 +133,8 @@ public class ConfigCatClientTest {
 
         ConfigCatClient cl = ConfigCatClient.newBuilder()
                 .cache(new FailingCache())
-                .refreshPolicy((f, c) -> {
-                    f.setUrl(server.url("/").toString());
-                    return new ManualPollingPolicy(f, c);
-                })
+                .mode(PollingModes.ManualPoll())
+                .baseUrl(server.url("/").toString())
                 .build(APIKEY);
 
         server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
@@ -159,16 +151,15 @@ public class ConfigCatClientTest {
         server.start();
 
         ConfigCatClient cl = ConfigCatClient.newBuilder()
-                .refreshPolicy((f, c) -> {
-                    f.setUrl(server.url("/").toString());
-                    return new ManualPollingPolicy(f,c);
-                })
+                .mode(PollingModes.ManualPoll())
+                .baseUrl(server.url("/").toString())
                 .maxWaitTimeForSyncCallsInSeconds(2)
                 .build(APIKEY);
 
         String result = TEST_JSON;
         server.enqueue(new MockResponse().setResponseCode(200).setBody(result));
         server.enqueue(new MockResponse().setResponseCode(200).setBody("delayed").setBodyDelay(5, TimeUnit.SECONDS));
+
         cl.forceRefresh();
         assertEquals("fakeValue", cl.getValue(String.class, "fakeKey", null));
         cl.forceRefresh();
@@ -184,15 +175,14 @@ public class ConfigCatClientTest {
         server.start();
 
         ConfigCatClient cl = ConfigCatClient.newBuilder()
-                .refreshPolicy((f, c) -> {
-                    f.setUrl(server.url("/").toString());
-                    return new ManualPollingPolicy(f,c);
-                })
+                .mode(PollingModes.ManualPoll())
+                .baseUrl(server.url("/").toString())
                 .build(APIKEY);
 
         String result = TEST_JSON;
         server.enqueue(new MockResponse().setResponseCode(200).setBody(result));
         server.enqueue(new MockResponse().setResponseCode(500));
+
         cl.forceRefresh();
         assertEquals("fakeValue", cl.getValueAsync(String.class, "fakeKey", null).get());
         cl.forceRefresh();
@@ -208,20 +198,20 @@ public class ConfigCatClientTest {
         server.start();
 
         ConfigCatClient cl = ConfigCatClient.newBuilder()
-                .refreshPolicy((f, c) -> {
-                    f.setUrl(server.url("/").toString());
-                    return new ManualPollingPolicy(f,c);
-                })
+                .mode(PollingModes.ManualPoll())
+                .baseUrl(server.url("/").toString())
                 .maxWaitTimeForSyncCallsInSeconds(2)
                 .build(APIKEY);
 
         String badJson = "{ test: test] }";
         String def = "def";
+        cl.forceRefresh();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(badJson));
+        cl.forceRefresh();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(badJson).setBodyDelay(5, TimeUnit.SECONDS));
-        cl.forceRefresh();
+
         assertSame(def, cl.getValue(String.class, "test", def));
-        cl.forceRefresh();
+
         assertSame(def, cl.getValue(String.class, "test", def));
 
         server.shutdown();
@@ -234,10 +224,8 @@ public class ConfigCatClientTest {
         server.start();
 
         ConfigCatClient cl = ConfigCatClient.newBuilder()
-                .refreshPolicy((f, c) -> {
-                    f.setUrl(server.url("/").toString());
-                    return new ManualPollingPolicy(f,c);
-                })
+                .mode(PollingModes.ManualPoll())
+                .baseUrl(server.url("/").toString())
                 .maxWaitTimeForSyncCallsInSeconds(2)
                 .build(APIKEY);
 

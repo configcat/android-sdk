@@ -30,13 +30,8 @@ public class ConfigCatClientIntegrationTest {
 
         this.client = ConfigCatClient.newBuilder()
                 .httpClient(new OkHttpClient.Builder().build())
-                .refreshPolicy((configFetcher, cache) -> {
-                    configFetcher.setUrl(this.server.url("/").toString());
-                    return LazyLoadingPolicy.newBuilder()
-                            .cacheRefreshIntervalInSeconds(2)
-                            .asyncRefresh(true)
-                            .build(configFetcher, cache);
-                })
+                .mode(PollingModes.LazyLoad(2, true))
+                .baseUrl(this.server.url("/").toString())
                 .build(APIKEY);
     }
 
@@ -78,14 +73,6 @@ public class ConfigCatClientIntegrationTest {
         server.enqueue(new MockResponse().setResponseCode(200).setBody(result));
         boolean config = this.client.getValue(Boolean.class,"fakeKey", false);
         assertTrue(config);
-    }
-
-    @Test
-    public void getDefaultValueWhenKeyNotExist() {
-        String result = String.format(TEST_JSON, "true");
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(result));
-        boolean config = this.client.getValue(Boolean.class,"nonExistingKey", false);
-        assertFalse(config);
     }
 
     @Test
@@ -162,6 +149,14 @@ public class ConfigCatClientIntegrationTest {
         server.enqueue(new MockResponse().setResponseCode(500));
         double config = this.client.getValue(Double.class,"fakeKey", def);
         assertEquals(def, config);
+    }
+
+    @Test
+    public void getDefaultValueWhenKeyNotExist() {
+        String result = String.format(TEST_JSON, "true");
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(result));
+        boolean config = this.client.getValue(Boolean.class,"nonExistingKey", false);
+        assertFalse(config);
     }
 
     @Test
