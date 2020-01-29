@@ -14,22 +14,20 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         ConfigCatClient.newBuilder()
-                .refreshPolicy { fetcher: ConfigFetcher, cache: ConfigCache -> AutoPollingPolicy.newBuilder()
-                        .autoPollIntervalInSeconds(5)
-                        .configurationChangeListener { parser, newConfiguration ->
-                            run {
-                                // create a user object to identify the caller
-                                val user = User.newBuilder()
-                                        .build("key")
+                .mode(PollingModes.AutoPoll(5) { parser, newConfiguration ->
+                    run {
+                        // create a user object to identify the caller
+                        val user = User.newBuilder()
+                                .email("someone@example.com")
+                                .build("key")
 
-                                var config = parser.parseValue(Boolean::class.java, newConfiguration, "isPOCFeatureEnabled", user)
-                                this@MainActivity.runOnUiThread(java.lang.Runnable {
-                                    var textField = findViewById<TextView>(R.id.editText)
-                                    textField.text = "isPOCFeatureEnabled: $config"
-                                })
-                            }
+                        var config = parser.parseValue(Boolean::class.java, newConfiguration, "isPOCFeatureEnabled", user)
+                        this@MainActivity.runOnUiThread {
+                            var textField = findViewById<TextView>(R.id.editText)
+                            textField.text = "isPOCFeatureEnabled: $config"
                         }
-                        .build(fetcher, cache)}
+                    }
+                })
                 .build("PKDVCLf-Hq-h-kCzMp-L7Q/HhOWfwVtZ0mb30i9wi17GQ")
     }
 }
