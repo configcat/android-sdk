@@ -58,11 +58,6 @@ public final class ConfigCatClient implements ConfigurationProvider {
     }
 
     @Override
-    public <T extends RefreshPolicy> T getRefreshPolicy(Class<T> classOfT) {
-        return classOfT.cast(this.refreshPolicy);
-    }
-
-    @Override
     public  <T> T getValue(Class<T> classOfT, String key, T defaultValue) {
         return this.getValue(classOfT, key, null, defaultValue);
     }
