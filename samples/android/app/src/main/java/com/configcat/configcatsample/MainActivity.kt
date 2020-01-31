@@ -7,27 +7,36 @@ import android.widget.TextView
 import com.configcat.*
 
 class MainActivity : AppCompatActivity() {
+    private lateinit var client: ConfigCatClient
 
     @SuppressLint("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        ConfigCatClient.newBuilder()
-                .mode(PollingModes.AutoPoll(5) { parser, newConfiguration ->
+        this.client = ConfigCatClient.newBuilder()
+                .mode(PollingModes.AutoPoll(5) {
                     run {
-                        // create a user object to identify the caller
-                        val user = User.newBuilder()
-                                .email("someone@example.com")
-                                .build("key")
-
-                        var config = parser.parseValue(Boolean::class.java, newConfiguration, "isPOCFeatureEnabled", user)
-                        this@MainActivity.runOnUiThread {
-                            var textField = findViewById<TextView>(R.id.editText)
-                            textField.text = "isPOCFeatureEnabled: $config"
-                        }
+                        this.fetchNewConfig()
                     }
                 })
                 .build("PKDVCLf-Hq-h-kCzMp-L7Q/HhOWfwVtZ0mb30i9wi17GQ")
+    }
+
+    @SuppressLint("SetTextI18n")
+    fun fetchNewConfig() {
+        val user = User.newBuilder()
+                .email("someone@example.com")
+                .build("key")
+
+        this@MainActivity.runOnUiThread {
+            var textField = findViewById<TextView>(R.id.editText)
+            textField.text = "isPOCFeatureEnabled: ${this.client.getValue(
+                    Boolean::class.java, 
+                    "isPOCFeatureEnabled", 
+                    user, 
+                    false
+            )}"
+        }
     }
 }
