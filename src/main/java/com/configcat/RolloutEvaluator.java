@@ -171,7 +171,7 @@ class RolloutEvaluator {
                         continue;
                     }
                     break;
-                                    //IS ONE OF (Sensitive)
+                //IS ONE OF (Sensitive)
                 case 16:
                     List<String> inValuesSensitive = new ArrayList<>(Arrays.asList(comparisonValue.split(",")));
                     inValuesSensitive.replaceAll(String::trim);
