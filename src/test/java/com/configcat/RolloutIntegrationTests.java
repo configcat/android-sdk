@@ -17,8 +17,9 @@ public class RolloutIntegrationTests {
     @CsvSource({"testmatrix.csv,PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A",
             "testmatrix_semantic.csv,PKDVCLf-Hq-h-kCzMp-L7Q/BAr3KgLTP0ObzKnBTo5nhA",
             "testmatrix_number.csv,PKDVCLf-Hq-h-kCzMp-L7Q/uGyK3q9_ckmdxRyI7vjwCw",
-            "testmatrix_semantic_2.csv,PKDVCLf-Hq-h-kCzMp-L7Q/q6jMCFIp-EmuAfnmZhPY7w"})
-    public void testMatrixTest(String file, String apiKey) throws FileNotFoundException {
+            "testmatrix_semantic_2.csv,PKDVCLf-Hq-h-kCzMp-L7Q/q6jMCFIp-EmuAfnmZhPY7w",
+            "testmatrix_sensitive.csv,PKDVCLf-Hq-h-kCzMp-L7Q/qX3TP2dTj06ZpCCT1h_SPA"})
+            public void testMatrixTest(String file, String apiKey) throws FileNotFoundException {
 
         ConfigCatClient client = ConfigCatClient.newBuilder()
                 .build(apiKey);
@@ -70,7 +71,11 @@ public class RolloutIntegrationTests {
                 i++;
             }
         }
-
+        if (errors.size() != 0) {
+            errors.forEach((error) -> {
+                System.out.println(error);
+            });
+        }
         assertTrue("Errors found: " + errors.size(), errors.size() == 0);
     }
 }
