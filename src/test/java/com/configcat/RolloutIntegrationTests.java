@@ -19,10 +19,10 @@ public class RolloutIntegrationTests {
             "testmatrix_number.csv,PKDVCLf-Hq-h-kCzMp-L7Q/uGyK3q9_ckmdxRyI7vjwCw",
             "testmatrix_semantic_2.csv,PKDVCLf-Hq-h-kCzMp-L7Q/q6jMCFIp-EmuAfnmZhPY7w",
             "testmatrix_sensitive.csv,PKDVCLf-Hq-h-kCzMp-L7Q/qX3TP2dTj06ZpCCT1h_SPA"})
-            public void testMatrixTest(String file, String apiKey) throws FileNotFoundException {
+            public void testMatrixTest(String file, String sdkKey) throws FileNotFoundException {
 
         ConfigCatClient client = ConfigCatClient.newBuilder()
-                .build(apiKey);
+                .build(sdkKey);
 
         Scanner csvScanner = new Scanner(new File("src/test/resources/" + file));
 
