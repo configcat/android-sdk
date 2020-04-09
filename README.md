@@ -18,11 +18,11 @@ ConfigCat is a <a href="https://configcat.com" target="_blank">hosted feature fl
 ### 1. Install the package
 *Gradle:*
 ```groovy
-implementation 'com.configcat:configcat-android-client:3.+'
+implementation 'com.configcat:configcat-android-client:4.+'
 ```
 
-### 2. Go to <a href="https://app.configcat.com/connect" target="_blank">Connect your application</a> tab to get your *API Key*:
-![API-KEY](https://raw.githubusercontent.com/ConfigCat/android-sdk/master/media/readme01.png  "API-KEY")
+### 2. Go to <a href="https://app.configcat.com/sdkkey" target="_blank">Connect your application</a> tab to get your *SDK Key*:
+![SDK-KEY](https://raw.githubusercontent.com/ConfigCat/android-sdk/master/media/readme01.png  "SDK-KEY")
 
 ### 3. Import *com.configcat.** to your application
 ```kotlin
@@ -31,7 +31,7 @@ import com.configcat.*
 
 ### 4. Create the *ConfigCat* client instance
 ```kotlin
-val client = new ConfigCatClient("#YOUR-API-KEY#")
+val client = new ConfigCatClient("#YOUR-SDK-KEY#")
 ```
 
 ### 5. Get your setting value:
@@ -86,8 +86,8 @@ if(isMyAwesomeFeatureEnabled) {
 ## Polling Modes
 The ConfigCat SDK supports 3 different polling mechanisms to acquire the setting values from ConfigCat. After latest setting values are downloaded, they are stored in the internal cache then all requests are served from there. Read more about Polling Modes and how to use them at [ConfigCat Java Docs](https://configcat.com/docs/sdk-reference/java/) or [ConfigCat Android Docs](https://configcat.com/docs/sdk-reference/android/).
 
-## Support
-If you need help how to use this SDK feel free to to contact the ConfigCat Staff on https://configcat.com. We're happy to help.
+## Need help?
+https://configcat.com/support
 
 ## Contributing
 Contributions are welcome.
