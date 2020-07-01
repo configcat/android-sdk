@@ -129,6 +129,7 @@ public interface ConfigurationProvider extends Closeable {
      *
      * @param classOfT the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
      * @param variationId the Variation ID.
+     * @param <T> the type of the desired config value.
      * @return the key of a setting and its value.
      */
     <T> Map.Entry<String, T> getKeyAndValue(Class<T> classOfT, String variationId);
@@ -138,6 +139,7 @@ public interface ConfigurationProvider extends Closeable {
      *
      * @param classOfT the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
      * @param variationId the Variation ID.
+     * @param <T> the type of the desired config value.
      * @return a future which computes the key of a setting and its value.
      */
     <T> CompletableFuture<Map.Entry<String, T>> getKeyAndValueAsync(Class<T> classOfT, String variationId);
