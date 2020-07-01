@@ -60,12 +60,26 @@ public class VariationIdTests {
     }
 
     @Test
+    public void getVariationIdNotFound() {
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
+        String result = client.getVariationId("nonexisting", "defaultId");
+        assertEquals("defaultId", result);
+    }
+
+    @Test
     public void getAllVariationIdsWorks() {
         server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
         String[] result = client.getAllVariationIds().toArray(new String[0]);
         assertEquals(2, result.length);
         assertEquals("fakeId1", result[0]);
         assertEquals("fakeId2", result[1]);
+    }
+
+    @Test
+    public void getAllVariationIdsEmpty() {
+        server.enqueue(new MockResponse().setResponseCode(200).setBody("{}"));
+        String[] result = client.getAllVariationIds().toArray(new String[0]);
+        assertEquals(0, result.length);
     }
 
     @Test
@@ -91,5 +105,12 @@ public class VariationIdTests {
         Map.Entry<String, Boolean> result = client.getKeyAndValueAsync(boolean.class, "fakeId1").get();
         assertEquals("key1", result.getKey());
         assertTrue(result.getValue());
+    }
+
+    @Test
+    public void getKeyAndValueNotFound() {
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
+        Map.Entry<String, Boolean> result = client.getKeyAndValue(boolean.class, "nonexisting");
+        assertNull(result);
     }
 }
