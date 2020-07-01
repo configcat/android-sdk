@@ -4,9 +4,10 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import javafx.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.AbstractMap;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -58,21 +59,21 @@ class ConfigurationParser {
         }
     }
 
-    public <T> Pair<String, T> parseKeyValue(Class<T> classOfT, String config, String variationId) throws ParsingFailedException {
+    public <T> Map.Entry<String, T> parseKeyValue(Class<T> classOfT, String config, String variationId) throws ParsingFailedException {
         try {
             Set<Map.Entry<String, JsonElement>> root = this.parser.parse(config).getAsJsonObject().entrySet();
             for (Map.Entry<String, JsonElement> node: root) {
                 String settingKey = node.getKey();
                 JsonObject setting = node.getValue().getAsJsonObject();
                 if(variationId.equals(setting.get(Setting.VariationId).getAsString())) {
-                    return new Pair<>(settingKey, (T)this.parseObject(classOfT, setting.get(Setting.Value)));
+                    return new AbstractMap.SimpleEntry<>(settingKey, (T)this.parseObject(classOfT, setting.get(Setting.Value)));
                 }
 
                 JsonArray rolloutRules = setting.get(Setting.RolloutRules).getAsJsonArray();
                 for (JsonElement rolloutElement : rolloutRules) {
                     JsonObject rolloutRule = rolloutElement.getAsJsonObject();
                     if(variationId.equals(rolloutRule.get(RolloutRules.VariationId).getAsString())) {
-                        return new Pair<>(settingKey, (T)this.parseObject(classOfT, rolloutRule.get(RolloutRules.Value)));
+                        return new AbstractMap.SimpleEntry<>(settingKey, (T)this.parseObject(classOfT, rolloutRule.get(RolloutRules.Value)));
                     }
                 }
 
@@ -80,7 +81,7 @@ class ConfigurationParser {
                 for (JsonElement percentageElement : persentageRules) {
                     JsonObject percentageRule = percentageElement.getAsJsonObject();
                     if(variationId.equals(percentageRule.get(RolloutPercentageItems.VariationId).getAsString())) {
-                        return new Pair<>(settingKey, (T)this.parseObject(classOfT, percentageRule.get(RolloutPercentageItems.Value)));
+                        return new AbstractMap.SimpleEntry<>(settingKey, (T)this.parseObject(classOfT, percentageRule.get(RolloutPercentageItems.Value)));
                     }
                 }
             }

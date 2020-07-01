@@ -2,9 +2,9 @@ package com.configcat;
 
 import java.io.Closeable;
 import java.util.Collection;
+import java.util.Map;
 
 import java9.util.concurrent.CompletableFuture;
-import javafx.util.Pair;
 
 /**
  * Defines the public interface of the {@link ConfigCatClient}.
@@ -131,7 +131,7 @@ public interface ConfigurationProvider extends Closeable {
      * @param variationId the Variation ID.
      * @return the key of a setting and its value.
      */
-    <T> Pair<String, T> getKeyAndValue(Class<T> classOfT, String variationId);
+    <T> Map.Entry<String, T> getKeyAndValue(Class<T> classOfT, String variationId);
 
     /**
      * Gets the key of a setting and its value identified by the given Variation ID (analytics).
@@ -140,7 +140,7 @@ public interface ConfigurationProvider extends Closeable {
      * @param variationId the Variation ID.
      * @return a future which computes the key of a setting and its value.
      */
-    <T> CompletableFuture<Pair<String, T>> getKeyAndValueAsync(Class<T> classOfT, String variationId);
+    <T> CompletableFuture<Map.Entry<String, T>> getKeyAndValueAsync(Class<T> classOfT, String variationId);
 
     /**
      * Gets a collection of all setting keys.

@@ -1,6 +1,5 @@
 package com.configcat;
 
-import javafx.util.Pair;
 import okhttp3.OkHttpClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -9,7 +8,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.util.Collection;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -81,7 +80,7 @@ public class VariationIdTests {
     @Test
     public void getKeyAndValueWorks() {
         server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
-        Pair<String, Boolean> result = client.getKeyAndValue(boolean.class, "fakeId2");
+        Map.Entry<String, Boolean> result = client.getKeyAndValue(boolean.class, "fakeId2");
         assertEquals("key2", result.getKey());
         assertFalse(result.getValue());
     }
@@ -89,7 +88,7 @@ public class VariationIdTests {
     @Test
     public void getKeyAndValueAsyncWorks() throws ExecutionException, InterruptedException {
         server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
-        Pair<String, Boolean> result = client.getKeyAndValueAsync(boolean.class, "fakeId1").get();
+        Map.Entry<String, Boolean> result = client.getKeyAndValueAsync(boolean.class, "fakeId1").get();
         assertEquals("key1", result.getKey());
         assertTrue(result.getValue());
     }

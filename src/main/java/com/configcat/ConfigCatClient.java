@@ -1,6 +1,5 @@
 package com.configcat;
 
-import javafx.util.Pair;
 import okhttp3.OkHttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,8 +9,8 @@ import java9.util.concurrent.CompletableFuture;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java9.util.function.BiFunction;
 
 /**
  * A client for handling configurations provided by ConfigCat.
@@ -185,7 +184,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
     }
 
     @Override
-    public <T> Pair<String, T> getKeyAndValue(Class<T> classOfT, String variationId) {
+    public <T> Map.Entry<String, T> getKeyAndValue(Class<T> classOfT, String variationId) {
         if(variationId == null || variationId.isEmpty())
             throw new IllegalArgumentException("variationId is null or empty");
 
@@ -199,7 +198,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
     }
 
     @Override
-    public <T> CompletableFuture<Pair<String, T>> getKeyAndValueAsync(Class<T> classOfT, String variationId) {
+    public <T> CompletableFuture<Map.Entry<String, T>> getKeyAndValueAsync(Class<T> classOfT, String variationId) {
         if(variationId == null || variationId.isEmpty())
             throw new IllegalArgumentException("variationId is null or empty");
 
@@ -274,7 +273,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         }
     }
 
-    private <T> Pair<String, T> getKeyAndValueFromJson(Class<T> classOfT, String config, String variationId) {
+    private <T> Map.Entry<String, T> getKeyAndValueFromJson(Class<T> classOfT, String config, String variationId) {
         try {
             return parser.parseKeyValue(classOfT, config, variationId);
         } catch (Exception e) {
