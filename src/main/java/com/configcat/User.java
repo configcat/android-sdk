@@ -16,14 +16,14 @@ public class User {
             throw new IllegalArgumentException("identifier is null or empty");
 
         this.identifier = identifier;
-        this.attributes = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-        this.attributes.put("identifier", identifier);
+        this.attributes = new TreeMap<>();
+        this.attributes.put("Identifier", identifier);
 
         if(country != null && !country.isEmpty())
-            this.attributes.put("country", country);
+            this.attributes.put("Country", country);
 
         if(email != null && !email.isEmpty())
-            this.attributes.put("email", email);
+            this.attributes.put("Email", email);
 
         if(custom != null)
             this.attributes.putAll(custom);
