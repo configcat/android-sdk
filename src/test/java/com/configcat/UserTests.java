@@ -2,8 +2,7 @@ package com.configcat;
 
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class UserTests {
 
@@ -26,11 +25,11 @@ public class UserTests {
         String country = "b";
         User user = User.newBuilder().email(email).country("b").build("a");
         assertEquals(email, user.getAttribute("Email"));
-        assertEquals(email, user.getAttribute("EMAIL"));
-        assertEquals(email, user.getAttribute("email"));
+        assertNotEquals(email, user.getAttribute("EMAIL"));
+        assertNotEquals(email, user.getAttribute("email"));
 
         assertEquals(country, user.getAttribute("Country"));
-        assertEquals(country, user.getAttribute("COUNTRY"));
-        assertEquals(country, user.getAttribute("country"));
+        assertNotEquals(country, user.getAttribute("COUNTRY"));
+        assertNotEquals(country, user.getAttribute("country"));
     }
 }
