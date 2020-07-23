@@ -44,7 +44,7 @@ public class RolloutIntegrationTests {
             String[] testObject = csvScanner.nextLine().split(";");
 
             User user = null;
-            if(!testObject[0].isEmpty() && !testObject[0].equals("##null##"))
+            if(!testObject[0].equals("##null##"))
             {
                 String email = "";
                 String country = "";

@@ -31,12 +31,10 @@ class MainActivity : AppCompatActivity() {
 
         this@MainActivity.runOnUiThread {
             var textField = findViewById<TextView>(R.id.editText)
-            textField.text = "isPOCFeatureEnabled: ${this.client.getValue(
+            textField.text = "isPOCFeatureEnabled: ${this.client.getKeyAndValue(
                     Boolean::class.java, 
-                    "isPOCFeatureEnabled", 
-                    user, 
-                    false
-            )}"
+                    "ca36009d"
+            ).value}"
         }
     }
 }
