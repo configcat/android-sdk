@@ -7,16 +7,18 @@ import static org.junit.jupiter.api.Assertions.*;
 public class UserTests {
 
     @Test
-    public void builderThrowsWhenArgumentInvalid() {
-        assertThrows(IllegalArgumentException.class, () -> User.newBuilder().build(null));
-        assertThrows(IllegalArgumentException.class, () -> User.newBuilder().build(""));
+    public void builderWorksWithEmptyOrNullId() {
+        User u1 = User.newBuilder().build(null);
+        assertEquals("", u1.getIdentifier());
+        User u2 = User.newBuilder().build("");
+        assertEquals("", u2.getIdentifier());
     }
 
     @Test
     public void getAttributeThrowsWhenArgumentInvalid() {
         User user = User.newBuilder().build("a");
         assertThrows(IllegalArgumentException.class, () -> user.getAttribute(null));
-        assertThrows(IllegalArgumentException.class, () -> user.getAttribute(""));
+        assertNull(user.getAttribute(""));
     }
 
     @Test

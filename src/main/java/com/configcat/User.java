@@ -12,10 +12,7 @@ public class User {
     private Map<String, String> attributes;
 
     private User(String identifier, String email, String country,  Map<String, String> custom) {
-        if(identifier == null || identifier.isEmpty())
-            throw new IllegalArgumentException("identifier is null or empty");
-
-        this.identifier = identifier;
+        this.identifier = identifier == null ? "" : identifier;
         this.attributes = new TreeMap<>();
         this.attributes.put("Identifier", identifier);
 
@@ -43,7 +40,7 @@ public class User {
     }
 
     String getAttribute(String key) {
-        if(key == null || key.isEmpty())
+        if(key == null)
             throw new IllegalArgumentException("key is null or empty");
 
         return this.attributes.get(key);
