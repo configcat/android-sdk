@@ -14,7 +14,7 @@ public class ConfigCatClientTest {
 
     private static final String SDKKEY = "TEST_KEY";
 
-    private static final String TEST_JSON = "{ fakeKey: { v: fakeValue, s: 0, p: [] ,r: [] } }";
+    private static final String TEST_JSON = "{ f: { fakeKey: { v: fakeValue, s: 0, p: [] ,r: [] } } }";
 
     @Test
     public void ensuresSdkKeyIsNotNull() {
@@ -73,8 +73,7 @@ public class ConfigCatClientTest {
                 .baseUrl(server.url("/").toString())
                 .build(SDKKEY);
 
-        String result = TEST_JSON;
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(result));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
         cl.forceRefresh();
         assertEquals("fakeValue", cl.getValue(String.class, "fakeKey", null));
 
@@ -150,8 +149,7 @@ public class ConfigCatClientTest {
                 .maxWaitTimeForSyncCallsInSeconds(2)
                 .build(SDKKEY);
 
-        String result = TEST_JSON;
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(result));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
         server.enqueue(new MockResponse().setResponseCode(200).setBody("delayed").setBodyDelay(5, TimeUnit.SECONDS));
 
         cl.forceRefresh();
@@ -173,8 +171,7 @@ public class ConfigCatClientTest {
                 .baseUrl(server.url("/").toString())
                 .build(SDKKEY);
 
-        String result = TEST_JSON;
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(result));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
         server.enqueue(new MockResponse().setResponseCode(500));
 
         cl.forceRefresh();

@@ -41,10 +41,10 @@ class AutoPollingPolicy extends RefreshPolicy {
         this.scheduler.scheduleAtFixedRate(() -> {
             try {
                 FetchResponse response = super.fetcher().getConfigurationJsonStringAsync().get();
-                String cached = super.cache().get();
+                String cached = super.readConfigCache();
                 String config = response.config();
                 if (response.isFetched() && !config.equals(cached)) {
-                    super.cache().set(config);
+                    super.writeConfigCache(config);
                     this.broadcastConfigurationChanged();
                 }
 
@@ -60,9 +60,9 @@ class AutoPollingPolicy extends RefreshPolicy {
     @Override
     public CompletableFuture<String> getConfigurationJsonAsync() {
         if(this.initFuture.isDone())
-            return CompletableFuture.completedFuture(super.cache().get());
+            return CompletableFuture.completedFuture(super.readConfigCache());
 
-        return this.initFuture.thenApplyAsync(v -> super.cache().get());
+        return this.initFuture.thenApplyAsync(v -> super.readConfigCache());
     }
 
     @Override

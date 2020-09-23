@@ -28,7 +28,8 @@ public class AutoPollingPolicyIntegrationTest {
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(),
                 "",
                 this.server.url("/").toString(),
-                PollingModes.AutoPoll(2));
+                false,
+                pollingMode.getPollingIdentifier());
         ConfigCache cache = new InMemoryConfigCache();
         this.policy = (AutoPollingPolicy)pollingMode.accept(new RefreshPolicyFactory(cache, fetcher));
     }
@@ -64,7 +65,7 @@ public class AutoPollingPolicyIntegrationTest {
         this.server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
 
         //first call
-        assertEquals(null, this.policy.getConfigurationJsonAsync().get());
+        assertNull(this.policy.getConfigurationJsonAsync().get());
     }
 
     @Test
