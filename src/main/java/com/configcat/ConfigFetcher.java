@@ -18,17 +18,17 @@ class ConfigFetcher implements Closeable {
     private final OkHttpClient httpClient;
     private final String mode;
     private final String version;
-    private final String apiKey;
+    private final String sdkKey;
     private final boolean urlIsCustom;
     private String url;
     private String eTag;
 
     ConfigFetcher(OkHttpClient httpClient,
-                  String apiKey,
+                  String sdkKey,
                   String url,
                   boolean urlIsCustom,
                   String pollingIdentifier) {
-        this.apiKey = apiKey;
+        this.sdkKey = sdkKey;
         this.urlIsCustom = urlIsCustom;
         this.url = url;
         this.httpClient = httpClient;
@@ -140,7 +140,7 @@ class ConfigFetcher implements Closeable {
     }
 
     Request getRequest() {
-        String url = this.url + "/configuration-files/" + this.apiKey + "/" + CONFIG_JSON_NAME;
+        String url = this.url + "/configuration-files/" + this.sdkKey + "/" + CONFIG_JSON_NAME;
         Request.Builder builder =  new Request.Builder()
                 .addHeader("X-ConfigCat-UserAgent", "ConfigCat-Java/"+ this.mode + "-" + this.version);
 

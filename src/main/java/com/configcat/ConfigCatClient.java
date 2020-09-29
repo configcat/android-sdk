@@ -54,7 +54,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                 ? new InMemoryConfigCache()
                 : builder.cache;
 
-        this.refreshPolicy = pollingMode.accept(new RefreshPolicyFactory(cache, fetcher));
+        this.refreshPolicy = pollingMode.accept(new RefreshPolicyFactory(cache, fetcher, sdkKey));
     }
 
     /**

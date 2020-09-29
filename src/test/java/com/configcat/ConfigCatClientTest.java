@@ -9,6 +9,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 
 public class ConfigCatClientTest {
 
@@ -238,4 +241,15 @@ public class ConfigCatClientTest {
         assertThrows(IllegalArgumentException.class, () -> client.getValueAsync(Boolean.class,"", false).get());
     }
 
+    @Test
+    public void ensureCacheKeyHashProducesTheSameOnEveryPlatform() throws Exception {
+        ConfigCache cache = mock(ConfigCache.class);
+        ConfigCatClient client = ConfigCatClient.newBuilder()
+                .cache(cache)
+                .build("PKDVCLf-Hq-h-kCzMp-L7Q/PaDVCFk9EpmD6sLpGLltTA");
+
+        client.forceRefresh();
+
+        verify(cache, atLeastOnce()).write(eq("config-v5-1oi96ci"), anyString());
+    }
 }
