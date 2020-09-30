@@ -1,5 +1,7 @@
 package com.configcat;
 
+import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.codec.digest.MurmurHash3;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,7 +16,7 @@ import java9.util.concurrent.CompletableFuture;
  */
 abstract class RefreshPolicy implements Closeable {
     protected static final Logger LOGGER = LoggerFactory.getLogger(RefreshPolicy.class);
-    private static final String CacheBase = "config-v5-%s";
+    private static final String CacheBase = "android_"+ ConfigFetcher.CONFIG_JSON_NAME +"_%s";
     private final ConfigCache cache;
     private final ConfigFetcher configFetcher;
     private final String CacheKey;
@@ -59,7 +61,7 @@ abstract class RefreshPolicy implements Closeable {
     RefreshPolicy(ConfigFetcher configFetcher, ConfigCache cache, String sdkKey) {
         this.configFetcher = configFetcher;
         this.cache = cache;
-        this.CacheKey = String.format(CacheBase, Integer.toString(MurmurHash3.hash32(sdkKey.getBytes()), 32));
+        this.CacheKey = new String(Hex.encodeHex(DigestUtils.sha1(String.format(CacheBase, sdkKey))));
     }
 
     /**
