@@ -89,8 +89,10 @@ class ConfigFetcher implements Closeable {
 
             } catch (Exception exception) {
                 LOGGER.error("Exception in ConfigFetcher.executeFetchAsync", exception);
+                return CompletableFuture.completedFuture(fetchResponse);
             }
 
+            LOGGER.error("Redirect loop during config.json fetch. Please contact support@configcat.com.");
             return CompletableFuture.completedFuture(fetchResponse);
         });
     }
