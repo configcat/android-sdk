@@ -27,13 +27,15 @@ class AutoPollingPolicy extends RefreshPolicy {
      *
      * @param configFetcher the internal config fetcher instance.
      * @param cache the internal cache instance.
+     * @param sdkKey the sdk key.
+     * @param config the polling mode configuration.
      */
-    AutoPollingPolicy(ConfigFetcher configFetcher, ConfigCache cache, AutoPollingMode modeConfig) {
-        super(configFetcher, cache);
+    AutoPollingPolicy(ConfigFetcher configFetcher, ConfigCache cache, String sdkKey, AutoPollingMode config) {
+        super(configFetcher, cache, sdkKey);
         this.listeners = new ArrayList<>();
 
-        if(modeConfig.getListener() != null)
-            this.listeners.add(modeConfig.getListener());
+        if(config.getListener() != null)
+            this.listeners.add(config.getListener());
 
         this.initialized = new AtomicBoolean(false);
         this.initFuture = new CompletableFuture<>();
@@ -41,10 +43,10 @@ class AutoPollingPolicy extends RefreshPolicy {
         this.scheduler.scheduleAtFixedRate(() -> {
             try {
                 FetchResponse response = super.fetcher().getConfigurationJsonStringAsync().get();
-                String cached = super.cache().get();
-                String config = response.config();
-                if (response.isFetched() && !config.equals(cached)) {
-                    super.cache().set(config);
+                String cached = super.readConfigCache();
+                String configJson = response.config();
+                if (response.isFetched() && !configJson.equals(cached)) {
+                    super.writeConfigCache(configJson);
                     this.broadcastConfigurationChanged();
                 }
 
@@ -54,15 +56,15 @@ class AutoPollingPolicy extends RefreshPolicy {
             } catch (Exception e){
                 LOGGER.error("Exception in AutoPollingCachePolicy", e);
             }
-        }, 0, modeConfig.getAutoPollRateInSeconds(), TimeUnit.SECONDS);
+        }, 0, config.getAutoPollRateInSeconds(), TimeUnit.SECONDS);
     }
 
     @Override
     public CompletableFuture<String> getConfigurationJsonAsync() {
         if(this.initFuture.isDone())
-            return CompletableFuture.completedFuture(super.cache().get());
+            return CompletableFuture.completedFuture(super.readConfigCache());
 
-        return this.initFuture.thenApplyAsync(v -> super.cache().get());
+        return this.initFuture.thenApplyAsync(v -> super.readConfigCache());
     }
 
     @Override

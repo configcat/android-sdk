@@ -18,6 +18,9 @@ import java.util.concurrent.TimeUnit;
 public final class ConfigCatClient implements ConfigurationProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(ConfigCatClient.class);
     private static final ConfigurationParser parser = new ConfigurationParser();
+    private static final String BASE_URL_GLOBAL = "https://cdn-global.configcat.com";
+    private static final String BASE_URL_EU = "https://cdn-eu.configcat.com";
+
     private final RefreshPolicy refreshPolicy;
     private final int maxWaitTimeForSyncCallsInSeconds;
 
@@ -31,6 +34,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                 ? PollingModes.AutoPoll(60)
                 : builder.pollingMode;
 
+        boolean hasCustomBaseUrl = builder.baseUrl != null && !builder.baseUrl.isEmpty();
         ConfigFetcher fetcher = new ConfigFetcher(builder.httpClient == null
                 ? new OkHttpClient
                     .Builder()
@@ -38,14 +42,19 @@ public final class ConfigCatClient implements ConfigurationProvider {
                     .build()
                 : builder.httpClient,
                 sdkKey,
-                builder.baseUrl,
-                pollingMode);
+                !hasCustomBaseUrl
+                        ? builder.dataGovernance == DataGovernance.GLOBAL
+                        ? BASE_URL_GLOBAL
+                        : BASE_URL_EU
+                        : builder.baseUrl,
+                hasCustomBaseUrl,
+                pollingMode.getPollingIdentifier());
 
         ConfigCache cache = builder.cache == null
                 ? new InMemoryConfigCache()
                 : builder.cache;
 
-        this.refreshPolicy = pollingMode.accept(new RefreshPolicyFactory(cache, fetcher));
+        this.refreshPolicy = pollingMode.accept(new RefreshPolicyFactory(cache, fetcher, sdkKey));
     }
 
     /**
@@ -300,6 +309,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         private int maxWaitTimeForSyncCallsInSeconds;
         private String baseUrl;
         private PollingMode pollingMode;
+        private DataGovernance dataGovernance = DataGovernance.GLOBAL;
 
         /**
          * Sets the underlying http client which will be used to fetch the latest configuration.
@@ -342,6 +352,18 @@ public final class ConfigCatClient implements ConfigurationProvider {
          */
         public Builder mode(PollingMode pollingMode) {
             this.pollingMode = pollingMode;
+            return this;
+        }
+
+        /**
+         * Default: Global. Set this parameter to be in sync with the Data Governance preference on the Dashboard:
+         * https://app.configcat.com/organization/data-governance (Only Organization Admins have access)
+         *
+         * @param dataGovernance the {@link DataGovernance} parameter.
+         * @return the builder.
+         */
+        public Builder dataGovernance(DataGovernance dataGovernance) {
+            this.dataGovernance = dataGovernance;
             return this;
         }
 
