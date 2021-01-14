@@ -1,40 +1,51 @@
 language: java
 dist: trusty
-sudo: false
+
 jdk:
 - oraclejdk8
 - oraclejdk9
 - openjdk8
+
+addons:
+  sonarcloud:
+    organization: "configcat"
+
 before_install:
 - chmod +x gradlew
 script: "./gradlew test"
+
 stages:
 - test
-- coverage
+- analysis
 - name: snapshot
   if: tag IS blank
 - name: release
   if: tag =~ /^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/
+
 jobs:
   include:
-  - stage: coverage
+  - stage: analysis
     script:
-    - "./gradlew check"
+    - ./gradlew check
     - bash <(curl -s https://codecov.io/bash)
-    jdk: oraclejdk8
+    - ./gradlew sonarqube -Dbuild.number=$TRAVIS_BUILD_NUMBER
+    jdk: openjdk11
   - stage: snapshot
     script: "./gradlew artifactoryPublish -Dsnapshot=true -Dbintray.user=$BINTRAY_USER -Dbintray.key=$BINTRAY_KEY -Dbuild.number=$TRAVIS_BUILD_NUMBER"
     jdk: oraclejdk8
   - stage: release
     script: "./gradlew bintrayUpload -Dbintray.user=$BINTRAY_USER -Dbintray.key=$BINTRAY_KEY -Dsigning.pass=$SIGN_PASS -Dbuild.number=$TRAVIS_BUILD_NUMBER"
     jdk: oraclejdk8
+
 before_cache:
 - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+
 cache:
   directories:
   - "$HOME/.gradle/caches/"
   - "$HOME/.gradle/wrapper/"
   - "$HOME/.m2/repositories/"
+
 env:
   global:
   - secure: x0f5zMalbU3zNxoeqEdNMCeIvuIfxIbD7MzuS/1QXXnNGm8WkuyIttLB2y7eW/eQX89ZfZek/sy3+/M9N87EdOBbghaex3WbD1V/cE6fEy3u05FiKpn7gIYUXejBdz/9Ez2a6LO3Axr1XWAQRL5sxSjyATKLRP+muV5igcFUXjwFeHW4Lv9TLUj3dR1g6gVo0NDTwjrrNwyQkhH3J+7+wdq27KbOGCLL0IkR/RicEGLU3kGwl7sgxFw8WlanIJDNmVKzgRoJQC/4PKHQ5oqVEtkaXDJKSp+rwSGroSrEmDEutCp+dme1l+TM0UD5Wq/jf0QC/jnr3ZYx0t3mztiTt71m9PA5f0U9TNX/H4TVNX7q7tsyUHC6v6c/n7KAV73ZgWFQiPzhevbpPl8V+MCH3eTPww30DyKV858E2wcoEJkSRZruCekYfHOG16JvKY8E0XHUTsqfHMIAc96f+0H5/om9QmX6jTJEvUUXmW0QdtoKHo6jBjdDFriihX0KVYW7NS5juRbdUOnWXIFOfhsNUDMNHxVik0t6ZN7pZDCxSVZINBPBWPZjlItzsYLJLEwF/IP/wHEH1Bqz9rY7Z5s7z96AUIPVT/97GGJZnFywlDzXpjOGMnRchZROgDGo0wbvyb+KlDFWlYR4kJ2mTxJXCYRilpfw4ImyzM59WuhwOWU=
