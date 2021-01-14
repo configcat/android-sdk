@@ -7,12 +7,7 @@ import java.util.Date;
 import java9.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * Describes a {@link RefreshPolicy} which uses an expiring cache
- * to maintain the internally stored configuration.
- */
 class LazyLoadingPolicy extends RefreshPolicy {
-    private static final Logger LOGGER = LoggerFactory.getLogger(LazyLoadingPolicy.class);
     private Date lastRefreshedTime;
     private final int cacheRefreshIntervalInSeconds;
     private final boolean asyncRefresh;
@@ -21,16 +16,8 @@ class LazyLoadingPolicy extends RefreshPolicy {
     private CompletableFuture<String> fetchingFuture;
     private final CompletableFuture<Void> init;
 
-    /**
-     * Constructor used by the child classes.
-     *
-     * @param configFetcher the internal config fetcher instance.
-     * @param cache the internal cache instance.
-     * @param sdkKey the sdk key.
-     * @param config the polling mode configuration.
-     */
-    LazyLoadingPolicy(ConfigFetcher configFetcher, ConfigCache cache, String sdkKey, LazyLoadingMode config) {
-        super(configFetcher, cache, sdkKey);
+    LazyLoadingPolicy(ConfigFetcher configFetcher, ConfigCache cache, Logger logger, String sdkKey, LazyLoadingMode config) {
+        super(configFetcher, cache, logger, sdkKey);
         this.asyncRefresh = config.isAsyncRefresh();
         this.cacheRefreshIntervalInSeconds = config.getCacheRefreshIntervalInSeconds();
         this.isFetching = new AtomicBoolean(false);
@@ -50,7 +37,7 @@ class LazyLoadingPolicy extends RefreshPolicy {
                         ? CompletableFuture.completedFuture(super.readConfigCache())
                         : this.fetchingFuture;
 
-            LOGGER.debug("Cache expired, refreshing.");
+            this.logger.debug("Cache expired, refreshing.");
             if(isInitialized) {
                 this.fetchingFuture = this.fetch();
                 if(this.asyncRefresh) {

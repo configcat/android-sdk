@@ -13,9 +13,14 @@ import java.util.Map;
 import java.util.Set;
 
 class ConfigurationParser {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ConfigurationParser.class);
+    private final Logger logger;
     private final JsonParser parser = new JsonParser();
-    private final RolloutEvaluator rolloutEvaluator = new RolloutEvaluator();
+    private final RolloutEvaluator rolloutEvaluator;
+
+    public ConfigurationParser(Logger logger) {
+        this.logger = logger;
+        this.rolloutEvaluator = new RolloutEvaluator(logger);
+    }
 
     public <T> T parseValue(Class<T> classOfT, String config, String key) throws ParsingFailedException, IllegalArgumentException {
         return this.parseValue(classOfT, config, key, null);
@@ -43,7 +48,7 @@ class ConfigurationParser {
 
     public String parseVariationId(String config, String key, User user) throws ParsingFailedException {
         try {
-            LOGGER.info("Evaluating getVariationId("+key+").");
+            this.logger.info("Evaluating getVariationId("+key+").");
             JsonObject root = this.parseConfigSection(config);
 
             JsonObject node = root.getAsJsonObject(key);
@@ -104,7 +109,7 @@ class ConfigurationParser {
 
     private Object parseValueInternal(Class<?> classOfT, String config, String key, User user) throws ParsingFailedException, IllegalArgumentException {
         try {
-            LOGGER.info("Evaluating getValue("+key+").");
+            this.logger.info("Evaluating getValue("+key+").");
             JsonObject root = this.parseConfigSection(config);
 
             JsonObject node = root.getAsJsonObject(key);

@@ -24,9 +24,4 @@ class LazyLoadingMode extends PollingMode {
     String getPollingIdentifier() {
         return "l";
     }
-
-    @Override
-    RefreshPolicy accept(PollingModeVisitor visitor) {
-        return visitor.visit(this);
-    }
 }

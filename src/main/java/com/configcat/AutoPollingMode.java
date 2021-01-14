@@ -27,9 +27,4 @@ public class AutoPollingMode extends PollingMode {
     String getPollingIdentifier() {
         return "a";
     }
-
-    @Override
-    RefreshPolicy accept(PollingModeVisitor visitor) {
-        return visitor.visit(this);
-    }
 }

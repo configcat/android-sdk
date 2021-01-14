@@ -11,27 +11,14 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * Describes a {@link RefreshPolicy} which polls the latest configuration
- * over HTTP and updates the local cache repeatedly.
- */
 class AutoPollingPolicy extends RefreshPolicy {
-    private static final Logger LOGGER = LoggerFactory.getLogger(AutoPollingPolicy.class);
     private final ScheduledExecutorService scheduler;
     private final CompletableFuture<Void> initFuture;
     private final AtomicBoolean initialized;
     private final ArrayList<ConfigurationChangeListener> listeners;
 
-    /**
-     * Constructor used by the child classes.
-     *
-     * @param configFetcher the internal config fetcher instance.
-     * @param cache the internal cache instance.
-     * @param sdkKey the sdk key.
-     * @param config the polling mode configuration.
-     */
-    AutoPollingPolicy(ConfigFetcher configFetcher, ConfigCache cache, String sdkKey, AutoPollingMode config) {
-        super(configFetcher, cache, sdkKey);
+    AutoPollingPolicy(ConfigFetcher configFetcher, ConfigCache cache, Logger logger, String sdkKey, AutoPollingMode config) {
+        super(configFetcher, cache, logger, sdkKey);
         this.listeners = new ArrayList<>();
 
         if(config.getListener() != null)
@@ -54,7 +41,7 @@ class AutoPollingPolicy extends RefreshPolicy {
                     initFuture.complete(null);
 
             } catch (Exception e){
-                LOGGER.error("Exception in AutoPollingCachePolicy", e);
+                this.logger.error("Exception in AutoPollingCachePolicy", e);
             }
         }, 0, config.getAutoPollRateInSeconds(), TimeUnit.SECONDS);
     }

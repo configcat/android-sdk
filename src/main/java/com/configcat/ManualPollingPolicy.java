@@ -1,21 +1,12 @@
 package com.configcat;
 
 import java9.util.concurrent.CompletableFuture;
+import org.slf4j.Logger;
 
-/**
- * Describes a {@link RefreshPolicy} which fetches the latest configuration
- * over HTTP every time when a get is called on the {@link ConfigCatClient}.
- */
 class ManualPollingPolicy extends RefreshPolicy {
-       /**
-     * Constructor used by the child classes.
-     *
-     * @param configFetcher the internal config fetcher instance.
-     * @param cache the internal cache instance.
-     * @param sdkKey the sdk key.
-     */
-    public ManualPollingPolicy(ConfigFetcher configFetcher, ConfigCache cache, String sdkKey) {
-        super(configFetcher, cache, sdkKey);
+
+    public ManualPollingPolicy(ConfigFetcher configFetcher, ConfigCache cache, Logger logger, String sdkKey) {
+        super(configFetcher, cache, logger, sdkKey);
     }
 
     @Override
