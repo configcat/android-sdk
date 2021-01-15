@@ -8,7 +8,7 @@ ConfigCat is a feature flag and configuration management service that lets you s
 ConfigCat is a <a href="https://configcat.com" target="_blank">hosted feature flag service</a>. Manage feature toggles across frontend, backend, mobile, desktop apps. <a href="https://configcat.com" target="_blank">Alternative to LaunchDarkly</a>. Management app + feature flag SDKs.
 
 [![Build Status](https://travis-ci.com/configcat/android-sdk.svg?branch=master)](https://travis-ci.com/configcat/android-sdk)
-[![Downloadl](https://api.bintray.com/packages/configcat/releases/configcat-android-client/images/download.svg)](https://bintray.com/configcat/releases/configcat-android-client/_latestVersion)
+[![Download](https://api.bintray.com/packages/configcat/releases/configcat-android-client/images/download.svg)](https://bintray.com/configcat/releases/configcat-android-client/_latestVersion)
 [![Coverage Status](https://img.shields.io/codecov/c/github/ConfigCat/android-sdk.svg)](https://codecov.io/gh/ConfigCat/android-sdk)
 [![Javadocs](http://javadoc.io/badge/com.configcat/configcat-android-client.svg)](http://javadoc.io/doc/com.configcat/configcat-android-client)
 ![License](https://img.shields.io/github/license/configcat/android-sdk.svg)
