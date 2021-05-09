@@ -28,6 +28,6 @@ In general, we follow the ["fork-and-pull" Git workflow](https://github.com/susa
 ## Building and running tests
 
 1. Open the `android-sdk` project in [Android Studio](https://developer.android.com/studio/index.html)
-2. Open menu Run
+2. Open Run menu
 3. Select Run...
 4. Select All in configcat-android-client
