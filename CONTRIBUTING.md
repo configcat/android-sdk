@@ -27,7 +27,24 @@ In general, we follow the ["fork-and-pull" Git workflow](https://github.com/susa
 
 ## Building and running tests
 
+### From command line with Gradle
+
+- On Windows:
+
+  ```bash
+  gradlew test
+  ```
+
+- On Mac or Linux:
+
+  ```bash
+  ./gradlew test
+  ```
+
+### From Android Studio
+
 1. Open the `android-sdk` project in [Android Studio](https://developer.android.com/studio/index.html)
 2. Open Run menu
 3. Select Run...
 4. Select All in configcat-android-client
+
