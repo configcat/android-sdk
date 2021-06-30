@@ -23,7 +23,7 @@ implementation 'com.configcat:configcat-android-client:6.+'
 ```
 
 ### 2. Go to <a href="https://app.configcat.com/sdkkey" target="_blank">Connect your application</a> section to get your *SDK Key*:
-![SDK-KEY](https://raw.githubusercontent.com/ConfigCat/.net-sdk/master/media/readme02-2.png  "SDK-KEY")
+![SDK-KEY](https://raw.githubusercontent.com/ConfigCat/android-sdk/master/media/readme02-2.png  "SDK-KEY")
 
 ### 3. Import *com.configcat.** to your application
 ```kotlin
