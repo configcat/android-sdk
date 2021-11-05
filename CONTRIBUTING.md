@@ -44,7 +44,5 @@ In general, we follow the ["fork-and-pull" Git workflow](https://github.com/susa
 ### From Android Studio
 
 1. Open the `android-sdk` project in [Android Studio](https://developer.android.com/studio/index.html)
-2. Open Run menu
-3. Select Run...
-4. Select All in configcat-android-client
-
+2. Open the context menu of android-sdk [configcat-android-client] project
+3. Select Run 'Tests in 'configcat-...'
