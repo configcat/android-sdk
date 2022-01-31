@@ -14,22 +14,22 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class DataGovernanceTest {
     private static final String JsonTemplate = "{ p: { u: \"%s\", r: %d }, f: {} }";
-    private final Logger logger = LoggerFactory.getLogger(DataGovernanceTest.class);
+    private final ConfigCatLogger logger = new ConfigCatLogger(LoggerFactory.getLogger(DataGovernanceTest.class));
 
     @Test
     public void shouldStayOnGivenUrl() throws IOException, ExecutionException, InterruptedException {
         MockWebServer server = this.createServer();
-        ConfigFetcher fetcher = this.createFetcher(server.url("/").toString(), false);
-
+        String url = server.url("/").toString();
+        ConfigFetcher fetcher = this.createFetcher(url, false);
         // Arrange
-        String body = String.format(JsonTemplate, server.url("/"), 0);
+        String body = String.format(JsonTemplate, url, 0);
         server.enqueue(new MockResponse().setResponseCode(200).setBody(body));
 
         // Act
-        FetchResponse response = fetcher.getConfigurationJsonStringAsync().get();
+        FetchResponse response = fetcher.fetchAsync().get();
 
         // Assert
-        assertEquals(body, response.config());
+        assertEquals(url, response.config().preferences.baseUrl);
         assertEquals(1, server.getRequestCount());
 
         // Cleanup
@@ -40,17 +40,17 @@ public class DataGovernanceTest {
     @Test
     public void shouldStayOnSameUrl() throws IOException, ExecutionException, InterruptedException {
         MockWebServer server = this.createServer();
-        ConfigFetcher fetcher = this.createFetcher(server.url("/").toString(), false);
-
+        String url = server.url("/").toString();
+        ConfigFetcher fetcher = this.createFetcher(url, false);
         // Arrange
-        String body = String.format(JsonTemplate, server.url("/"), 1);
+        String body = String.format(JsonTemplate, url, 1);
         server.enqueue(new MockResponse().setResponseCode(200).setBody(body));
 
         // Act
-        FetchResponse response = fetcher.getConfigurationJsonStringAsync().get();
+        FetchResponse response = fetcher.fetchAsync().get();
 
         // Assert
-        assertEquals(body, response.config());
+        assertEquals(url, response.config().preferences.baseUrl);
         assertEquals(1, server.getRequestCount());
 
         // Cleanup
@@ -61,17 +61,18 @@ public class DataGovernanceTest {
     @Test
     public void shouldStayOnSameUrlEvenWithForce() throws IOException, ExecutionException, InterruptedException {
         MockWebServer server = this.createServer();
-        ConfigFetcher fetcher = this.createFetcher(server.url("/").toString(), false);
+        String url = server.url("/").toString();
+        ConfigFetcher fetcher = this.createFetcher(url, false);
 
         // Arrange
-        String body = String.format(JsonTemplate, server.url("/"), 2);
+        String body = String.format(JsonTemplate, url, 2);
         server.enqueue(new MockResponse().setResponseCode(200).setBody(body));
 
         // Act
-        FetchResponse response = fetcher.getConfigurationJsonStringAsync().get();
+        FetchResponse response = fetcher.fetchAsync().get();
 
         // Assert
-        assertEquals(body, response.config());
+        assertEquals(url, response.config().preferences.baseUrl);
         assertEquals(1, server.getRequestCount());
 
         // Cleanup
@@ -83,20 +84,23 @@ public class DataGovernanceTest {
     public void shouldRedirectToAnotherServer() throws IOException, ExecutionException, InterruptedException {
         MockWebServer firstServer = this.createServer();
         MockWebServer secondServer = this.createServer();
-        ConfigFetcher fetcher = this.createFetcher(firstServer.url("/").toString(), false);
+        String firstServerUrl = firstServer.url("/").toString();
+        String secondServerUrl = secondServer.url("/").toString();
+        ConfigFetcher fetcher = this.createFetcher(firstServerUrl, false);
 
         // Arrange
-        String firstBody = String.format(JsonTemplate, secondServer.url("/"), 1);
+        String firstBody = String.format(JsonTemplate, secondServerUrl, 1);
         firstServer.enqueue(new MockResponse().setResponseCode(200).setBody(firstBody));
 
-        String secondBody = String.format(JsonTemplate, secondServer.url("/"), 0);
+        String secondBody = String.format(JsonTemplate, secondServerUrl, 0);
         secondServer.enqueue(new MockResponse().setResponseCode(200).setBody(secondBody));
 
         // Act
-        FetchResponse response = fetcher.getConfigurationJsonStringAsync().get();
+        FetchResponse response = fetcher.fetchAsync().get();
 
         // Assert
-        assertEquals(secondBody, response.config());
+        assertEquals(secondServerUrl, response.config().preferences.baseUrl);
+        assertEquals(0, response.config().preferences.redirect);
         assertEquals(1, firstServer.getRequestCount());
         assertEquals(1, secondServer.getRequestCount());
 
@@ -110,20 +114,23 @@ public class DataGovernanceTest {
     public void shouldRedirectToAnotherServerWhenForced() throws IOException, ExecutionException, InterruptedException {
         MockWebServer firstServer = this.createServer();
         MockWebServer secondServer = this.createServer();
-        ConfigFetcher fetcher = this.createFetcher(firstServer.url("/").toString(), false);
+        String firstServerUrl = firstServer.url("/").toString();
+        String secondServerUrl = secondServer.url("/").toString();
+        ConfigFetcher fetcher = this.createFetcher(firstServerUrl, false);
 
         // Arrange
-        String firstBody = String.format(JsonTemplate, secondServer.url("/"), 2);
+        String firstBody = String.format(JsonTemplate, secondServerUrl, 2);
         firstServer.enqueue(new MockResponse().setResponseCode(200).setBody(firstBody));
 
-        String secondBody = String.format(JsonTemplate, secondServer.url("/"), 0);
+        String secondBody = String.format(JsonTemplate, secondServerUrl, 0);
         secondServer.enqueue(new MockResponse().setResponseCode(200).setBody(secondBody));
 
         // Act
-        FetchResponse response = fetcher.getConfigurationJsonStringAsync().get();
+        FetchResponse response = fetcher.fetchAsync().get();
 
         // Assert
-        assertEquals(secondBody, response.config());
+        assertEquals(secondServerUrl, response.config().preferences.baseUrl);
+        assertEquals(0, response.config().preferences.redirect);
         assertEquals(1, firstServer.getRequestCount());
         assertEquals(1, secondServer.getRequestCount());
 
@@ -137,21 +144,24 @@ public class DataGovernanceTest {
     public void shouldBreakTheRedirectLoop() throws IOException, ExecutionException, InterruptedException {
         MockWebServer firstServer = this.createServer();
         MockWebServer secondServer = this.createServer();
-        ConfigFetcher fetcher = this.createFetcher(firstServer.url("/").toString(), false);
+        String firstServerUrl = firstServer.url("/").toString();
+        String secondServerUrl = secondServer.url("/").toString();
+        ConfigFetcher fetcher = this.createFetcher(firstServerUrl, false);
 
         // Arrange
-        String firstBody = String.format(JsonTemplate, secondServer.url("/"), 1);
+        String firstBody = String.format(JsonTemplate, secondServerUrl, 1);
         firstServer.enqueue(new MockResponse().setResponseCode(200).setBody(firstBody));
         firstServer.enqueue(new MockResponse().setResponseCode(200).setBody(firstBody));
 
-        String secondBody = String.format(JsonTemplate, firstServer.url("/"), 1);
+        String secondBody = String.format(JsonTemplate, firstServerUrl, 1);
         secondServer.enqueue(new MockResponse().setResponseCode(200).setBody(secondBody));
 
         // Act
-        FetchResponse response = fetcher.getConfigurationJsonStringAsync().get();
+        FetchResponse response = fetcher.fetchAsync().get();
 
         // Assert
-        assertEquals(firstBody, response.config());
+        assertEquals(secondServerUrl, response.config().preferences.baseUrl);
+        assertEquals(1, response.config().preferences.redirect);
         assertEquals(2, firstServer.getRequestCount());
         assertEquals(1, secondServer.getRequestCount());
 
@@ -165,17 +175,20 @@ public class DataGovernanceTest {
     public void shouldRespectCustomUrlWhenNotForced() throws IOException, ExecutionException, InterruptedException {
         MockWebServer firstServer = this.createServer();
         MockWebServer secondServer = this.createServer();
-        ConfigFetcher fetcher = this.createFetcher(firstServer.url("/").toString(), true);
+        String firstServerUrl = firstServer.url("/").toString();
+        String secondServerUrl = secondServer.url("/").toString();
+        ConfigFetcher fetcher = this.createFetcher(firstServerUrl, true);
 
         // Arrange
-        String firstBody = String.format(JsonTemplate, secondServer.url("/"), 1);
+        String firstBody = String.format(JsonTemplate, secondServerUrl, 1);
         firstServer.enqueue(new MockResponse().setResponseCode(200).setBody(firstBody));
 
         // Act
-        FetchResponse response = fetcher.getConfigurationJsonStringAsync().get();
+        FetchResponse response = fetcher.fetchAsync().get();
 
         // Assert
-        assertEquals(firstBody, response.config());
+        assertEquals(secondServerUrl, response.config().preferences.baseUrl);
+        assertEquals(1, response.config().preferences.redirect);
         assertEquals(1, firstServer.getRequestCount());
         assertEquals(0, secondServer.getRequestCount());
 
@@ -189,20 +202,23 @@ public class DataGovernanceTest {
     public void shouldNotRespectCustomUrlWhenForced() throws IOException, ExecutionException, InterruptedException {
         MockWebServer firstServer = this.createServer();
         MockWebServer secondServer = this.createServer();
-        ConfigFetcher fetcher = this.createFetcher(firstServer.url("/").toString(), true);
+        String firstServerUrl = firstServer.url("/").toString();
+        String secondServerUrl = secondServer.url("/").toString();
+        ConfigFetcher fetcher = this.createFetcher(firstServerUrl, true);
 
         // Arrange
-        String firstBody = String.format(JsonTemplate, secondServer.url("/"), 2);
+        String firstBody = String.format(JsonTemplate, secondServerUrl, 2);
         firstServer.enqueue(new MockResponse().setResponseCode(200).setBody(firstBody));
 
-        String secondBody = String.format(JsonTemplate, secondServer.url("/"), 0);
+        String secondBody = String.format(JsonTemplate, secondServerUrl, 0);
         secondServer.enqueue(new MockResponse().setResponseCode(200).setBody(secondBody));
 
         // Act
-        FetchResponse response = fetcher.getConfigurationJsonStringAsync().get();
+        FetchResponse response = fetcher.fetchAsync().get();
 
         // Assert
-        assertEquals(secondBody, response.config());
+        assertEquals(secondServerUrl, response.config().preferences.baseUrl);
+        assertEquals(0, response.config().preferences.redirect);
         assertEquals(1, firstServer.getRequestCount());
         assertEquals(1, secondServer.getRequestCount());
 
@@ -220,6 +236,6 @@ public class DataGovernanceTest {
     }
 
     private ConfigFetcher createFetcher(String url, boolean isCustomUrl) {
-        return new ConfigFetcher(new OkHttpClient.Builder().build(), logger, "", url, isCustomUrl, "m");
+        return new ConfigFetcher(new OkHttpClient.Builder().build(), logger, new ConfigJsonCache(logger, new NullConfigCache(), ""), "", url, isCustomUrl, "m");
     }
 }

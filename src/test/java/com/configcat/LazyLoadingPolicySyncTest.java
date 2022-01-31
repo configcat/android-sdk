@@ -19,21 +19,22 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 public class LazyLoadingPolicySyncTest {
-    private RefreshPolicy policy;
+    private RefreshPolicyBase policy;
     private MockWebServer server;
-    private final Logger logger = LoggerFactory.getLogger(LazyLoadingPolicySyncTest.class);
+    private final ConfigCatLogger logger = new ConfigCatLogger(LoggerFactory.getLogger(LazyLoadingPolicySyncTest.class));
+    private static final String TEST_JSON = "{ f: { fakeKey: { v: %s, p: [] ,r: [] } } }";
 
     @BeforeEach
     public void setUp() throws IOException {
         this.server = new MockWebServer();
         this.server.start();
 
+        ConfigJsonCache memoryCache = new ConfigJsonCache(logger, new NullConfigCache(), "");
         PollingMode mode = PollingModes
-                .LazyLoad(5);
+                .lazyLoad(5);
 
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger,"", this.server.url("/").toString(), false, mode.getPollingIdentifier());
-        ConfigCache cache = new InMemoryConfigCache();
-        this.policy = new LazyLoadingPolicy(fetcher, cache, logger, "", (LazyLoadingMode)mode);
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, memoryCache, "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
+        this.policy = new LazyLoadingPolicy(fetcher, logger, memoryCache, (LazyLoadingMode) mode);
     }
 
     @AfterEach
@@ -44,72 +45,52 @@ public class LazyLoadingPolicySyncTest {
 
     @Test
     public void get() throws InterruptedException, ExecutionException {
-        this.server.enqueue(new MockResponse().setResponseCode(200).setBody("test"));
-        this.server.enqueue(new MockResponse().setResponseCode(200).setBody("test2").setBodyDelay(3, TimeUnit.SECONDS));
+        this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
+        this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test2")).setBodyDelay(3, TimeUnit.SECONDS));
 
         //first call
-        assertEquals("test", this.policy.getConfigurationJsonAsync().get());
+        assertEquals("test", this.policy.getConfigurationAsync().get().entries.get("fakeKey").value.getAsString());
 
         //wait for cache invalidation
         Thread.sleep(6000);
 
         //next call will block until the new value is fetched
-        assertEquals("test2", this.policy.getConfigurationJsonAsync().get());
+        assertEquals("test2", this.policy.getConfigurationAsync().get().entries.get("fakeKey").value.getAsString());
     }
 
     @Test
     public void getCacheFails() throws InterruptedException, ExecutionException {
         PollingMode mode = PollingModes
-                .LazyLoad(5);
+                .lazyLoad(5);
+        ConfigJsonCache cache = new ConfigJsonCache(logger, new FailingCache(), "");
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, cache, "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
+        RefreshPolicyBase lPolicy = new LazyLoadingPolicy(fetcher, logger, cache, (LazyLoadingMode) mode);
 
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
-        RefreshPolicy lPolicy = new LazyLoadingPolicy(fetcher, new FailingCache(), logger, "", (LazyLoadingMode)mode);
-
-        this.server.enqueue(new MockResponse().setResponseCode(200).setBody("test"));
-        this.server.enqueue(new MockResponse().setResponseCode(200).setBody("test2").setBodyDelay(3, TimeUnit.SECONDS));
+        this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
+        this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test2")).setBodyDelay(3, TimeUnit.SECONDS));
 
         //first call
-        assertEquals("test", lPolicy.getConfigurationJsonAsync().get());
+        assertEquals("test", lPolicy.getConfigurationAsync().get().entries.get("fakeKey").value.getAsString());
 
         //wait for cache invalidation
         Thread.sleep(6000);
 
         //next call will block until the new value is fetched
-        assertEquals("test2", lPolicy.getConfigurationJsonAsync().get());
+        assertEquals("test2", lPolicy.getConfigurationAsync().get().entries.get("fakeKey").value.getAsString());
     }
 
     @Test
     public void getWithFailedRefresh() throws InterruptedException, ExecutionException {
-        this.server.enqueue(new MockResponse().setResponseCode(200).setBody("test"));
+        this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
         this.server.enqueue(new MockResponse().setResponseCode(500));
 
         //first call
-        assertEquals("test", this.policy.getConfigurationJsonAsync().get());
+        assertEquals("test", this.policy.getConfigurationAsync().get().entries.get("fakeKey").value.getAsString());
 
         //wait for cache invalidation
         Thread.sleep(6000);
 
         //previous value returned because of the refresh failure
-        assertEquals("test", this.policy.getConfigurationJsonAsync().get());
-    }
-
-    @Test
-    public void getFetchedSameResponseNotUpdatesCache() throws Exception {
-        String result = "test";
-
-        ConfigFetcher fetcher = mock(ConfigFetcher.class);
-        ConfigCache cache = mock(ConfigCache.class);
-
-        when(cache.read(anyString())).thenReturn(result);
-
-        when(fetcher.getConfigurationJsonStringAsync())
-                .thenReturn(CompletableFuture.completedFuture(new FetchResponse(FetchResponse.Status.FETCHED, result)));
-
-        RefreshPolicy policy = new LazyLoadingPolicy(fetcher, cache, logger, "", (LazyLoadingMode)PollingModes
-                .LazyLoad(60));
-
-        assertEquals("test", policy.getConfigurationJsonAsync().get());
-
-        verify(cache, never()).write(anyString(), eq(result));
+        assertEquals("test", this.policy.getConfigurationAsync().get().entries.get("fakeKey").value.getAsString());
     }
 }
