@@ -207,7 +207,10 @@ public class ConfigCatClientIntegrationTest {
 
     @Test
     public void getAllKeys() {
-        ConfigCatClient cl = new ConfigCatClient("PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A");
+        ConfigCatClient cl = ConfigCatClient.newBuilder()
+                .logLevel(LogLevel.INFO)
+                .dataGovernance(DataGovernance.EU_ONLY)
+                .build("PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A");
 
         Collection<String> keys = cl.getAllKeys();
 

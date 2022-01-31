@@ -180,6 +180,27 @@ public class AutoPollingPolicyTest {
     }
 
     @Test
+    public void configChangedWithInitWaitTime() throws IOException, InterruptedException {
+        AtomicBoolean isCalled = new AtomicBoolean();
+        ConfigCache cache = new NullConfigCache();
+        ConfigJsonCache memoryCache = new ConfigJsonCache(logger, cache, "");
+        PollingMode mode = PollingModes
+                .autoPoll(2, 5, () -> isCalled.set(true));
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, memoryCache,
+                "", server.url("/").toString(), false, mode.getPollingIdentifier());
+
+        RefreshPolicyBase policy = new AutoPollingPolicy(fetcher, logger, memoryCache, (AutoPollingMode) mode);
+
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
+
+        Thread.sleep(1000);
+
+        assertTrue(isCalled.get());
+
+        policy.close();
+    }
+
+    @Test
     public void getCacheFails() throws Exception {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
 
