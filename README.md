@@ -19,7 +19,7 @@ ConfigCat is a <a href="https://configcat.com" target="_blank">hosted feature fl
 ### 1. Install the package
 *Gradle:*
 ```groovy
-implementation 'com.configcat:configcat-android-client:6.+'
+implementation 'com.configcat:configcat-android-client:7.+'
 ```
 
 ### 2. Go to the <a href="https://app.configcat.com/sdkkey" target="_blank">ConfigCat Dashboard</a> to get your *SDK Key*:
@@ -37,7 +37,7 @@ val client = new ConfigCatClient("#YOUR-SDK-KEY#")
 
 ### 5. Get your setting value:
 ```kotlin
-val isMyAwesomeFeatureEnabled = client.getValue(Boolean::class.javaObjectType, "isMyAwesomeFeatureEnabled", false)
+val isMyAwesomeFeatureEnabled = client.getValue(Boolean::class.java, "isMyAwesomeFeatureEnabled", false)
 if(isMyAwesomeFeatureEnabled) {
     doTheNewThing()
 } else{
@@ -46,7 +46,7 @@ if(isMyAwesomeFeatureEnabled) {
 ```
 Or use the async APIs:
 ```kotlin
-client.getValueAsync(Boolean::class.javaObjectType, "isMyAwesomeFeatureEnabled", false)
+client.getValueAsync(Boolean::class.java, "isMyAwesomeFeatureEnabled", false)
     .thenAccept({ isMyAwesomeFeatureEnabled ->
         if(isMyAwesomeFeatureEnabled) {
             doTheNewThing()
@@ -73,7 +73,7 @@ The user object must be created with a **mandatory** identifier parameter which 
 ```kotlin
 val user = User.newBuilder().build("#USER-IDENTIFIER#") // mandatory
 
-val isMyAwesomeFeatureEnabled = client.getValue(Boolean::class.javaObjectType, "isMyAwesomeFeatureEnabled", user, false)
+val isMyAwesomeFeatureEnabled = client.getValue(Boolean::class.java, "isMyAwesomeFeatureEnabled", user, false)
 if(isMyAwesomeFeatureEnabled) {
     doTheNewThing()
 } else{
