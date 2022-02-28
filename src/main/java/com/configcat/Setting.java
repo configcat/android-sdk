@@ -16,10 +16,10 @@ public class Setting {
     /**
      * Type of the feature flag / setting.
      *
-     * 0 -> [bool],
-     * 1 -> [String],
-     * 2 -> [int],
-     * 3 -> [double],
+     * 0: [bool],
+     * 1: [String],
+     * 2: [int],
+     * 3: [double],
      */
     @SerializedName(value = "t")
     public int type;
