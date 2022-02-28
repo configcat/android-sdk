@@ -1,10 +1,14 @@
 package com.configcat;
 
+import okhttp3.OkHttpClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -15,48 +19,42 @@ import static org.mockito.Mockito.*;
 
 public class ConfigCatClientTest {
 
-    private static final String SDKKEY = "TEST_KEY";
+    private static final String APIKEY = "TEST_KEY";
 
     private static final String TEST_JSON = "{ f: { fakeKey: { v: fakeValue, s: 0, p: [] ,r: [] } } }";
+    private static final String TEST_JSON_MULTIPLE = "{ f: { key1: { v: true, i: 'fakeId1', p: [] ,r: [] }, key2: { v: false, i: 'fakeId2', p: [] ,r: [] } } }";
 
     @Test
-    public void ensuresSdkKeyIsNotNull() {
+    public void ensuresApiKeyIsNotNull() {
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class, () -> new ConfigCatClient(null));
 
-        assertEquals("sdkKey is null or empty", exception.getMessage());
+        assertEquals("'sdkKey' cannot be null or empty.", exception.getMessage());
 
         IllegalArgumentException builderException = assertThrows(
                 IllegalArgumentException.class, () -> ConfigCatClient.newBuilder().build(null));
 
-        assertEquals("sdkKey is null or empty", builderException.getMessage());
+        assertEquals("'sdkKey' cannot be null or empty.", builderException.getMessage());
     }
 
     @Test
-    public void ensuresSdkKeyIsNotEmpty() {
+    public void ensuresApiKeyIsNotEmpty() {
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class, () -> new ConfigCatClient(""));
 
-        assertEquals("sdkKey is null or empty", exception.getMessage());
+        assertEquals("'sdkKey' cannot be null or empty.", exception.getMessage());
 
         IllegalArgumentException builderException = assertThrows(
                 IllegalArgumentException.class, () -> ConfigCatClient.newBuilder().build(""));
 
-        assertEquals("sdkKey is null or empty", builderException.getMessage());
-    }
-
-    @Test
-    public void ensuresMaxWaitTimeoutGreaterThanTwoSeconds() {
-        assertThrows(IllegalArgumentException.class, () -> ConfigCatClient
-                .newBuilder()
-                .maxWaitTimeForSyncCallsInSeconds(1));
+        assertEquals("'sdkKey' cannot be null or empty.", builderException.getMessage());
     }
 
     @Test
     public void getValueWithDefaultConfigTimeout() throws IOException {
         ConfigCatClient cl = ConfigCatClient.newBuilder()
-                .maxWaitTimeForSyncCallsInSeconds(2)
-                .build(SDKKEY);
+                .httpClient(new OkHttpClient.Builder().readTimeout(2, TimeUnit.SECONDS).build())
+                .build(APIKEY);
 
         // makes a call to a real url which would fail, default expected
         boolean config = cl.getValue(Boolean.class, "key", true);
@@ -72,9 +70,9 @@ public class ConfigCatClientTest {
 
         ConfigCatClient cl = ConfigCatClient.newBuilder()
                 .cache(new FailingCache())
-                .mode(PollingModes.ManualPoll())
+                .mode(PollingModes.manualPoll())
                 .baseUrl(server.url("/").toString())
-                .build(SDKKEY);
+                .build(APIKEY);
 
         server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
         cl.forceRefresh();
@@ -91,9 +89,9 @@ public class ConfigCatClientTest {
 
         ConfigCatClient cl = ConfigCatClient.newBuilder()
                 .cache(new FailingCache())
-                .mode(PollingModes.AutoPoll(5))
+                .mode(PollingModes.autoPoll(5))
                 .baseUrl(server.url("/").toString())
-                .build(SDKKEY);
+                .build(APIKEY);
 
         server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
 
@@ -110,9 +108,9 @@ public class ConfigCatClientTest {
 
         ConfigCatClient cl = ConfigCatClient.newBuilder()
                 .cache(new FailingCache())
-                .mode(PollingModes.LazyLoad(5))
+                .mode(PollingModes.lazyLoad(5))
                 .baseUrl(server.url("/").toString())
-                .build(SDKKEY);
+                .build(APIKEY);
 
         server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
 
@@ -129,9 +127,9 @@ public class ConfigCatClientTest {
 
         ConfigCatClient cl = ConfigCatClient.newBuilder()
                 .cache(new FailingCache())
-                .mode(PollingModes.ManualPoll())
+                .mode(PollingModes.manualPoll())
                 .baseUrl(server.url("/").toString())
-                .build(SDKKEY);
+                .build(APIKEY);
 
         server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
 
@@ -142,23 +140,43 @@ public class ConfigCatClientTest {
     }
 
     @Test
-    public void getConfigurationReturnsPreviousCachedOnFail() throws IOException {
+    public void getConfigurationReturnsPreviousCachedOnTimeout() throws IOException {
         MockWebServer server = new MockWebServer();
         server.start();
 
         ConfigCatClient cl = ConfigCatClient.newBuilder()
-                .mode(PollingModes.ManualPoll())
+                .mode(PollingModes.manualPoll())
                 .baseUrl(server.url("/").toString())
-                .maxWaitTimeForSyncCallsInSeconds(2)
-                .build(SDKKEY);
+                .httpClient(new OkHttpClient.Builder().readTimeout(1, TimeUnit.SECONDS).build())
+                .build(APIKEY);
 
         server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody("delayed").setBodyDelay(5, TimeUnit.SECONDS));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody("delayed").setBodyDelay(3, TimeUnit.SECONDS));
 
         cl.forceRefresh();
         assertEquals("fakeValue", cl.getValue(String.class, "fakeKey", null));
         cl.forceRefresh();
         assertEquals("fakeValue", cl.getValue(String.class, "fakeKey", null));
+
+        server.close();
+        cl.close();
+    }
+
+    @Test
+    public void maxInitWaitTimeTest() throws IOException {
+        MockWebServer server = new MockWebServer();
+        server.start();
+
+        ConfigCatClient cl = ConfigCatClient.newBuilder()
+                .mode(PollingModes.autoPoll(60, 1))
+                .baseUrl(server.url("/").toString())
+                .build(APIKEY);
+
+        server.enqueue(new MockResponse().setResponseCode(200).setBody("delayed").setBodyDelay(2, TimeUnit.SECONDS));
+
+        Instant previous = Instant.now();
+        assertNull(cl.getValue(String.class, "fakeKey", null));
+        assertTrue(Duration.between(previous, Instant.now()).toMillis() < 1500);
 
         server.close();
         cl.close();
@@ -170,9 +188,9 @@ public class ConfigCatClientTest {
         server.start();
 
         ConfigCatClient cl = ConfigCatClient.newBuilder()
-                .mode(PollingModes.ManualPoll())
+                .mode(PollingModes.manualPoll())
                 .baseUrl(server.url("/").toString())
-                .build(SDKKEY);
+                .build(APIKEY);
 
         server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
         server.enqueue(new MockResponse().setResponseCode(500));
@@ -192,15 +210,15 @@ public class ConfigCatClientTest {
         server.start();
 
         ConfigCatClient cl = ConfigCatClient.newBuilder()
-                .mode(PollingModes.ManualPoll())
+                .mode(PollingModes.manualPoll())
                 .baseUrl(server.url("/").toString())
-                .maxWaitTimeForSyncCallsInSeconds(2)
-                .build(SDKKEY);
+                .httpClient(new OkHttpClient.Builder().readTimeout(1, TimeUnit.SECONDS).build())
+                .build(APIKEY);
 
         String badJson = "{ test: test] }";
         String def = "def";
         server.enqueue(new MockResponse().setResponseCode(200).setBody(badJson));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(badJson).setBodyDelay(5, TimeUnit.SECONDS));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(badJson).setBodyDelay(3, TimeUnit.SECONDS));
 
         cl.forceRefresh();
         assertSame(def, cl.getValue(String.class, "test", def));
@@ -218,12 +236,12 @@ public class ConfigCatClientTest {
         server.start();
 
         ConfigCatClient cl = ConfigCatClient.newBuilder()
-                .mode(PollingModes.ManualPoll())
+                .mode(PollingModes.manualPoll())
                 .baseUrl(server.url("/").toString())
-                .maxWaitTimeForSyncCallsInSeconds(2)
-                .build(SDKKEY);
+                .httpClient(new OkHttpClient.Builder().readTimeout(1, TimeUnit.SECONDS).build())
+                .build(APIKEY);
 
-        server.enqueue(new MockResponse().setResponseCode(200).setBody("test").setBodyDelay(5, TimeUnit.SECONDS));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody("test").setBodyDelay(3, TimeUnit.SECONDS));
 
         cl.forceRefresh();
 
@@ -232,12 +250,34 @@ public class ConfigCatClientTest {
     }
 
     @Test
+    public void getAllValues() throws IOException {
+        MockWebServer server = new MockWebServer();
+        server.start();
+
+        ConfigCatClient cl = ConfigCatClient.newBuilder()
+                .mode(PollingModes.manualPoll())
+                .baseUrl(server.url("/").toString())
+                .build(APIKEY);
+
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON_MULTIPLE));
+        cl.forceRefresh();
+
+        Map<String, Object> allValues = cl.getAllValues(null);
+
+        assertEquals(true, allValues.get("key1"));
+        assertEquals(false, allValues.get("key2"));
+
+        server.shutdown();
+        cl.close();
+    }
+
+    @Test
     public void getValueInvalidArguments() {
         ConfigCatClient client = new ConfigCatClient("key");
-        assertThrows(IllegalArgumentException.class, () -> client.getValue(Boolean.class,null, false));
-        assertThrows(IllegalArgumentException.class, () -> client.getValue(Boolean.class,"", false));
+        assertThrows(IllegalArgumentException.class, () -> client.getValue(Boolean.class, null, false));
+        assertThrows(IllegalArgumentException.class, () -> client.getValue(Boolean.class, "", false));
 
-        assertThrows(IllegalArgumentException.class, () -> client.getValueAsync(Boolean.class,null, false).get());
-        assertThrows(IllegalArgumentException.class, () -> client.getValueAsync(Boolean.class,"", false).get());
+        assertThrows(IllegalArgumentException.class, () -> client.getValueAsync(Boolean.class, null, false).get());
+        assertThrows(IllegalArgumentException.class, () -> client.getValueAsync(Boolean.class, "", false).get());
     }
 }

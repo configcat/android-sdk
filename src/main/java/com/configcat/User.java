@@ -8,21 +8,21 @@ import java.util.TreeMap;
  * Its only mandatory attribute is the {@code identifier}.
  */
 public class User {
-    private String identifier;
-    private Map<String, String> attributes;
+    private final String identifier;
+    private final Map<String, String> attributes;
 
-    private User(String identifier, String email, String country,  Map<String, String> custom) {
+    private User(String identifier, String email, String country, Map<String, String> custom) {
         this.identifier = identifier == null ? "" : identifier;
         this.attributes = new TreeMap<>();
         this.attributes.put("Identifier", identifier);
 
-        if(country != null && !country.isEmpty())
+        if (country != null && !country.isEmpty())
             this.attributes.put("Country", country);
 
-        if(email != null && !email.isEmpty())
+        if (email != null && !email.isEmpty())
             this.attributes.put("Email", email);
 
-        if(custom != null)
+        if (custom != null)
             this.attributes.putAll(custom);
     }
 
@@ -40,10 +40,15 @@ public class User {
     }
 
     String getAttribute(String key) {
-        if(key == null)
+        if (key == null)
             throw new IllegalArgumentException("key is null or empty");
 
-        return this.attributes.get(key);
+        return this.attributes.getOrDefault(key, null);
+    }
+
+    @Override
+    public String toString() {
+        return "User" + attributes + "";
     }
 
     /**

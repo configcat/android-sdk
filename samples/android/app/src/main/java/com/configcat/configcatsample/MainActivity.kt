@@ -15,11 +15,14 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         this.client = ConfigCatClient.newBuilder()
-                .mode(PollingModes.AutoPoll(5) {
+                .mode(PollingModes.autoPoll(5) {
                     run {
                         this.fetchNewConfig()
                     }
                 })
+                // Info level logging helps to inspect the feature flag evaluation process.
+                // Use the default Warning level to avoid too detailed logging in your application.
+                .logLevel(LogLevel.INFO)
                 .build("PKDVCLf-Hq-h-kCzMp-L7Q/HhOWfwVtZ0mb30i9wi17GQ")
     }
 
