@@ -30,10 +30,10 @@ repositories {
 }
 
 dependencies {
-    api "net.sourceforge.streamsupport:android-retrofuture:1.7.0"
-    api 'com.squareup.okhttp3:okhttp:3.14.9'
-    api 'org.slf4j:slf4j-api:1.7.32'
-    api 'com.google.code.gson:gson:2.8.9'
+    api 'net.sourceforge.streamsupport:android-retrofuture:1.7.4'
+    api 'com.squareup.okhttp3:okhttp:4.10.0'
+    api 'org.slf4j:slf4j-api:1.7.36'
+    api 'com.google.code.gson:gson:2.9.0'
     api 'commons-codec:commons-codec:1.15'
     api 'de.skuzzle:semantic-version:2.1.0'
     testImplementation group: "org.junit.jupiter", name: "junit-jupiter-api", version:"5.1.0"
@@ -41,7 +41,7 @@ dependencies {
     testImplementation group: "org.slf4j", name: "slf4j-nop", version:"1.7.25"
     testImplementation group: "com.squareup.okhttp3", name: "mockwebserver", version:"4.9.2"
     testImplementation "org.mockito:mockito-core:2.+"
-    testImplementation "net.sourceforge.streamsupport:android-retrofuture:1.7.0"
+    testImplementation 'net.sourceforge.streamsupport:android-retrofuture:1.7.4'
     testRuntimeOnly group: "org.junit.jupiter", name: "junit-jupiter-engine", version:"5.8.0"
 }
 
