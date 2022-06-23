@@ -14,7 +14,7 @@ class ConfigFetcher implements Closeable {
     private final ConfigCatLogger logger;
     private final OkHttpClient httpClient;
     private final String mode;
-    private final String version;
+    private final String version = "7.0.1";
     private final ConfigJsonCache configJsonCache;
     private final String sdkKey;
     private final boolean urlIsCustom;
@@ -41,7 +41,6 @@ class ConfigFetcher implements Closeable {
         this.urlIsCustom = urlIsCustom;
         this.url = url;
         this.httpClient = httpClient;
-        this.version = this.getClass().getPackage().getImplementationVersion();
         this.mode = pollingIdentifier;
     }
 
@@ -169,7 +168,7 @@ class ConfigFetcher implements Closeable {
     Request getRequest(String etag) {
         String url = this.url + "/configuration-files/" + this.sdkKey + "/" + CONFIG_JSON_NAME + ".json";
         Request.Builder builder = new Request.Builder()
-                .addHeader("X-ConfigCat-UserAgent", "ConfigCat-Java/" + this.mode + "-" + this.version);
+                .addHeader("X-ConfigCat-UserAgent", "ConfigCat-Droid/" + this.mode + "-" + this.version);
 
         if (etag != null && !etag.isEmpty())
             builder.addHeader("If-None-Match", etag);
