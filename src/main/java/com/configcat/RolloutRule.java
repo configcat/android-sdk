@@ -3,6 +3,9 @@ package com.configcat;
 import com.google.gson.JsonElement;
 import com.google.gson.annotations.SerializedName;
 
+/**
+ * Describes a targeting rule.
+ */
 public class RolloutRule {
     /**
      * Value served when the rule is selected during evaluation.

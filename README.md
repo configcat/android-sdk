@@ -45,15 +45,16 @@ if(isMyAwesomeFeatureEnabled) {
 }
 ```
 Or use the async APIs:
+
 ```kotlin
 client.getValueAsync(Boolean::class.java, "isMyAwesomeFeatureEnabled", false)
-    .thenAccept({ isMyAwesomeFeatureEnabled ->
-        if(isMyAwesomeFeatureEnabled) {
+    .thenAccept { isMyAwesomeFeatureEnabled ->
+        if (isMyAwesomeFeatureEnabled) {
             doTheNewThing()
         } else {
             doTheOldThing()
         }
-    })
+    }
 ```
 You also have to put this line into your manifest xml to enable the library access to the network.
 ```xml
