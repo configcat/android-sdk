@@ -4,6 +4,7 @@ package com.configcat;
  * Describes the polling modes.
  */
 public final class PollingModes {
+    private PollingModes() { /* prevent from instantiating */ }
     /**
      * Creates a configured auto polling configuration.
      *

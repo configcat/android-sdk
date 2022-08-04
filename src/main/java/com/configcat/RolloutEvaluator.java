@@ -153,8 +153,8 @@ class RolloutEvaluator {
                         case 14:
                         case 15:
                             try {
-                                Double userDoubleValue = Double.parseDouble(userValue.replaceAll(",", "."));
-                                Double comparisonDoubleValue = Double.parseDouble(comparisonValue.replaceAll(",", "."));
+                                Double userDoubleValue = Double.parseDouble(userValue.replace(",", "."));
+                                Double comparisonDoubleValue = Double.parseDouble(comparisonValue.replace(",", "."));
 
                                 if ((comparator == 10 && userDoubleValue.equals(comparisonDoubleValue)) ||
                                         (comparator == 11 && !userDoubleValue.equals(comparisonDoubleValue)) ||

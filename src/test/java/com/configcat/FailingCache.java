@@ -1,6 +1,6 @@
 package com.configcat;
 
-public class FailingCache extends ConfigCache {
+class FailingCache extends ConfigCache {
 
     @Override
     protected String read(String key) throws Exception {

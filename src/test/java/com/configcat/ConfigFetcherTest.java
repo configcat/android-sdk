@@ -22,7 +22,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.doThrow;
 
-public class ConfigFetcherTest {
+class ConfigFetcherTest {
     private MockWebServer server;
     private final ConfigCatLogger logger = new ConfigCatLogger(LoggerFactory.getLogger(ConfigFetcherTest.class), LogLevel.WARNING);
     private static final String TEST_JSON = "{ f: { fakeKey: { v: fakeValue, s: 0, p: [] ,r: [] } } }";
@@ -40,7 +40,7 @@ public class ConfigFetcherTest {
     }
 
     @Test
-    public void getConfigurationJsonStringETag() throws InterruptedException, ExecutionException {
+    void getConfigurationJsonStringETag() throws InterruptedException, ExecutionException {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON).setHeader("ETag", "fakeETag"));
         this.server.enqueue(new MockResponse().setResponseCode(304));
 
@@ -66,7 +66,7 @@ public class ConfigFetcherTest {
     }
 
     @Test
-    public void getConfigurationException() throws IOException, ExecutionException, InterruptedException {
+    void getConfigurationException() throws IOException, ExecutionException, InterruptedException {
 
         ConfigFetcher fetch = new ConfigFetcher(new OkHttpClient.Builder()
                 .readTimeout(1, TimeUnit.SECONDS)
@@ -87,7 +87,7 @@ public class ConfigFetcherTest {
     }
 
     @Test
-    public void getFetchedETagNotUpdatesCache() throws Exception {
+    void getFetchedETagNotUpdatesCache() throws Exception {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON).setHeader("ETag", "fakeETag"));
         this.server.enqueue(new MockResponse().setResponseCode(304));
 
@@ -106,7 +106,7 @@ public class ConfigFetcherTest {
     }
 
     @Test
-    public void getFetchedSameResponseNotUpdatesCache() throws Exception {
+    void getFetchedSameResponseNotUpdatesCache() throws Exception {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
 
         ConfigCache cache = mock(ConfigCache.class);
@@ -124,7 +124,7 @@ public class ConfigFetcherTest {
     }
 
     @Test
-    public void getCacheFails() throws Exception {
+    void getCacheFails() throws Exception {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
         ConfigCache cache = mock(ConfigCache.class);
 
@@ -141,7 +141,7 @@ public class ConfigFetcherTest {
     }
 
     @Test
-    public void cacheWriteFailsCachedTakesPrecedence() throws Exception {
+    void cacheWriteFailsCachedTakesPrecedence() throws Exception {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON2));
         ConfigCache cache = mock(ConfigCache.class);
 
@@ -164,7 +164,7 @@ public class ConfigFetcherTest {
     }
 
     @Test
-    public void testIntegration() throws IOException, ExecutionException, InterruptedException {
+    void testIntegration() throws IOException, ExecutionException, InterruptedException {
         ConfigJsonCache cache = new ConfigJsonCache(logger, new NullConfigCache(), "PKDVCLf-Hq-h-kCzMp-L7Q/PaDVCFk9EpmD6sLpGLltTA");
         ConfigFetcher fetch = new ConfigFetcher(new OkHttpClient.Builder()
                 .readTimeout(1, TimeUnit.SECONDS)

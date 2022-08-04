@@ -3,9 +3,9 @@ package com.configcat;
 /**
  * The manual polling mode configuration.
  */
-class ManualPollingMode extends PollingMode {
+class ManualPollingMode implements PollingMode {
     @Override
-    String getPollingIdentifier() {
+    public String getPollingIdentifier() {
         return "m";
     }
 }

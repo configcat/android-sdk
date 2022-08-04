@@ -5,9 +5,9 @@ import org.slf4j.Logger;
 
 import static org.mockito.Mockito.*;
 
-public class LoggerTest {
+class LoggerTest {
     @Test
-    public void debug() {
+    void debug() {
         Logger mockLogger = mock(Logger.class);
         ConfigCatLogger logger = new ConfigCatLogger(mockLogger, LogLevel.DEBUG);
 
@@ -23,7 +23,7 @@ public class LoggerTest {
     }
 
     @Test
-    public void info() {
+    void info() {
         Logger mockLogger = mock(Logger.class);
         ConfigCatLogger logger = new ConfigCatLogger(mockLogger, LogLevel.INFO);
 
@@ -39,7 +39,7 @@ public class LoggerTest {
     }
 
     @Test
-    public void warn() {
+    void warn() {
         Logger mockLogger = mock(Logger.class);
         ConfigCatLogger logger = new ConfigCatLogger(mockLogger, LogLevel.WARNING);
 
@@ -55,7 +55,7 @@ public class LoggerTest {
     }
 
     @Test
-    public void error() {
+    void error() {
         Logger mockLogger = mock(Logger.class);
         ConfigCatLogger logger = new ConfigCatLogger(mockLogger, LogLevel.ERROR);
 
@@ -71,7 +71,7 @@ public class LoggerTest {
     }
 
     @Test
-    public void noLog() {
+    void noLog() {
         Logger mockLogger = mock(Logger.class);
         ConfigCatLogger logger = new ConfigCatLogger(mockLogger, LogLevel.NO_LOG);
 

@@ -20,7 +20,7 @@ class Config {
     @SerializedName(value = "e")
     public String eTag = "";
 
-    public static Config empty = new Config();
+    public static final Config empty = new Config();
 }
 
 class Preferences {

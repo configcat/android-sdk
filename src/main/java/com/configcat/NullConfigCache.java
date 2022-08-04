@@ -11,5 +11,5 @@ class NullConfigCache extends ConfigCache {
     }
 
     @Override
-    protected void write(String key, String value) { }
+    protected void write(String key, String value) { /* do nothing */ }
 }

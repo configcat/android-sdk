@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class FailingWriteCache extends ConfigCache {
+class FailingWriteCache extends ConfigCache {
     Map<String, String> map = new HashMap<>();
     AtomicInteger counter = new AtomicInteger(1);
     public AtomicInteger successCounter = new AtomicInteger(0);

@@ -22,8 +22,8 @@ class MainActivity : AppCompatActivity() {
                 })
                 // Info level logging helps to inspect the feature flag evaluation process.
                 // Use the default Warning level to avoid too detailed logging in your application.
-                .logLevel(LogLevel.INFO)
-                .build("977YCH1UFkOKnxvxOmQ96A/hFK5A8EqZUaQ2DExpuBl2Q")
+                .logLevel(LogLevel.DEBUG)
+                .build("PKDVCLf-Hq-h-kCzMp-L7Q/HhOWfwVtZ0mb30i9wi17GQ")
     }
 
     override fun onDestroy() {

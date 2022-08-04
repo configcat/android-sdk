@@ -61,5 +61,5 @@ class NullRefreshPolicy implements RefreshPolicy {
     }
 
     @Override
-    public void close() throws IOException { }
+    public void close() throws IOException { /* nothing to close */ }
 }

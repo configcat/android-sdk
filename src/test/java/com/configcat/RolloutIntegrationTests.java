@@ -1,17 +1,21 @@
 package com.configcat;
 
+import static org.junit.Assert.assertEquals;
+
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Scanner;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
-
-public class RolloutIntegrationTests {
+class RolloutIntegrationTests {
 
     static final String VariationTestKind = "variation";
     static final String ValueTestKind = "value";
@@ -25,7 +29,7 @@ public class RolloutIntegrationTests {
             "testmatrix_sensitive.csv,PKDVCLf-Hq-h-kCzMp-L7Q/qX3TP2dTj06ZpCCT1h_SPA," + ValueTestKind,
             "testmatrix_variationId.csv, PKDVCLf-Hq-h-kCzMp-L7Q/nQ5qkhRAUEa6beEyyrVLBA," + VariationTestKind,
     })
-    public void testMatrixTest(String file, String sdkKey, String kind) throws FileNotFoundException {
+    void testMatrixTest(String file, String sdkKey, String kind) throws FileNotFoundException {
 
         ConfigCatClient client = ConfigCatClient.newBuilder()
                 .build(sdkKey);
@@ -33,7 +37,7 @@ public class RolloutIntegrationTests {
         Scanner csvScanner = new Scanner(new File("src/test/resources/" + file));
 
         if(!csvScanner.hasNext())
-            fail();
+            Assertions.fail();
 
         String[] header = csvScanner.nextLine().split(";");
         String customKey = header[3];
@@ -73,17 +77,15 @@ public class RolloutIntegrationTests {
                 String value = kind.equals(VariationTestKind)
                         ? client.getVariationId(settingKey, user, null)
                         : client.getValue(String.class, settingKey, user, null);
-                if(!value.toLowerCase().equals(testObject[i + 4].toLowerCase())) {
+                if(!value.equalsIgnoreCase(testObject[i + 4])) {
                     errors.add(String.format("Identifier: %s, Key: %s. Expected: %s, Result: %s \n", testObject[0], settingKey, testObject[i + 4], value));
                 }
                 i++;
             }
         }
         if (errors.size() != 0) {
-            errors.forEach((error) -> {
-                System.out.println(error);
-            });
+            errors.forEach(System.out::println);
         }
-        assertTrue("Errors found: " + errors.size(), errors.size() == 0);
+        Assertions.assertEquals(0, errors.size(), "Errors found: " + errors.size());
     }
 }
