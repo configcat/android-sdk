@@ -1,19 +1,15 @@
 package com.configcat;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.time.Instant;
-import java.util.Date;
-import java9.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import java9.util.concurrent.CompletableFuture;
 
 /**
  * Describes a {@link RefreshPolicyBase} which uses an expiring cache
  * to maintain the internally stored configuration.
  */
 class LazyLoadingPolicy extends RefreshPolicyBase {
-    private Instant lastRefreshedTime;
+    private long lastRefreshedTime;
     private final int cacheRefreshIntervalInSeconds;
     private final boolean asyncRefresh;
     private final AtomicBoolean isFetching;
@@ -33,13 +29,14 @@ class LazyLoadingPolicy extends RefreshPolicyBase {
         this.cacheRefreshIntervalInSeconds = config.getCacheRefreshIntervalInSeconds();
         this.isFetching = new AtomicBoolean(false);
         this.initialized = new AtomicBoolean(false);
-        this.lastRefreshedTime = Instant.MIN;
+        this.lastRefreshedTime = 0;
         this.init = new CompletableFuture<>();
     }
 
     @Override
     protected CompletableFuture<Config> getConfigurationAsync() {
-        if (Instant.now().isAfter(lastRefreshedTime.plusSeconds(this.cacheRefreshIntervalInSeconds))) {
+        long threshHold = lastRefreshedTime + (this.cacheRefreshIntervalInSeconds * 1000L);
+        if (System.currentTimeMillis() > threshHold) {
             boolean isInitialized = this.init.isDone();
 
             if (isInitialized && !this.isFetching.compareAndSet(false, true))
@@ -73,7 +70,7 @@ class LazyLoadingPolicy extends RefreshPolicyBase {
                     }
 
                     if (!response.isFailed())
-                        this.lastRefreshedTime = Instant.now();
+                        this.lastRefreshedTime = System.currentTimeMillis();
 
                     if (this.initialized.compareAndSet(false, true)) {
                         this.init.complete(null);

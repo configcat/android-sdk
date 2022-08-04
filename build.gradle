@@ -17,15 +17,16 @@ plugins {
 
 apply plugin: "com.android.library"
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
-
 android {
     publishing {
         singleVariant('release') {
             withSourcesJar()
             withJavadocJar()
         }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
     defaultConfig {
         compileSdkVersion(32)
@@ -102,7 +103,7 @@ jacoco {
 
 tasks.withType(Test) { useJUnitPlatform() }
 
-task junit5CodeCoverageReport(type:JacocoReport, dependsOn: 'testDebugUnitTest'){
+task junit5CodeCoverageReport(type:JacocoReport, dependsOn: 'test'){
     reports {
         xml.enabled = true
         xml.destination file("${buildDir}/reports/jacoco/report.xml")

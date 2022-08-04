@@ -72,7 +72,7 @@ class RolloutEvaluator {
                         //IS ONE OF
                         case 0:
                             List<String> inValues = new ArrayList<>(Arrays.asList(comparisonValue.split(",")));
-                            inValues.replaceAll(String::trim);
+                            Utils.trimElements(inValues);
                             inValues.removeAll(Arrays.asList(null, ""));
                             if (inValues.contains(userValue)) {
                                 logEntries.add(this.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value));
@@ -82,7 +82,7 @@ class RolloutEvaluator {
                         //IS NOT ONE OF
                         case 1:
                             List<String> notInValues = new ArrayList<>(Arrays.asList(comparisonValue.split(",")));
-                            notInValues.replaceAll(String::trim);
+                            Utils.trimElements(notInValues);
                             notInValues.removeAll(Arrays.asList(null, ""));
                             if (!notInValues.contains(userValue)) {
                                 logEntries.add(this.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value));
@@ -107,7 +107,7 @@ class RolloutEvaluator {
                         case 4:
                         case 5:
                             List<String> inSemVerValues = new ArrayList<>(Arrays.asList(comparisonValue.split(",")));
-                            inSemVerValues.replaceAll(String::trim);
+                            Utils.trimElements(inSemVerValues);
                             inSemVerValues.removeAll(Arrays.asList(null, ""));
                             try {
                                 Version userVersion = Version.parseVersion(userValue, true);
@@ -173,7 +173,7 @@ class RolloutEvaluator {
                         //IS ONE OF (Sensitive)
                         case 16:
                             List<String> inValuesSensitive = new ArrayList<>(Arrays.asList(comparisonValue.split(",")));
-                            inValuesSensitive.replaceAll(String::trim);
+                            Utils.trimElements(inValuesSensitive);
                             inValuesSensitive.removeAll(Arrays.asList(null, ""));
                             String hashValueOne = new String(Hex.encodeHex(DigestUtils.sha1(userValue)));
                             if (inValuesSensitive.contains(hashValueOne)) {
@@ -184,7 +184,7 @@ class RolloutEvaluator {
                         //IS NOT ONE OF (Sensitive)
                         case 17:
                             List<String> notInValuesSensitive = new ArrayList<>(Arrays.asList(comparisonValue.split(",")));
-                            notInValuesSensitive.replaceAll(String::trim);
+                            Utils.trimElements(notInValuesSensitive);
                             notInValuesSensitive.removeAll(Arrays.asList(null, ""));
                             String hashValueNotOne = new String(Hex.encodeHex(DigestUtils.sha1(userValue)));
                             if (!notInValuesSensitive.contains(hashValueNotOne)) {
@@ -244,7 +244,8 @@ class RolloutEvaluator {
         }
 
         public String toPrint() {
-            return String.join(System.lineSeparator(), this.entries);
+            String separator = System.getProperty("line.separator");
+            return String.join(separator, this.entries);
         }
     }
 }

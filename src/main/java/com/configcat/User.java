@@ -43,7 +43,7 @@ public class User {
         if (key == null)
             throw new IllegalArgumentException("key is null or empty");
 
-        return this.attributes.getOrDefault(key, null);
+        return this.attributes.get(key);
     }
 
     @Override
