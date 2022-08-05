@@ -35,8 +35,7 @@ class LazyLoadingPolicy extends RefreshPolicyBase {
 
     @Override
     protected CompletableFuture<Config> getConfigurationAsync() {
-        long threshHold = lastRefreshedTime + (this.cacheRefreshIntervalInSeconds * 1000L);
-        if (System.currentTimeMillis() > threshHold) {
+        if (System.currentTimeMillis() > lastRefreshedTime + (this.cacheRefreshIntervalInSeconds * 1000L)) {
             boolean isInitialized = this.init.isDone();
 
             if (isInitialized && !this.isFetching.compareAndSet(false, true))
