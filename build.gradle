@@ -38,6 +38,21 @@ android {
 ext {
     buildNumber = System.getProperty("build.number")
     isSnapshot = Boolean.valueOf(System.getProperty("snapshot"))
+    excludes = [
+            'android/databinding/**/*.class',
+            '**/android/databinding/*Binding.class',
+            '**/android/databinding/*',
+            '**/androidx/databinding/*',
+            '**/BR.*',
+            '**/R.class',
+            '**/R$*.class',
+            '**/BuildConfig.*',
+            '**/Manifest*.*',
+            '**/*Test*.*',
+            'android/**/*.*',
+            '**/*$Result.*',
+            '**/*$Result$*.*'
+    ]
 }
 
 group = "com.configcat"
@@ -77,12 +92,12 @@ task javadoc(type: Javadoc) {
 }
 
 task sourcesJar(type: Jar) {
-    classifier = "sources"
+    classifier "sources"
     from android.sourceSets.main.java.srcDirs
 }
 
 task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier = "javadoc"
+    classifier "javadoc"
     from javadoc.destinationDir
 }
 
@@ -97,31 +112,23 @@ sonarqube {
     }
 }
 
-jacoco {
-    toolVersion = "0.8.6"
-}
-
 tasks.withType(Test) { useJUnitPlatform() }
 
 task jacocoTestReport(type:JacocoReport, dependsOn: ['testDebugUnitTest']){
     reports {
         csv.enabled false
-        xml.enabled false
+        html.enabled false
         xml {
             enabled true
             destination file("${buildDir}/reports/jacoco/report.xml")
         }
     }
 
-    def fileFilter = ['**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*', '**/*Test*.*', 'android/**/*.*']
-    def debugTree = fileTree(dir: "${buildDir}/intermediates/classes/debug", excludes: fileFilter)
-    def mainSrc = "${project.projectDir}/src/main/java/com/configcat"
-
-    sourceDirectories.setFrom(files([mainSrc]))
-    classDirectories.setFrom(files([debugTree]))
+    def classes = fileTree(dir: "${buildDir}/intermediates/javac/debug/classes", excludes: excludes)
+    sourceDirectories.setFrom(files("${project.projectDir}/src/main/java"))
+    classDirectories.setFrom(files([classes]))
     executionData.setFrom(fileTree(dir: "$buildDir", includes: [
-            "jacoco/testDebugUnitTest.exec",
-            "outputs/code-coverage/connected/*coverage.ec"
+            "/outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec",
     ]))
 }
 
