@@ -57,10 +57,10 @@ client.getValueAsync(Boolean::class.java, "isMyAwesomeFeatureEnabled", false)
     }
 ```
 
-### Compatibility
+## Compatibility
 The minimum supported Android SDK version is 21 (Lollipop).
 
-### R8 (ProGuard)
+## R8 (ProGuard)
 When you use R8 or ProGuard, the aar artifact automatically applies the [included rules](proguard-rules.pro) for the SDK.
 
 ## Getting user specific setting values with Targeting
