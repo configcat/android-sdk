@@ -103,17 +103,19 @@ jacoco {
 
 tasks.withType(Test) { useJUnitPlatform() }
 
-task junit5CodeCoverageReport(type:JacocoReport, dependsOn: 'test'){
+task jacocoTestReport(type:JacocoReport, dependsOn: ['testDebugUnitTest']){
     reports {
-        xml.enabled = true
-        xml.destination file("${buildDir}/reports/jacoco/report.xml")
-        html.enabled = false
-        csv.enabled = false
+        csv.enabled false
+        xml.enabled false
+        xml {
+            enabled true
+            destination file("${buildDir}/reports/jacoco/report.xml")
+        }
     }
 
     def fileFilter = ['**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*', '**/*Test*.*', 'android/**/*.*']
     def debugTree = fileTree(dir: "${buildDir}/intermediates/classes/debug", excludes: fileFilter)
-    def mainSrc = "${project.projectDir}/src/main/java"
+    def mainSrc = "${project.projectDir}/src/main/java/com/configcat"
 
     sourceDirectories.setFrom(files([mainSrc]))
     classDirectories.setFrom(files([debugTree]))
@@ -123,7 +125,7 @@ task junit5CodeCoverageReport(type:JacocoReport, dependsOn: 'test'){
     ]))
 }
 
-check.dependsOn junit5CodeCoverageReport
+check.dependsOn jacocoTestReport
 
 artifacts {
     archives sourcesJar, javadocJar
