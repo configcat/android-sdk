@@ -38,9 +38,9 @@ val client = new ConfigCatClient("#YOUR-SDK-KEY#")
 ### 5. Get your setting value:
 ```kotlin
 val isMyAwesomeFeatureEnabled = client.getValue(Boolean::class.java, "isMyAwesomeFeatureEnabled", false)
-if(isMyAwesomeFeatureEnabled) {
+if (isMyAwesomeFeatureEnabled) {
     doTheNewThing()
-} else{
+} else {
     doTheOldThing()
 }
 ```
@@ -56,11 +56,12 @@ client.getValueAsync(Boolean::class.java, "isMyAwesomeFeatureEnabled", false)
         }
     }
 ```
-You also have to put this line into your manifest xml to enable the library access to the network.
-```xml
-<uses-permission android:name="android.permission.INTERNET" />
-```
-The minimum supported sdk version is 18 (Jelly Bean). Java 1.8 or later is required.
+
+### Compatibility
+The minimum supported Android SDK version is 21 (Lollipop).
+
+### R8 (ProGuard)
+When you use R8 or ProGuard, the aar artifact automatically applies the [included rules](proguard-rules.pro) for the SDK.
 
 ## Getting user specific setting values with Targeting
 Using this feature, you will be able to get different setting values for different users in your application by passing a `User Object` to the `getValue()` function.
@@ -75,11 +76,13 @@ The user object must be created with a **mandatory** identifier parameter which 
 val user = User.newBuilder().build("#USER-IDENTIFIER#") // mandatory
 
 val isMyAwesomeFeatureEnabled = client.getValue(Boolean::class.java, "isMyAwesomeFeatureEnabled", user, false)
-if(isMyAwesomeFeatureEnabled) {
-    doTheNewThing()
-} else{
-    doTheOldThing()
-}
+    .thenAccept { isMyAwesomeFeatureEnabled ->
+        if (isMyAwesomeFeatureEnabled) {
+            doTheNewThing()
+        } else {
+            doTheOldThing()
+        }
+    }
 ```
 
 ## Sample/Demo app

@@ -244,8 +244,7 @@ class RolloutEvaluator {
         }
 
         public String toPrint() {
-            String separator = System.getProperty("line.separator");
-            return String.join(separator, this.entries);
+            return String.join(System.lineSeparator(), this.entries);
         }
     }
 }

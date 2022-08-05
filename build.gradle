@@ -30,8 +30,8 @@ android {
     }
     defaultConfig {
         compileSdkVersion(32)
-        minSdkVersion(18)
-        consumerProguardFiles("consumer-proguard-rules.pro")
+        minSdkVersion(21)
+        consumerProguardFiles("proguard-rules.pro")
     }
 }
 
