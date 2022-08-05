@@ -61,7 +61,7 @@ client.getValueAsync(Boolean::class.java, "isMyAwesomeFeatureEnabled", false)
 The minimum supported Android SDK version is 21 (Lollipop).
 
 ## R8 (ProGuard)
-When you use R8 or ProGuard, the aar artifact automatically applies the [included rules](proguard-rules.pro) for the SDK.
+When you use R8 or ProGuard, the aar artifact automatically applies the [included rules](configcat-proguard-rules.pro) for the SDK.
 
 ## Getting user specific setting values with Targeting
 Using this feature, you will be able to get different setting values for different users in your application by passing a `User Object` to the `getValue()` function.

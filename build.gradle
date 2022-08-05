@@ -31,7 +31,7 @@ android {
     defaultConfig {
         compileSdkVersion(32)
         minSdkVersion(21)
-        consumerProguardFiles("proguard-rules.pro")
+        consumerProguardFiles("configcat-proguard-rules.pro")
     }
 }
 
