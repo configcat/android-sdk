@@ -1,7 +1,5 @@
 package com.configcat;
 
-import org.slf4j.Logger;
-
 import java9.util.concurrent.CompletableFuture;
 
 class ManualPollingPolicy extends RefreshPolicyBase {

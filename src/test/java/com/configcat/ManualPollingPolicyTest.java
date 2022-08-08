@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-public class ManualPollingPolicyTest {
+class ManualPollingPolicyTest {
     private RefreshPolicyBase policy;
     private MockWebServer server;
     private final ConfigCatLogger logger = new ConfigCatLogger(LoggerFactory.getLogger(ManualPollingPolicyTest.class));
@@ -42,7 +42,7 @@ public class ManualPollingPolicyTest {
     }
 
     @Test
-    public void get() throws InterruptedException, ExecutionException {
+    void get() throws InterruptedException, ExecutionException {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test2")).setBodyDelay(2, TimeUnit.SECONDS));
 
@@ -56,7 +56,7 @@ public class ManualPollingPolicyTest {
     }
 
     @Test
-    public void getCacheFails() throws InterruptedException, ExecutionException {
+    void getCacheFails() throws InterruptedException, ExecutionException {
         PollingMode mode = PollingModes.manualPoll();
         ConfigJsonCache cache = new ConfigJsonCache(logger, new FailingCache(), "");
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, cache, "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
@@ -75,7 +75,7 @@ public class ManualPollingPolicyTest {
     }
 
     @Test
-    public void getWithFailedRefresh() throws InterruptedException, ExecutionException {
+    void getWithFailedRefresh() throws InterruptedException, ExecutionException {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
         this.server.enqueue(new MockResponse().setResponseCode(500));
 
@@ -89,7 +89,7 @@ public class ManualPollingPolicyTest {
     }
 
     @Test
-    public void getFetchedSameResponseUpdatesCache() throws Exception {
+    void getFetchedSameResponseUpdatesCache() throws Exception {
         String result = "test";
         ConfigCache cache = mock(ConfigCache.class);
         ConfigJsonCache memoryCache = new ConfigJsonCache(logger, cache, "");

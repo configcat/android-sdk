@@ -3,6 +3,9 @@ package com.configcat;
 import com.google.gson.JsonElement;
 import com.google.gson.annotations.SerializedName;
 
+/**
+ * Describes a rollout percentage rule.
+ */
 public class RolloutPercentageItem {
     /**
      * Value served when the rule is selected during evaluation.

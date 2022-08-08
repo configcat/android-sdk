@@ -26,18 +26,23 @@ class MainActivity : AppCompatActivity() {
                 .build("PKDVCLf-Hq-h-kCzMp-L7Q/HhOWfwVtZ0mb30i9wi17GQ")
     }
 
+    override fun onDestroy() {
+        client.close()
+        super.onDestroy()
+    }
+
     @SuppressLint("SetTextI18n")
     fun fetchNewConfig() {
         val user = User.newBuilder()
                 .email("someone@example.com")
                 .build("key")
 
-        this@MainActivity.runOnUiThread {
-            var textField = findViewById<TextView>(R.id.editText)
-            textField.text = "isPOCFeatureEnabled: ${this.client.getKeyAndValue(
-                    Boolean::class.java, 
-                    "ca36009d"
-            ).value}"
-        }
+        this.client.getValueAsync(Boolean::class.java, "isPOCFeatureEnabled", user, false)
+            .thenAccept { value ->
+                this@MainActivity.runOnUiThread {
+                    val textField = findViewById<TextView>(R.id.editText)
+                    textField.text = "isPOCFeatureEnabled: $value"
+                }
+            }
     }
 }

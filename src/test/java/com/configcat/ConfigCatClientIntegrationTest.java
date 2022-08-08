@@ -16,7 +16,7 @@ import java.util.concurrent.TimeoutException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class ConfigCatClientIntegrationTest {
+class ConfigCatClientIntegrationTest {
 
     private static final String APIKEY = "TEST_KEY";
     private ConfigCatClient client;
@@ -43,7 +43,7 @@ public class ConfigCatClientIntegrationTest {
     }
 
     @Test
-    public void getStringValue() {
+    void getStringValue() {
         String sValue = "ááúúóüüőőööúúűű";
         String result = String.format(TEST_JSON, sValue);
         server.enqueue(new MockResponse().setResponseCode(200).setBody(result));
@@ -52,7 +52,7 @@ public class ConfigCatClientIntegrationTest {
     }
 
     @Test
-    public void getStringValueReturnsDefaultOnFail() {
+    void getStringValueReturnsDefaultOnFail() {
         String def = "def";
         server.enqueue(new MockResponse().setResponseCode(500));
         String config = this.client.getValue(String.class, "fakeKey", def);
@@ -60,7 +60,7 @@ public class ConfigCatClientIntegrationTest {
     }
 
     @Test
-    public void getStringValueReturnsDefaultOnException() {
+    void getStringValueReturnsDefaultOnException() {
         String result = "{ test: test] }";
         String def = "def";
         server.enqueue(new MockResponse().setResponseCode(200).setBody(result));
@@ -69,7 +69,7 @@ public class ConfigCatClientIntegrationTest {
     }
 
     @Test
-    public void getBooleanValue() {
+    void getBooleanValue() {
         String result = String.format(TEST_JSON, "true");
         server.enqueue(new MockResponse().setResponseCode(200).setBody(result));
         boolean config = this.client.getValue(Boolean.class, "fakeKey", false);
@@ -77,7 +77,7 @@ public class ConfigCatClientIntegrationTest {
     }
 
     @Test
-    public void getBooleanValuePrimitive() {
+    void getBooleanValuePrimitive() {
         String result = String.format(TEST_JSON, "true");
         server.enqueue(new MockResponse().setResponseCode(200).setBody(result));
         boolean config = this.client.getValue(boolean.class, "fakeKey", false);
@@ -85,14 +85,14 @@ public class ConfigCatClientIntegrationTest {
     }
 
     @Test
-    public void getBooleanValueReturnsDefaultOnFail() {
+    void getBooleanValueReturnsDefaultOnFail() {
         server.enqueue(new MockResponse().setResponseCode(500));
         boolean config = this.client.getValue(boolean.class, "fakeKey", true);
         assertTrue(config);
     }
 
     @Test
-    public void getBooleanValueReturnsDefaultOnException() {
+    void getBooleanValueReturnsDefaultOnException() {
         String result = "{ test: test] }";
         boolean def = true;
         server.enqueue(new MockResponse().setResponseCode(200).setBody(result));
@@ -101,7 +101,7 @@ public class ConfigCatClientIntegrationTest {
     }
 
     @Test
-    public void getIntegerValue() {
+    void getIntegerValue() {
         int iValue = 342423;
         String result = String.format(TEST_JSON, iValue);
         server.enqueue(new MockResponse().setResponseCode(200).setBody(result));
@@ -110,7 +110,7 @@ public class ConfigCatClientIntegrationTest {
     }
 
     @Test
-    public void getIntegerValuePrimitive() {
+    void getIntegerValuePrimitive() {
         int iValue = 342423;
         String result = String.format(TEST_JSON, iValue);
         server.enqueue(new MockResponse().setResponseCode(200).setBody(result));
@@ -119,7 +119,7 @@ public class ConfigCatClientIntegrationTest {
     }
 
     @Test
-    public void getIntegerValueReturnsDefaultOnFail() {
+    void getIntegerValueReturnsDefaultOnFail() {
         int def = 342423;
         server.enqueue(new MockResponse().setResponseCode(500));
         int config = this.client.getValue(int.class, "fakeKey", def);
@@ -127,7 +127,7 @@ public class ConfigCatClientIntegrationTest {
     }
 
     @Test
-    public void getIntegerValueReturnsDefaultOnException() {
+    void getIntegerValueReturnsDefaultOnException() {
         String result = "{ test: test] }";
         int def = 14;
         server.enqueue(new MockResponse().setResponseCode(200).setBody(result));
@@ -136,7 +136,7 @@ public class ConfigCatClientIntegrationTest {
     }
 
     @Test
-    public void getDoubleValue() {
+    void getDoubleValue() {
         double iValue = 432.234;
         String result = String.format(TEST_JSON, iValue);
         server.enqueue(new MockResponse().setResponseCode(200).setBody(result));
@@ -145,7 +145,7 @@ public class ConfigCatClientIntegrationTest {
     }
 
     @Test
-    public void getDoubleValueReturnsDefaultOnFail() {
+    void getDoubleValueReturnsDefaultOnFail() {
         double def = 432.234;
         server.enqueue(new MockResponse().setResponseCode(500));
         double config = this.client.getValue(Double.class, "fakeKey", def);
@@ -153,7 +153,7 @@ public class ConfigCatClientIntegrationTest {
     }
 
     @Test
-    public void getDefaultValueWhenKeyNotExist() {
+    void getDefaultValueWhenKeyNotExist() {
         String result = String.format(TEST_JSON, "true");
         server.enqueue(new MockResponse().setResponseCode(200).setBody(result));
         boolean config = this.client.getValue(Boolean.class, "nonExistingKey", false);
@@ -161,7 +161,7 @@ public class ConfigCatClientIntegrationTest {
     }
 
     @Test
-    public void getDoubleValueReturnsDefaultOnException() {
+    void getDoubleValueReturnsDefaultOnException() {
         String result = "{ test: test] }";
         double def = 14.5;
         server.enqueue(new MockResponse().setResponseCode(200).setBody(result));
@@ -170,7 +170,7 @@ public class ConfigCatClientIntegrationTest {
     }
 
     @Test
-    public void invalidateCache() {
+    void invalidateCache() {
         server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test2")));
 
@@ -180,7 +180,7 @@ public class ConfigCatClientIntegrationTest {
     }
 
     @Test
-    public void invalidateCacheFail() {
+    void invalidateCacheFail() {
         server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
         server.enqueue(new MockResponse().setResponseCode(500));
 
@@ -190,7 +190,7 @@ public class ConfigCatClientIntegrationTest {
     }
 
     @Test
-    public void getConfigurationJsonStringWithDefaultConfigTimeout() {
+    void getConfigurationJsonStringWithDefaultConfigTimeout() {
         ConfigCatClient cl = ConfigCatClient.newBuilder()
                 .httpClient(new OkHttpClient.Builder().readTimeout(2, TimeUnit.SECONDS).build())
                 .build(APIKEY);
@@ -201,13 +201,13 @@ public class ConfigCatClientIntegrationTest {
     }
 
     @Test
-    public void getConfigurationJsonStringWithDefaultConfig() throws InterruptedException, ExecutionException, TimeoutException {
+    void getConfigurationJsonStringWithDefaultConfig() throws InterruptedException, ExecutionException, TimeoutException {
         ConfigCatClient cl = new ConfigCatClient(APIKEY);
         assertNull(cl.getValueAsync(String.class, "test", null).get(2, TimeUnit.SECONDS));
     }
 
     @Test
-    public void getAllKeys() {
+    void getAllKeys() {
         ConfigCatClient cl = ConfigCatClient.newBuilder()
                 .logLevel(LogLevel.INFO)
                 .dataGovernance(DataGovernance.EU_ONLY)
@@ -220,7 +220,7 @@ public class ConfigCatClientIntegrationTest {
     }
 
     @Test
-    public void ensureFailingCacheWriteDoesNotPreventFurtherWrites() {
+    void ensureFailingCacheWriteDoesNotPreventFurtherWrites() {
         FailingWriteCache cache = new FailingWriteCache();
         ConfigJsonCache memoryCache = new ConfigJsonCache(
                 new ConfigCatLogger(LoggerFactory.getLogger(ConfigCatClientIntegrationTest.class)), cache, "");

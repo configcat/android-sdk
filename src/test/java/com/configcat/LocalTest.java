@@ -11,11 +11,11 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class LocalTest {
+class LocalTest {
     private static final String TEST_JSON = "{ f: { fakeKey: { v: %s, p: [] ,r: [] } } }";
 
     @Test
-    public void invalidArguments() {
+    void invalidArguments() {
         assertThrows(IllegalArgumentException.class, () -> ConfigCatClient.newBuilder()
                 .flagOverrides(null, null).build("key"));
         assertThrows(IllegalArgumentException.class, () -> ConfigCatClient.newBuilder()
@@ -27,7 +27,7 @@ public class LocalTest {
     }
 
     @Test
-    public void object() throws IOException {
+    void object() throws IOException {
         Map<String, Object> map = new HashMap<>();
         map.put("enabledFeature", true);
         map.put("disabledFeature", false);
@@ -48,7 +48,7 @@ public class LocalTest {
     }
 
     @Test
-    public void getAll() throws IOException {
+    void getAll() throws IOException {
         Map<String, Object> map = new HashMap<>();
         map.put("enabledFeature", true);
         map.put("disabledFeature", false);
@@ -66,7 +66,7 @@ public class LocalTest {
     }
 
     @Test
-    public void localOverRemote() throws IOException {
+    void localOverRemote() throws IOException {
         MockWebServer server = new MockWebServer();
         server.start();
 
@@ -90,7 +90,7 @@ public class LocalTest {
     }
 
     @Test
-    public void remoteOverLocal() throws IOException {
+    void remoteOverLocal() throws IOException {
         MockWebServer server = new MockWebServer();
         server.start();
 

@@ -17,7 +17,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
-public class ConfigCatClientTest {
+class ConfigCatClientTest {
 
     private static final String APIKEY = "TEST_KEY";
 
@@ -25,7 +25,7 @@ public class ConfigCatClientTest {
     private static final String TEST_JSON_MULTIPLE = "{ f: { key1: { v: true, i: 'fakeId1', p: [] ,r: [] }, key2: { v: false, i: 'fakeId2', p: [] ,r: [] } } }";
 
     @Test
-    public void ensuresApiKeyIsNotNull() {
+    void ensuresApiKeyIsNotNull() {
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class, () -> new ConfigCatClient(null));
 
@@ -38,7 +38,7 @@ public class ConfigCatClientTest {
     }
 
     @Test
-    public void ensuresApiKeyIsNotEmpty() {
+    void ensuresApiKeyIsNotEmpty() {
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class, () -> new ConfigCatClient(""));
 
@@ -51,7 +51,7 @@ public class ConfigCatClientTest {
     }
 
     @Test
-    public void getValueWithDefaultConfigTimeout() throws IOException {
+    void getValueWithDefaultConfigTimeout() throws IOException {
         ConfigCatClient cl = ConfigCatClient.newBuilder()
                 .httpClient(new OkHttpClient.Builder().readTimeout(2, TimeUnit.SECONDS).build())
                 .build(APIKEY);
@@ -64,7 +64,7 @@ public class ConfigCatClientTest {
     }
 
     @Test
-    public void getConfigurationWithFailingCache() throws IOException {
+    void getConfigurationWithFailingCache() throws IOException {
         MockWebServer server = new MockWebServer();
         server.start();
 
@@ -83,7 +83,7 @@ public class ConfigCatClientTest {
     }
 
     @Test
-    public void getConfigurationAutoPollFail() throws IOException {
+    void getConfigurationAutoPollFail() throws IOException {
         MockWebServer server = new MockWebServer();
         server.start();
 
@@ -102,7 +102,7 @@ public class ConfigCatClientTest {
     }
 
     @Test
-    public void getConfigurationExpCacheFail() throws IOException {
+    void getConfigurationExpCacheFail() throws IOException {
         MockWebServer server = new MockWebServer();
         server.start();
 
@@ -121,7 +121,7 @@ public class ConfigCatClientTest {
     }
 
     @Test
-    public void getConfigurationManualFail() throws IOException {
+    void getConfigurationManualFail() throws IOException {
         MockWebServer server = new MockWebServer();
         server.start();
 
@@ -140,7 +140,7 @@ public class ConfigCatClientTest {
     }
 
     @Test
-    public void getConfigurationReturnsPreviousCachedOnTimeout() throws IOException {
+    void getConfigurationReturnsPreviousCachedOnTimeout() throws IOException {
         MockWebServer server = new MockWebServer();
         server.start();
 
@@ -163,7 +163,7 @@ public class ConfigCatClientTest {
     }
 
     @Test
-    public void maxInitWaitTimeTest() throws IOException {
+    void maxInitWaitTimeTest() throws IOException {
         MockWebServer server = new MockWebServer();
         server.start();
 
@@ -183,7 +183,7 @@ public class ConfigCatClientTest {
     }
 
     @Test
-    public void getConfigurationReturnsPreviousCachedOnFailAsync() throws IOException, ExecutionException, InterruptedException {
+    void getConfigurationReturnsPreviousCachedOnFailAsync() throws IOException, ExecutionException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.start();
 
@@ -205,7 +205,7 @@ public class ConfigCatClientTest {
     }
 
     @Test
-    public void getValueReturnsDefaultOnExceptionRepeatedly() throws IOException {
+    void getValueReturnsDefaultOnExceptionRepeatedly() throws IOException {
         MockWebServer server = new MockWebServer();
         server.start();
 
@@ -231,7 +231,7 @@ public class ConfigCatClientTest {
     }
 
     @Test
-    public void forceRefreshWithTimeout() throws IOException {
+    void forceRefreshWithTimeout() throws IOException {
         MockWebServer server = new MockWebServer();
         server.start();
 
@@ -250,7 +250,7 @@ public class ConfigCatClientTest {
     }
 
     @Test
-    public void getAllValues() throws IOException {
+    void getAllValues() throws IOException {
         MockWebServer server = new MockWebServer();
         server.start();
 
@@ -272,7 +272,7 @@ public class ConfigCatClientTest {
     }
 
     @Test
-    public void getValueInvalidArguments() {
+    void getValueInvalidArguments() {
         ConfigCatClient client = new ConfigCatClient("key");
         assertThrows(IllegalArgumentException.class, () -> client.getValue(Boolean.class, null, false));
         assertThrows(IllegalArgumentException.class, () -> client.getValue(Boolean.class, "", false));

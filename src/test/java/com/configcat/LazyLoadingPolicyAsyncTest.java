@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class LazyLoadingPolicyAsyncTest {
+class LazyLoadingPolicyAsyncTest {
     private RefreshPolicyBase policy;
     private MockWebServer server;
     private final ConfigCatLogger logger = new ConfigCatLogger(LoggerFactory.getLogger(LazyLoadingPolicyAsyncTest.class));
@@ -40,7 +40,7 @@ public class LazyLoadingPolicyAsyncTest {
     }
 
     @Test
-    public void get() throws InterruptedException, ExecutionException {
+    void get() throws InterruptedException, ExecutionException {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test2")).setBodyDelay(2, TimeUnit.SECONDS));
 
@@ -62,7 +62,7 @@ public class LazyLoadingPolicyAsyncTest {
     }
 
     @Test
-    public void getCacheFails() throws InterruptedException, ExecutionException {
+    void getCacheFails() throws InterruptedException, ExecutionException {
         PollingMode mode = PollingModes
                 .lazyLoad(5, true);
         ConfigJsonCache cache = new ConfigJsonCache(logger, new FailingCache(), "");
@@ -90,7 +90,7 @@ public class LazyLoadingPolicyAsyncTest {
     }
 
     @Test
-    public void getWithFailedRefresh() throws InterruptedException, ExecutionException {
+    void getWithFailedRefresh() throws InterruptedException, ExecutionException {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
         this.server.enqueue(new MockResponse().setResponseCode(500));
 

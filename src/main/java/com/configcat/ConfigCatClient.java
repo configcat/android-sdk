@@ -569,7 +569,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
          *                  or use it for local only mode.
          * @return the builder.
          *
-         * @throws IllegalArgumentException when the <tt>dataSourceBuilder</tt> or <tt>behaviour</tt> parameter is null.
+         * @throws IllegalArgumentException when the dataSourceBuilder or behaviour parameter is null.
          */
         public Builder flagOverrides(OverrideDataSource overrideDataSource, OverrideBehaviour behaviour) {
             if (overrideDataSource == null) {

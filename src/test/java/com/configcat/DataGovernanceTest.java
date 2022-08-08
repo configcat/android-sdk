@@ -12,12 +12,12 @@ import java.util.concurrent.ExecutionException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class DataGovernanceTest {
+class DataGovernanceTest {
     private static final String JsonTemplate = "{ p: { u: \"%s\", r: %d }, f: {} }";
     private final ConfigCatLogger logger = new ConfigCatLogger(LoggerFactory.getLogger(DataGovernanceTest.class));
 
     @Test
-    public void shouldStayOnGivenUrl() throws IOException, ExecutionException, InterruptedException {
+    void shouldStayOnGivenUrl() throws IOException, ExecutionException, InterruptedException {
         MockWebServer server = this.createServer();
         String url = server.url("/").toString();
         ConfigFetcher fetcher = this.createFetcher(url, false);
@@ -38,7 +38,7 @@ public class DataGovernanceTest {
     }
 
     @Test
-    public void shouldStayOnSameUrl() throws IOException, ExecutionException, InterruptedException {
+    void shouldStayOnSameUrl() throws IOException, ExecutionException, InterruptedException {
         MockWebServer server = this.createServer();
         String url = server.url("/").toString();
         ConfigFetcher fetcher = this.createFetcher(url, false);
@@ -59,7 +59,7 @@ public class DataGovernanceTest {
     }
 
     @Test
-    public void shouldStayOnSameUrlEvenWithForce() throws IOException, ExecutionException, InterruptedException {
+    void shouldStayOnSameUrlEvenWithForce() throws IOException, ExecutionException, InterruptedException {
         MockWebServer server = this.createServer();
         String url = server.url("/").toString();
         ConfigFetcher fetcher = this.createFetcher(url, false);
@@ -81,7 +81,7 @@ public class DataGovernanceTest {
     }
 
     @Test
-    public void shouldRedirectToAnotherServer() throws IOException, ExecutionException, InterruptedException {
+    void shouldRedirectToAnotherServer() throws IOException, ExecutionException, InterruptedException {
         MockWebServer firstServer = this.createServer();
         MockWebServer secondServer = this.createServer();
         String firstServerUrl = firstServer.url("/").toString();
@@ -111,7 +111,7 @@ public class DataGovernanceTest {
     }
 
     @Test
-    public void shouldRedirectToAnotherServerWhenForced() throws IOException, ExecutionException, InterruptedException {
+    void shouldRedirectToAnotherServerWhenForced() throws IOException, ExecutionException, InterruptedException {
         MockWebServer firstServer = this.createServer();
         MockWebServer secondServer = this.createServer();
         String firstServerUrl = firstServer.url("/").toString();
@@ -141,7 +141,7 @@ public class DataGovernanceTest {
     }
 
     @Test
-    public void shouldBreakTheRedirectLoop() throws IOException, ExecutionException, InterruptedException {
+    void shouldBreakTheRedirectLoop() throws IOException, ExecutionException, InterruptedException {
         MockWebServer firstServer = this.createServer();
         MockWebServer secondServer = this.createServer();
         String firstServerUrl = firstServer.url("/").toString();
@@ -172,7 +172,7 @@ public class DataGovernanceTest {
     }
 
     @Test
-    public void shouldRespectCustomUrlWhenNotForced() throws IOException, ExecutionException, InterruptedException {
+    void shouldRespectCustomUrlWhenNotForced() throws IOException, ExecutionException, InterruptedException {
         MockWebServer firstServer = this.createServer();
         MockWebServer secondServer = this.createServer();
         String firstServerUrl = firstServer.url("/").toString();
@@ -199,7 +199,7 @@ public class DataGovernanceTest {
     }
 
     @Test
-    public void shouldNotRespectCustomUrlWhenForced() throws IOException, ExecutionException, InterruptedException {
+    void shouldNotRespectCustomUrlWhenForced() throws IOException, ExecutionException, InterruptedException {
         MockWebServer firstServer = this.createServer();
         MockWebServer secondServer = this.createServer();
         String firstServerUrl = firstServer.url("/").toString();

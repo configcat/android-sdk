@@ -1,6 +1,5 @@
 package com.configcat;
 
-import com.google.gson.JsonElement;
 import com.google.gson.annotations.SerializedName;
 
 import java.util.HashMap;
@@ -21,7 +20,7 @@ class Config {
     @SerializedName(value = "e")
     public String eTag = "";
 
-    public static Config empty = new Config();
+    public static final Config empty = new Config();
 }
 
 class Preferences {

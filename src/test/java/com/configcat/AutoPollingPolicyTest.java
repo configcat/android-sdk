@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-public class AutoPollingPolicyTest {
+class AutoPollingPolicyTest {
     private MockWebServer server;
     private final ConfigCatLogger logger = new ConfigCatLogger(LoggerFactory.getLogger(AutoPollingPolicyTest.class), LogLevel.WARNING);
     private static final String TEST_JSON = "{ f: { fakeKey: { v: %s, p: [] ,r: [] } } }";
@@ -37,12 +37,12 @@ public class AutoPollingPolicyTest {
     }
 
     @Test
-    public void ensuresPollingIntervalGreaterThanTwoSeconds() {
+    void ensuresPollingIntervalGreaterThanTwoSeconds() {
         assertThrows(IllegalArgumentException.class, () -> PollingModes.autoPoll(1));
     }
 
     @Test
-    public void get() throws InterruptedException, ExecutionException {
+    void get() throws InterruptedException, ExecutionException {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test2")).setBodyDelay(3, TimeUnit.SECONDS));
 
@@ -69,7 +69,7 @@ public class AutoPollingPolicyTest {
     }
 
     @Test
-    public void getFail() throws InterruptedException, ExecutionException {
+    void getFail() throws InterruptedException, ExecutionException {
         this.server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
 
         ConfigCache cache = new NullConfigCache();
@@ -89,7 +89,7 @@ public class AutoPollingPolicyTest {
     }
 
     @Test
-    public void getMany() throws InterruptedException, ExecutionException {
+    void getMany() throws InterruptedException, ExecutionException {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test2")));
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test3")));
@@ -132,7 +132,7 @@ public class AutoPollingPolicyTest {
     }
 
     @Test
-    public void getWithFailedRefresh() throws InterruptedException, ExecutionException {
+    void getWithFailedRefresh() throws InterruptedException, ExecutionException {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
         this.server.enqueue(new MockResponse().setResponseCode(500));
 
@@ -159,7 +159,7 @@ public class AutoPollingPolicyTest {
     }
 
     @Test
-    public void configChanged() throws IOException, InterruptedException {
+    void configChanged() throws IOException, InterruptedException {
         AtomicBoolean isCalled = new AtomicBoolean();
         ConfigCache cache = new NullConfigCache();
         ConfigJsonCache memoryCache = new ConfigJsonCache(logger, cache, "");
@@ -180,7 +180,7 @@ public class AutoPollingPolicyTest {
     }
 
     @Test
-    public void configChangedWithInitWaitTime() throws IOException, InterruptedException {
+    void configChangedWithInitWaitTime() throws IOException, InterruptedException {
         AtomicBoolean isCalled = new AtomicBoolean();
         ConfigCache cache = new NullConfigCache();
         ConfigJsonCache memoryCache = new ConfigJsonCache(logger, cache, "");
@@ -201,7 +201,7 @@ public class AutoPollingPolicyTest {
     }
 
     @Test
-    public void getCacheFails() throws Exception {
+    void getCacheFails() throws Exception {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
 
         ConfigCache cache = mock(ConfigCache.class);

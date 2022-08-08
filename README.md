@@ -9,8 +9,8 @@ ConfigCat is a <a href="https://configcat.com" target="_blank">hosted feature fl
 
 [![Android CI](https://github.com/configcat/android-sdk/actions/workflows/android-ci.yml/badge.svg?branch=master)](https://github.com/configcat/android-sdk/actions/workflows/android-ci.yml)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.configcat/configcat-android-client/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.configcat/configcat-android-client)
-[![Coverage Status](https://img.shields.io/codecov/c/github/ConfigCat/android-sdk.svg)](https://codecov.io/gh/ConfigCat/android-sdk)
 [![Javadocs](http://javadoc.io/badge/com.configcat/configcat-android-client.svg)](http://javadoc.io/doc/com.configcat/configcat-android-client)
+[![Coverage Status](https://img.shields.io/sonar/coverage/configcat_android-sdk?logo=SonarCloud&server=https%3A%2F%2Fsonarcloud.io)](https://sonarcloud.io/project/overview?id=configcat_android-sdk)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=configcat_android-sdk&metric=alert_status)](https://sonarcloud.io/dashboard?id=configcat_android-sdk)
 ![License](https://img.shields.io/github/license/configcat/android-sdk.svg)
 
@@ -38,28 +38,30 @@ val client = new ConfigCatClient("#YOUR-SDK-KEY#")
 ### 5. Get your setting value:
 ```kotlin
 val isMyAwesomeFeatureEnabled = client.getValue(Boolean::class.java, "isMyAwesomeFeatureEnabled", false)
-if(isMyAwesomeFeatureEnabled) {
+if (isMyAwesomeFeatureEnabled) {
     doTheNewThing()
-} else{
+} else {
     doTheOldThing()
 }
 ```
 Or use the async APIs:
+
 ```kotlin
 client.getValueAsync(Boolean::class.java, "isMyAwesomeFeatureEnabled", false)
-    .thenAccept({ isMyAwesomeFeatureEnabled ->
-        if(isMyAwesomeFeatureEnabled) {
+    .thenAccept { isMyAwesomeFeatureEnabled ->
+        if (isMyAwesomeFeatureEnabled) {
             doTheNewThing()
         } else {
             doTheOldThing()
         }
-    })
+    }
 ```
-You also have to put this line into your manifest xml to enable the library access to the network.
-```xml
-<uses-permission android:name="android.permission.INTERNET" />
-```
-The minimum supported sdk version is 18 (Jelly Bean). Java 1.8 or later is required.
+
+## Compatibility
+The minimum supported Android SDK version is 21 (Lollipop).
+
+## R8 (ProGuard)
+When you use R8 or ProGuard, the aar artifact automatically applies the [included rules](configcat-proguard-rules.pro) for the SDK.
 
 ## Getting user specific setting values with Targeting
 Using this feature, you will be able to get different setting values for different users in your application by passing a `User Object` to the `getValue()` function.
@@ -74,11 +76,13 @@ The user object must be created with a **mandatory** identifier parameter which 
 val user = User.newBuilder().build("#USER-IDENTIFIER#") // mandatory
 
 val isMyAwesomeFeatureEnabled = client.getValue(Boolean::class.java, "isMyAwesomeFeatureEnabled", user, false)
-if(isMyAwesomeFeatureEnabled) {
-    doTheNewThing()
-} else{
-    doTheOldThing()
-}
+    .thenAccept { isMyAwesomeFeatureEnabled ->
+        if (isMyAwesomeFeatureEnabled) {
+            doTheNewThing()
+        } else {
+            doTheOldThing()
+        }
+    }
 ```
 
 ## Sample/Demo app
