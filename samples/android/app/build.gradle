@@ -9,7 +9,7 @@ android {
     compileSdkVersion 32
     defaultConfig {
         applicationId "com.configcat.configcatsample"
-        minSdkVersion 18
+        minSdkVersion 21
         targetSdkVersion 32
         versionCode 1
         versionName "1.0"
@@ -36,7 +36,7 @@ dependencies {
     implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.7.10'
     implementation 'androidx.appcompat:appcompat:1.4.2'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-    implementation 'com.configcat:configcat-android-client:7.1.0'
+    implementation 'com.configcat:configcat-android-client:7.2.0'
     implementation 'org.slf4j:slf4j-android:1.+'
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.3'

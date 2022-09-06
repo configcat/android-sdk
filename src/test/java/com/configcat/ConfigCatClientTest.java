@@ -21,8 +21,8 @@ class ConfigCatClientTest {
 
     private static final String APIKEY = "TEST_KEY";
 
-    private static final String TEST_JSON = "{ f: { fakeKey: { v: fakeValue, s: 0, p: [] ,r: [] } } }";
-    private static final String TEST_JSON_MULTIPLE = "{ f: { key1: { v: true, i: 'fakeId1', p: [] ,r: [] }, key2: { v: false, i: 'fakeId2', p: [] ,r: [] } } }";
+    private static final String TEST_JSON = "{ f: { fakeKey: { v: fakeValue, t: 0, p: [] ,r: [] } } }";
+    private static final String TEST_JSON_MULTIPLE = "{ f: { key1: { v: true, t: 0, i: 'fakeId1', p: [] ,r: [] }, key2: { v: false, t: 0, i: 'fakeId2', p: [] ,r: [] } } }";
 
     @Test
     void ensuresApiKeyIsNotNull() {
