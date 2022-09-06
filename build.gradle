@@ -75,7 +75,7 @@ dependencies {
     testImplementation group: "org.junit.jupiter", name: "junit-jupiter-params", version:"5.8.0"
     testImplementation group: "org.slf4j", name: "slf4j-nop", version:"1.7.25"
     testImplementation group: "com.squareup.okhttp3", name: "mockwebserver", version:"4.10.0"
-    testImplementation 'org.mockito:mockito-core:4.6.1'
+    testImplementation 'org.mockito:mockito-core:4.7.0'
     testImplementation 'net.sourceforge.streamsupport:android-retrofuture:1.7.4'
     testRuntimeOnly group: "org.junit.jupiter", name: "junit-jupiter-engine", version:"5.8.0"
 }

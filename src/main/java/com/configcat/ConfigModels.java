@@ -5,13 +5,6 @@ import com.google.gson.annotations.SerializedName;
 import java.util.HashMap;
 import java.util.Map;
 
-enum SettingType {
-    BOOLEAN,
-    STRING,
-    INT,
-    DOUBLE,
-}
-
 class Config {
     @SerializedName(value = "p")
     public Preferences preferences;

@@ -17,6 +17,7 @@ class LocalMapDataSource extends OverrideDataSource {
         for (Map.Entry<String, Object> entry : source.entrySet()) {
             Setting setting = new Setting();
             setting.value = gson.toJsonTree(entry.getValue());
+            setting.type = determineSettingType(entry.getValue());
             this.loadedSettings.put(entry.getKey(), setting);
         }
     }
@@ -24,5 +25,19 @@ class LocalMapDataSource extends OverrideDataSource {
     @Override
     public Map<String, Setting> getLocalConfiguration() {
         return this.loadedSettings;
+    }
+
+    private SettingType determineSettingType(Object value) {
+        if (value instanceof String) {
+            return SettingType.STRING;
+        } else if (value instanceof Boolean) {
+            return SettingType.BOOLEAN;
+        } else if (value instanceof Integer) {
+            return SettingType.INT;
+        } else if (value instanceof Double) {
+            return SettingType.DOUBLE;
+        } else {
+            throw new IllegalArgumentException("Could not determine the setting type of '"+value+"'");
+        }
     }
 }
