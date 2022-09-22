@@ -61,7 +61,6 @@ public final class ConfigCatClient implements ConfigurationProvider {
             ConfigFetcher fetcher = new ConfigFetcher(builder.httpClient == null
                     ? new OkHttpClient
                     .Builder()
-                    .retryOnConnectionFailure(true)
                     .build()
                     : builder.httpClient,
                     this.logger,
