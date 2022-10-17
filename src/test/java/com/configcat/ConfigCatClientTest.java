@@ -161,9 +161,10 @@ class ConfigCatClientTest {
             options.baseUrl(server.url("/").toString());
         });
 
-        Instant previous = Instant.now();
+        long start = System.currentTimeMillis();
         assertNull(cl.getValue(String.class, "fakeKey", null));
-        assertTrue(Duration.between(previous, Instant.now()).toMillis() < 1500);
+        long duration = System.currentTimeMillis() - start;
+        assertTrue(duration < 1500);
 
         server.close();
         cl.close();
