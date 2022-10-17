@@ -24,7 +24,7 @@ import static org.mockito.Mockito.doThrow;
 
 class ConfigFetcherTest {
     private MockWebServer server;
-    private final ConfigCatLogger logger = new ConfigCatLogger(LoggerFactory.getLogger(ConfigFetcherTest.class), LogLevel.WARNING);
+    private final ConfigCatLogger logger = new ConfigCatLogger(LoggerFactory.getLogger(ConfigFetcherTest.class), LogLevel.WARNING, new ConfigCatClient.Hooks());
     private static final String TEST_JSON = "{ f: { fakeKey: { v: fakeValue, s: 0, p: [] ,r: [] } } }";
     private static final String TEST_JSON2 = "{ f: { fakeKey: { v: fakeValue2, s: 0, p: [] ,r: [] } } }";
 
@@ -40,39 +40,38 @@ class ConfigFetcherTest {
     }
 
     @Test
-    void getConfigurationJsonStringETag() throws InterruptedException, ExecutionException {
+    void fetchNotModified() throws InterruptedException, ExecutionException, IOException {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON).setHeader("ETag", "fakeETag"));
         this.server.enqueue(new MockResponse().setResponseCode(304));
 
-        ConfigJsonCache cache = new ConfigJsonCache(logger, new NullConfigCache(), "");
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, cache,
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger,
                 "", this.server.url("/").toString(), false, PollingModes.manualPoll().getPollingIdentifier());
 
-        FetchResponse fResult = fetcher.fetchAsync().get();
-        cache.writeToCache(fResult.config());
+        FetchResponse fResult = fetcher.fetchAsync(null).get();
 
-        assertEquals("fakeValue", fResult.config().entries.get("fakeKey").value.getAsString());
+        assertEquals("fakeValue", fResult.entry().config.entries.get("fakeKey").value.getAsString());
         assertTrue(fResult.isFetched());
         assertFalse(fResult.isNotModified());
         assertFalse(fResult.isFailed());
 
-        FetchResponse notModifiedResponse = fetcher.fetchAsync().get();
+        FetchResponse notModifiedResponse = fetcher.fetchAsync(fResult.entry().eTag).get();
         assertTrue(notModifiedResponse.isNotModified());
         assertFalse(notModifiedResponse.isFailed());
         assertFalse(notModifiedResponse.isFetched());
 
         assertNull(this.server.takeRequest().getHeader("If-None-Match"));
         assertEquals("fakeETag", this.server.takeRequest().getHeader("If-None-Match"));
+
+        fetcher.close();
     }
 
     @Test
-    void getConfigurationException() throws IOException, ExecutionException, InterruptedException {
+    void fetchException() throws IOException, ExecutionException, InterruptedException {
 
         ConfigFetcher fetch = new ConfigFetcher(new OkHttpClient.Builder()
                 .readTimeout(1, TimeUnit.SECONDS)
                 .build(),
                 logger,
-                new ConfigJsonCache(logger, new NullConfigCache(), ""),
                 "",
                 this.server.url("/").toString(),
                 false,
@@ -80,25 +79,29 @@ class ConfigFetcherTest {
 
         this.server.enqueue(new MockResponse().setBody("test").setBodyDelay(2, TimeUnit.SECONDS));
 
-        assertTrue(fetch.fetchAsync().get().isFailed());
-        assertEquals(Config.empty, fetch.fetchAsync().get().config());
+        FetchResponse response = fetch.fetchAsync(null).get();
+        assertTrue(response.isFailed());
+        assertEquals(Entry.empty, response.entry());
 
         fetch.close();
     }
 
     @Test
-    void getFetchedETagNotUpdatesCache() throws Exception {
+    void fetchedETagNotUpdatesCache() throws Exception {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON).setHeader("ETag", "fakeETag"));
         this.server.enqueue(new MockResponse().setResponseCode(304));
 
+        Gson gson = new GsonBuilder().create();
+        Config config = gson.fromJson(TEST_JSON, Config.class);
+        Entry entry = new Entry(config, "fakeETag", Constants.DISTANT_PAST);
+
         ConfigCache cache = mock(ConfigCache.class);
-        when(cache.read(anyString())).thenReturn(TEST_JSON);
-        ConfigJsonCache configJsonCache = new ConfigJsonCache(logger, cache, "");
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, configJsonCache,
+        when(cache.read(anyString())).thenReturn(gson.toJson(entry));
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger,
                 "", this.server.url("/").toString(), false, PollingModes.manualPoll().getPollingIdentifier());
 
-        RefreshPolicyBase policy = new AutoPollingPolicy(fetcher, logger, configJsonCache, (AutoPollingMode) PollingModes.autoPoll(2));
-        assertEquals("fakeValue", policy.getConfigurationAsync().get().entries.get("fakeKey").value.getAsString());
+        ConfigService policy = new ConfigService("", PollingModes.autoPoll(2), cache, logger, fetcher, new ConfigCatClient.Hooks(), false);
+        assertEquals("fakeValue", policy.getSettings().get().settings().get("fakeKey").value.getAsString());
 
         verify(cache, never()).write(anyString(), eq(TEST_JSON));
 
@@ -106,17 +109,16 @@ class ConfigFetcherTest {
     }
 
     @Test
-    void getFetchedSameResponseNotUpdatesCache() throws Exception {
+    void fetchedSameResponseNotUpdatesCache() throws Exception {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
 
         ConfigCache cache = mock(ConfigCache.class);
         when(cache.read(anyString())).thenReturn(TEST_JSON);
-        ConfigJsonCache configJsonCache = new ConfigJsonCache(logger, cache, "");
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, configJsonCache,
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger,
                 "", this.server.url("/").toString(), false, PollingModes.manualPoll().getPollingIdentifier());
 
-        RefreshPolicyBase policy = new AutoPollingPolicy(fetcher, logger, configJsonCache, (AutoPollingMode) PollingModes.autoPoll(2));
-        assertEquals("fakeValue", policy.getConfigurationAsync().get().entries.get("fakeKey").value.getAsString());
+        ConfigService policy = new ConfigService("", PollingModes.autoPoll(2), cache, logger, fetcher, new ConfigCatClient.Hooks(), false);
+        assertEquals("fakeValue", policy.getSettings().get().settings().get("fakeKey").value.getAsString());
 
         verify(cache, never()).write(anyString(), eq(TEST_JSON));
 
@@ -124,63 +126,37 @@ class ConfigFetcherTest {
     }
 
     @Test
-    void getCacheFails() throws Exception {
+    void fetchSuccess() throws Exception {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
         ConfigCache cache = mock(ConfigCache.class);
 
         doThrow(new Exception()).when(cache).read(anyString());
         doThrow(new Exception()).when(cache).write(anyString(), anyString());
 
-        ConfigJsonCache configJsonCache = new ConfigJsonCache(logger, cache, "");
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, configJsonCache,
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger,
                 "", this.server.url("/").toString(), false, PollingModes.manualPoll().getPollingIdentifier());
 
-        assertEquals("fakeValue", fetcher.fetchAsync().get().config().entries.get("fakeKey").value.getAsString());
-
-        fetcher.close();
-    }
-
-    @Test
-    void cacheWriteFailsCachedTakesPrecedence() throws Exception {
-        this.server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON2));
-        ConfigCache cache = mock(ConfigCache.class);
-
-        Gson gson = new GsonBuilder().create();
-        Config config = gson.fromJson(TEST_JSON, Config.class);
-
-        when(cache.read(anyString())).thenReturn(gson.toJson(config));
-        doThrow(new Exception()).when(cache).write(anyString(), anyString());
-
-        ConfigJsonCache configJsonCache = new ConfigJsonCache(logger, cache, "");
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, configJsonCache,
-                "", this.server.url("/").toString(), false, PollingModes.manualPoll().getPollingIdentifier());
-
-        FetchResponse result = fetcher.fetchAsync().get();
-        configJsonCache.writeToCache(result.config());
-
-        assertEquals("fakeValue", configJsonCache.readFromCache().entries.get("fakeKey").value.getAsString());
+        FetchResponse response = fetcher.fetchAsync(null).get();
+        assertTrue(response.isFetched());
+        assertEquals("fakeValue", response.entry().config.entries.get("fakeKey").value.getAsString());
 
         fetcher.close();
     }
 
     @Test
     void testIntegration() throws IOException, ExecutionException, InterruptedException {
-        ConfigJsonCache cache = new ConfigJsonCache(logger, new NullConfigCache(), "PKDVCLf-Hq-h-kCzMp-L7Q/PaDVCFk9EpmD6sLpGLltTA");
         ConfigFetcher fetch = new ConfigFetcher(new OkHttpClient.Builder()
                 .readTimeout(1, TimeUnit.SECONDS)
                 .build(),
                 logger,
-                cache,
                 "PKDVCLf-Hq-h-kCzMp-L7Q/PaDVCFk9EpmD6sLpGLltTA",
                 "https://cdn-global.configcat.com",
                 false,
                 PollingModes.manualPoll().getPollingIdentifier());
 
-        FetchResponse result = fetch.fetchAsync().get();
-        cache.writeToCache(result.config());
-
+        FetchResponse result = fetch.fetchAsync(null).get();
         assertTrue(result.isFetched());
-        assertTrue(fetch.fetchAsync().get().isNotModified());
+        assertTrue(fetch.fetchAsync(result.entry().eTag).get().isNotModified());
 
         fetch.close();
     }

@@ -23,7 +23,7 @@ public class Setting {
      * Collection of percentage rules that belongs to the feature flag / setting.
      */
     @SerializedName(value = "p")
-    public RolloutPercentageItem[] percentageItems;
+    public PercentageRule[] percentageItems;
 
     /**
      * Collection of targeting rules that belongs to the feature flag / setting.

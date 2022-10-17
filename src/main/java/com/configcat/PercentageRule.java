@@ -6,7 +6,7 @@ import com.google.gson.annotations.SerializedName;
 /**
  * Describes a rollout percentage rule.
  */
-public class RolloutPercentageItem {
+public class PercentageRule {
     /**
      * Value served when the rule is selected during evaluation.
      */

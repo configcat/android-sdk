@@ -16,14 +16,11 @@ class LocalTest {
 
     @Test
     void invalidArguments() {
-        assertThrows(IllegalArgumentException.class, () -> ConfigCatClient.newBuilder()
-                .flagOverrides(null, null).build("key"));
-        assertThrows(IllegalArgumentException.class, () -> ConfigCatClient.newBuilder()
-                .flagOverrides(null, OverrideBehaviour.LOCAL_ONLY).build("key"));
+        assertThrows(IllegalArgumentException.class, () -> ConfigCatClient.get("key1", options -> options.flagOverrides(null, null)));
+        assertThrows(IllegalArgumentException.class, () -> ConfigCatClient.get("key2", options -> options.flagOverrides(null, OverrideBehaviour.LOCAL_ONLY)));
         Map<String, Object> map = new HashMap<>();
         map.put("enabledFeature", true);
-        assertThrows(IllegalArgumentException.class, () -> ConfigCatClient.newBuilder()
-                .flagOverrides(OverrideDataSource.map(map), null).build("key"));
+        assertThrows(IllegalArgumentException.class, () -> ConfigCatClient.get("key3", options -> options.flagOverrides(OverrideDataSource.map(map), null)));
     }
 
     @Test
@@ -34,9 +31,7 @@ class LocalTest {
         map.put("intSetting", 5);
         map.put("doubleSetting", 3.14);
         map.put("stringSetting", "test");
-        ConfigCatClient client = new ConfigCatClient.Builder()
-                .flagOverrides(OverrideDataSource.map(map), OverrideBehaviour.LOCAL_ONLY)
-                .build("localhost");
+        ConfigCatClient client = ConfigCatClient.get("localhost", options -> options.flagOverrides(OverrideDataSource.map(map), OverrideBehaviour.LOCAL_ONLY));
 
         assertTrue(client.getValue(Boolean.class, "enabledFeature", User.newBuilder().build("test"), false));
         assertFalse(client.getValue(Boolean.class, "disabledFeature", User.newBuilder().build("test"), true));
@@ -55,9 +50,7 @@ class LocalTest {
         map.put("intSetting", 5);
         map.put("doubleSetting", 3.14);
         map.put("stringSetting", "test");
-        ConfigCatClient client = new ConfigCatClient.Builder()
-                .flagOverrides(OverrideDataSource.map(map), OverrideBehaviour.LOCAL_ONLY)
-                .build("localhost");
+        ConfigCatClient client = ConfigCatClient.get("localhost", options -> options.flagOverrides(OverrideDataSource.map(map), OverrideBehaviour.LOCAL_ONLY));
 
         Map<String, Object> values = client.getAllValues(User.newBuilder().build("test"));
         assertEquals(5, values.entrySet().size());
@@ -73,11 +66,12 @@ class LocalTest {
         Map<String, Object> map = new HashMap<>();
         map.put("fakeKey", true);
         map.put("nonexisting", true);
-        ConfigCatClient client = new ConfigCatClient.Builder()
-                .mode(PollingModes.manualPoll())
-                .baseUrl(server.url("/").toString())
-                .flagOverrides(OverrideDataSource.map(map), OverrideBehaviour.LOCAL_OVER_REMOTE)
-                .build("localhost");
+
+        ConfigCatClient client = ConfigCatClient.get("localhost", options -> {
+            options.mode(PollingModes.manualPoll());
+            options.baseUrl(server.url("/").toString());
+            options.flagOverrides(OverrideDataSource.map(map), OverrideBehaviour.LOCAL_OVER_REMOTE);
+        });
 
         server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, false)));
 
@@ -97,11 +91,11 @@ class LocalTest {
         Map<String, Object> map = new HashMap<>();
         map.put("fakeKey", true);
         map.put("nonexisting", true);
-        ConfigCatClient client = new ConfigCatClient.Builder()
-                .mode(PollingModes.manualPoll())
-                .baseUrl(server.url("/").toString())
-                .flagOverrides(OverrideDataSource.map(map), OverrideBehaviour.REMOTE_OVER_LOCAL)
-                .build("localhost");
+        ConfigCatClient client = ConfigCatClient.get("localhost", options -> {
+            options.mode(PollingModes.manualPoll());
+            options.baseUrl(server.url("/").toString());
+            options.flagOverrides(OverrideDataSource.map(map), OverrideBehaviour.REMOTE_OVER_LOCAL);
+        });
 
         server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, false)));
 

@@ -9,17 +9,61 @@ import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+class FetchResponse {
+    public enum Status {
+        FETCHED,
+        NOT_MODIFIED,
+        FAILED
+    }
+
+    private final Status status;
+    private final Entry entry;
+    private final String error;
+
+    public boolean isFetched() {
+        return this.status == Status.FETCHED;
+    }
+
+    public boolean isNotModified() {
+        return this.status == Status.NOT_MODIFIED;
+    }
+
+    public boolean isFailed() {
+        return this.status == Status.FAILED;
+    }
+
+    public Entry entry() {
+        return this.entry;
+    }
+
+    public String error() { return this.error; }
+
+    FetchResponse(Status status, Entry entry, String error) {
+        this.status = status;
+        this.entry = entry;
+        this.error = error;
+    }
+
+    public static FetchResponse fetched(Entry entry) {
+        return new FetchResponse(Status.FETCHED, entry, null);
+    }
+
+    public static FetchResponse notModified() {
+        return new FetchResponse(Status.NOT_MODIFIED, Entry.empty, null);
+    }
+
+    public static FetchResponse failed(String error) {
+        return new FetchResponse(Status.FAILED, Entry.empty, error);
+    }
+}
+
 class ConfigFetcher implements Closeable {
-    public static final String CONFIG_JSON_NAME = "config_v5";
-    private final AtomicBoolean isClosed = new AtomicBoolean(false);
+    private final AtomicBoolean closed = new AtomicBoolean(false);
     private final ConfigCatLogger logger;
     private final OkHttpClient httpClient;
     private final String mode;
-    private static final String VERSION = "7.0.3";
-    private final ConfigJsonCache configJsonCache;
     private final String sdkKey;
     private final boolean urlIsCustom;
-    private CompletableFuture<FetchResponse> currentFuture;
 
     private String url;
 
@@ -31,13 +75,11 @@ class ConfigFetcher implements Closeable {
 
     ConfigFetcher(OkHttpClient httpClient,
                   ConfigCatLogger logger,
-                  ConfigJsonCache configJsonCache,
                   String sdkKey,
                   String url,
                   boolean urlIsCustom,
                   String pollingIdentifier) {
         this.logger = logger;
-        this.configJsonCache = configJsonCache;
         this.sdkKey = sdkKey;
         this.urlIsCustom = urlIsCustom;
         this.url = url;
@@ -45,17 +87,18 @@ class ConfigFetcher implements Closeable {
         this.mode = pollingIdentifier;
     }
 
-    public CompletableFuture<FetchResponse> fetchAsync() {
-        return this.executeFetchAsync(2);
+    public CompletableFuture<FetchResponse> fetchAsync(String eTag) {
+        return this.executeFetchAsync(2, eTag);
     }
 
-    private CompletableFuture<FetchResponse> executeFetchAsync(int executionCount) {
-        return this.getResponseAsync().thenComposeAsync(fetchResponse -> {
+    private CompletableFuture<FetchResponse> executeFetchAsync(int executionCount, String eTag) {
+        return this.getResponseAsync(eTag).thenComposeAsync(fetchResponse -> {
             if (!fetchResponse.isFetched()) {
                 return CompletableFuture.completedFuture(fetchResponse);
             }
             try {
-                Config config = fetchResponse.config();
+                Entry entry = fetchResponse.entry();
+                Config config = entry.config;
                 if (config.preferences == null) {
                     return CompletableFuture.completedFuture(fetchResponse);
                 }
@@ -85,7 +128,7 @@ class ConfigFetcher implements Closeable {
                     }
 
                     if (executionCount > 0) {
-                        return this.executeFetchAsync(executionCount - 1);
+                        return this.executeFetchAsync(executionCount - 1, entry.eTag);
                     }
                 }
 
@@ -99,22 +142,23 @@ class ConfigFetcher implements Closeable {
         });
     }
 
-    private CompletableFuture<FetchResponse> getResponseAsync() {
-        if (this.currentFuture != null && !this.currentFuture.isDone()) {
-            this.logger.debug("Config fetching is skipped because there is an ongoing fetch request");
-            return this.currentFuture;
-        }
-
-        Config cachedConfig = this.configJsonCache.readFromCache();
-        Request request = this.getRequest(cachedConfig.eTag);
+    private CompletableFuture<FetchResponse> getResponseAsync(String eTag) {
+        Request request = this.getRequest(eTag);
         CompletableFuture<FetchResponse> future = new CompletableFuture<>();
         this.httpClient.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                if (!isClosed.get()) {
-                    logger.error("An error occurred during fetching the latest configuration.", e);
+                String generalMessage = "An error occurred during fetching the latest config.json.";
+                if (!closed.get()) {
+                    if (e instanceof SocketTimeoutException) {
+                        String message = "Request timed out. Timeout values: [connect: " + httpClient.connectTimeoutMillis() + "ms, read: " + httpClient.readTimeoutMillis() + "ms, write: " + httpClient.writeTimeoutMillis() + "ms]";
+                        logger.error(message, e);
+                        future.complete(FetchResponse.failed(message));
+                        return;
+                    }
+                    logger.error(generalMessage, e);
                 }
-                future.complete(FetchResponse.failed());
+                future.complete(FetchResponse.failed(generalMessage));
             }
 
             @Override
@@ -123,37 +167,38 @@ class ConfigFetcher implements Closeable {
                     if (response.isSuccessful() && body != null) {
                         String content = body.string();
                         String eTag = response.header("ETag");
-                        Config config = configJsonCache.readFromJson(content, eTag);
-                        if (config == Config.empty) {
-                            future.complete(FetchResponse.failed());
+                        Result<Config> result = deserializeConfig(content);
+                        if (result.error() != null) {
+                            future.complete(FetchResponse.failed(result.error()));
                             return;
                         }
                         logger.debug("Fetch was successful: new config fetched.");
-                        future.complete(FetchResponse.fetched(config));
+                        future.complete(FetchResponse.fetched(new Entry(result.value(), eTag, System.currentTimeMillis())));
                     } else if (response.code() == 304) {
                         logger.debug("Fetch was successful: config not modified.");
                         future.complete(FetchResponse.notModified());
                     } else {
-                        logger.error("Double-check your API KEY at https://app.configcat.com/apikey. Received unexpected response: " + response.code());
-                        future.complete(FetchResponse.failed());
+                        String message = "Double-check your SDK Key at https://app.configcat.com/sdkkey. Received unexpected response: " + response.code();
+                        logger.error(message);
+                        future.complete(FetchResponse.failed(message));
                     }
                 } catch (SocketTimeoutException e) {
-                    logger.error("Request timed out. Timeout values: [connect: " + httpClient.connectTimeoutMillis() + "ms, read: " + httpClient.readTimeoutMillis() + "ms, write: " + httpClient.writeTimeoutMillis() + "ms]", e);
-                    future.complete(FetchResponse.failed());
+                    String message = "Request timed out. Timeout values: [connect: " + httpClient.connectTimeoutMillis() + "ms, read: " + httpClient.readTimeoutMillis() + "ms, write: " + httpClient.writeTimeoutMillis() + "ms]";
+                    logger.error(message, e);
+                    future.complete(FetchResponse.failed(message));
                 } catch (Exception e) {
-                    logger.error("Exception in ConfigFetcher.getResponseAsync", e);
-                    future.complete(FetchResponse.failed());
+                    String message = "Exception in ConfigFetcher.getResponseAsync";
+                    logger.error(message, e);
+                    future.complete(FetchResponse.failed(message + ": " + e.getMessage()));
                 }
             }
         });
-
-        this.currentFuture = future;
         return future;
     }
 
     @Override
     public void close() throws IOException {
-        if (!this.isClosed.compareAndSet(false, true)) {
+        if (!this.closed.compareAndSet(false, true)) {
             return;
         }
 
@@ -166,15 +211,25 @@ class ConfigFetcher implements Closeable {
         }
     }
 
-    Request getRequest(String etag) {
-        String url = this.url + "/configuration-files/" + this.sdkKey + "/" + CONFIG_JSON_NAME + ".json";
+    private Request getRequest(String eTag) {
+        String url = this.url + "/configuration-files/" + this.sdkKey + "/" + Constants.CONFIG_JSON_NAME + ".json";
         Request.Builder builder = new Request.Builder()
-                .addHeader("X-ConfigCat-UserAgent", "ConfigCat-Droid/" + this.mode + "-" + VERSION);
+                .addHeader("X-ConfigCat-UserAgent", "ConfigCat-Droid/" + this.mode + "-" + Constants.VERSION);
 
-        if (etag != null && !etag.isEmpty())
-            builder.addHeader("If-None-Match", etag);
+        if (eTag != null && !eTag.isEmpty())
+            builder.addHeader("If-None-Match", eTag);
 
         return builder.url(url).build();
+    }
+
+    private Result<Config> deserializeConfig(String json) {
+        try {
+            return Result.success(Utils.gson.fromJson(json, Config.class));
+        } catch (Exception e) {
+            String message = "JSON parsing failed. " + e.getMessage();
+            this.logger.error(message);
+            return Result.error(message);
+        }
     }
 }
 
