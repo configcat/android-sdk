@@ -480,6 +480,36 @@ class ConfigCatClientTest {
     }
 
     @Test
+    void testDefaultUserVariationId() throws IOException {
+        MockWebServer server = new MockWebServer();
+        server.start();
+
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(Helpers.RULES_JSON));
+
+        ConfigCatClient cl = ConfigCatClient.get(APIKEY, options -> {
+            options.mode(PollingModes.manualPoll());
+            options.baseUrl(server.url("/").toString());
+        });
+
+        cl.forceRefresh();
+
+        User user1 = new User.Builder().build("test@test1.com");
+        User user2 = new User.Builder().build("test@test2.com");
+
+        cl.setDefaultUser(user1);
+
+        assertEquals("id1", cl.getVariationId("key", ""));
+        assertEquals("id2", cl.getVariationId("key", user2, ""));
+
+        cl.clearDefaultUser();
+
+        assertEquals("defVar", cl.getVariationId("key", ""));
+
+        server.shutdown();
+        cl.close();
+    }
+
+    @Test
     void testHooks() throws IOException {
         MockWebServer server = new MockWebServer();
         server.start();
