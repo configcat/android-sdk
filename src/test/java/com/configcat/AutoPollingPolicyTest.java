@@ -179,7 +179,7 @@ class AutoPollingPolicyTest {
 
     @Test
     void testInitWaitTimeTimeout() throws Exception {
-        this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")).setBodyDelay(2, TimeUnit.SECONDS));
+        this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")).setBodyDelay(3, TimeUnit.SECONDS));
 
         PollingMode pollingMode = PollingModes.autoPoll(60, 1);
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient(),
@@ -194,7 +194,7 @@ class AutoPollingPolicyTest {
         assertTrue(policy.getSettings().get().settings().isEmpty());
         long end = System.currentTimeMillis();
         long duration = end - start;
-        assertTrue(duration < 3000 && duration > 1000);
+        assertTrue(duration <= 2000 && duration >= 1000);
 
         policy.close();
     }
