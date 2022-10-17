@@ -19,7 +19,7 @@ ConfigCat is a <a href="https://configcat.com" target="_blank">hosted feature fl
 ### 1. Install the package
 *Gradle:*
 ```groovy
-implementation 'com.configcat:configcat-android-client:7.+'
+implementation 'com.configcat:configcat-android-client:8.+'
 ```
 
 ### 2. Go to the <a href="https://app.configcat.com/sdkkey" target="_blank">ConfigCat Dashboard</a> to get your *SDK Key*:
