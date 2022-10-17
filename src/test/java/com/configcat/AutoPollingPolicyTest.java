@@ -192,8 +192,8 @@ class AutoPollingPolicyTest {
 
         long start = System.currentTimeMillis();
         assertTrue(policy.getSettings().get().settings().isEmpty());
-        long end = System.currentTimeMillis();
-        long duration = end - start;
+        long duration = System.currentTimeMillis() - start;
+        System.out.println(duration);
         assertTrue(duration <= 2000 && duration >= 1000);
 
         policy.close();
