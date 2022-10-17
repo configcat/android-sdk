@@ -6,8 +6,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 class Entry {
+    @SerializedName(value = "c")
     public Config config;
+    @SerializedName(value = "e")
     public String eTag;
+    @SerializedName(value = "f")
     public long fetchTime;
 
     public Entry(Config config, String eTag, long fetchTime) {
@@ -28,10 +31,6 @@ class Config {
     public Preferences preferences;
     @SerializedName(value = "f")
     public Map<String, Setting> entries = new HashMap<>();
-
-    boolean isEmpty() {
-        return this == empty;
-    }
 
     public static final Config empty = new Config();
 }

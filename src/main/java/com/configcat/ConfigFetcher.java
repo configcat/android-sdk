@@ -212,14 +212,14 @@ class ConfigFetcher implements Closeable {
     }
 
     private Request getRequest(String eTag) {
-        String url = this.url + "/configuration-files/" + this.sdkKey + "/" + Constants.CONFIG_JSON_NAME + ".json";
+        String requestUrl = this.url + "/configuration-files/" + this.sdkKey + "/" + Constants.CONFIG_JSON_NAME + ".json";
         Request.Builder builder = new Request.Builder()
                 .addHeader("X-ConfigCat-UserAgent", "ConfigCat-Droid/" + this.mode + "-" + Constants.VERSION);
 
         if (eTag != null && !eTag.isEmpty())
             builder.addHeader("If-None-Match", eTag);
 
-        return builder.url(url).build();
+        return builder.url(requestUrl).build();
     }
 
     private Result<Config> deserializeConfig(String json) {
