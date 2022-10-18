@@ -526,7 +526,7 @@ class ConfigCatClientTest {
             options.mode(PollingModes.manualPoll());
             options.baseUrl(server.url("/").toString());
             options.hooks().addOnConfigChanged(map -> changed.set(true));
-            options.hooks().addOnReady(() -> ready.set(true));
+            options.hooks().addOnClientReady(() -> ready.set(true));
             options.hooks().addOnError(error::set);
         });
 
@@ -588,7 +588,7 @@ class ConfigCatClientTest {
         });
 
         cl.getHooks().addOnConfigChanged(map -> changed.set(true));
-        cl.getHooks().addOnReady(() -> ready.set(true));
+        cl.getHooks().addOnClientReady(() -> ready.set(true));
         cl.getHooks().addOnError(error::set);
 
         cl.forceRefresh();
