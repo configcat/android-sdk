@@ -751,7 +751,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
     public static class Hooks {
         private final Object sync = new Object();
         private final List<Consumer<Map<String, Setting>>> onConfigChanged = new ArrayList<>();
-        private final List<Runnable> onReady = new ArrayList<>();
+        private final List<Runnable> onClientReady = new ArrayList<>();
         private final List<Consumer<EvaluationDetails<Object>>> onFlagEvaluated = new ArrayList<>();
         private final List<Consumer<String>> onError = new ArrayList<>();
 
@@ -764,9 +764,9 @@ public final class ConfigCatClient implements ConfigurationProvider {
          *
          * @param callback the method to call when the event fires.
          */
-        public void addOnReady(Runnable callback) {
+        public void addOnClientReady(Runnable callback) {
             synchronized (sync) {
-                this.onReady.add(callback);
+                this.onClientReady.add(callback);
             }
         }
 
@@ -805,9 +805,9 @@ public final class ConfigCatClient implements ConfigurationProvider {
             }
         }
 
-        void invokeOnReady() {
+        void invokeOnClientReady() {
             synchronized (sync) {
-                for (Runnable func : this.onReady) {
+                for (Runnable func : this.onClientReady) {
                     func.run();
                 }
             }
@@ -842,7 +842,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                 this.onConfigChanged.clear();
                 this.onError.clear();
                 this.onFlagEvaluated.clear();
-                this.onReady.clear();
+                this.onClientReady.clear();
             }
         }
     }

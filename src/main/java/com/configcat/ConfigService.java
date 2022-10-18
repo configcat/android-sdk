@@ -71,7 +71,7 @@ class ConfigService implements Closeable {
             initScheduler = Executors.newSingleThreadScheduledExecutor();
             initScheduler.schedule(() -> {
                 if (initialized.compareAndSet(false, true)) {
-                    hooks.invokeOnReady();
+                    hooks.invokeOnClientReady();
                     String message = "Max init wait time for the very first fetch reached (" + autoPollingMode.getMaxInitWaitTimeSeconds() + "s). Returning cached config.";
                     logger.warn(message);
                     completeRunningTask(Result.error(message));
@@ -204,7 +204,7 @@ class ConfigService implements Closeable {
 
     private void setInitialized() {
         if (!initialized.compareAndSet(false, true)) return;
-        this.hooks.invokeOnReady();
+        this.hooks.invokeOnClientReady();
     }
 
     private void startPoll(AutoPollingMode mode) {
