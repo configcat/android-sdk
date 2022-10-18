@@ -15,7 +15,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         this.client = ConfigCatClient.newBuilder()
-                .mode(PollingModes.autoPoll(5) {
+                .pollingMode(PollingModes.autoPoll(5) {
                     run {
                         this.fetchNewConfig()
                     }

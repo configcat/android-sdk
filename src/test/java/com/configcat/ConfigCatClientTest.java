@@ -55,7 +55,7 @@ class ConfigCatClientTest {
 
         ConfigCatClient cl = ConfigCatClient.get(APIKEY, options -> {
             options.cache(new FailingCache());
-            options.mode(PollingModes.manualPoll());
+            options.pollingMode(PollingModes.manualPoll());
             options.baseUrl(server.url("/").toString());
         });
 
@@ -74,7 +74,7 @@ class ConfigCatClientTest {
 
         ConfigCatClient cl = ConfigCatClient.get(APIKEY, options -> {
             options.cache(new FailingCache());
-            options.mode(PollingModes.autoPoll(5));
+            options.pollingMode(PollingModes.autoPoll(5));
             options.baseUrl(server.url("/").toString());
         });
 
@@ -93,7 +93,7 @@ class ConfigCatClientTest {
 
         ConfigCatClient cl = ConfigCatClient.get(APIKEY, options -> {
             options.cache(new FailingCache());
-            options.mode(PollingModes.lazyLoad(5));
+            options.pollingMode(PollingModes.lazyLoad(5));
             options.baseUrl(server.url("/").toString());
         });
 
@@ -112,7 +112,7 @@ class ConfigCatClientTest {
 
         ConfigCatClient cl = ConfigCatClient.get(APIKEY, options -> {
             options.cache(new FailingCache());
-            options.mode(PollingModes.manualPoll());
+            options.pollingMode(PollingModes.manualPoll());
             options.baseUrl(server.url("/").toString());
         });
 
@@ -131,7 +131,7 @@ class ConfigCatClientTest {
 
         ConfigCatClient cl = ConfigCatClient.get(APIKEY, options -> {
             options.httpClient(new OkHttpClient.Builder().readTimeout(1, TimeUnit.SECONDS).build());
-            options.mode(PollingModes.manualPoll());
+            options.pollingMode(PollingModes.manualPoll());
             options.baseUrl(server.url("/").toString());
         });
 
@@ -155,7 +155,7 @@ class ConfigCatClientTest {
         server.enqueue(new MockResponse().setResponseCode(200).setBody("delayed").setBodyDelay(2, TimeUnit.SECONDS));
 
         ConfigCatClient cl = ConfigCatClient.get(APIKEY, options -> {
-            options.mode(PollingModes.autoPoll(60, 1));
+            options.pollingMode(PollingModes.autoPoll(60, 1));
             options.baseUrl(server.url("/").toString());
         });
 
@@ -174,7 +174,7 @@ class ConfigCatClientTest {
         server.start();
 
         ConfigCatClient cl = ConfigCatClient.get(APIKEY, options -> {
-            options.mode(PollingModes.manualPoll());
+            options.pollingMode(PollingModes.manualPoll());
             options.baseUrl(server.url("/").toString());
         });
 
@@ -197,7 +197,7 @@ class ConfigCatClientTest {
 
         ConfigCatClient cl = ConfigCatClient.get(APIKEY, options -> {
             options.httpClient(new OkHttpClient.Builder().readTimeout(1, TimeUnit.SECONDS).build());
-            options.mode(PollingModes.manualPoll());
+            options.pollingMode(PollingModes.manualPoll());
             options.baseUrl(server.url("/").toString());
         });
 
@@ -223,7 +223,7 @@ class ConfigCatClientTest {
 
         ConfigCatClient cl = ConfigCatClient.get(APIKEY, options -> {
             options.httpClient(new OkHttpClient.Builder().readTimeout(1, TimeUnit.SECONDS).build());
-            options.mode(PollingModes.manualPoll());
+            options.pollingMode(PollingModes.manualPoll());
             options.baseUrl(server.url("/").toString());
         });
 
@@ -241,7 +241,7 @@ class ConfigCatClientTest {
         server.start();
 
         ConfigCatClient cl = ConfigCatClient.get(APIKEY, options -> {
-            options.mode(PollingModes.manualPoll());
+            options.pollingMode(PollingModes.manualPoll());
             options.baseUrl(server.url("/").toString());
         });
 
@@ -276,7 +276,7 @@ class ConfigCatClientTest {
         server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
 
         ConfigCatClient cl = ConfigCatClient.get(APIKEY, options -> {
-            options.mode(PollingModes.autoPoll());
+            options.pollingMode(PollingModes.autoPoll());
             options.baseUrl(server.url("/").toString());
         });
 
@@ -295,7 +295,7 @@ class ConfigCatClientTest {
         server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
 
         ConfigCatClient cl = ConfigCatClient.get(APIKEY, options -> {
-            options.mode(PollingModes.lazyLoad());
+            options.pollingMode(PollingModes.lazyLoad());
             options.baseUrl(server.url("/").toString());
         });
 
@@ -314,7 +314,7 @@ class ConfigCatClientTest {
         server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
 
         ConfigCatClient cl = ConfigCatClient.get(APIKEY, options -> {
-            options.mode(PollingModes.manualPoll());
+            options.pollingMode(PollingModes.manualPoll());
             options.baseUrl(server.url("/").toString());
         });
 
@@ -333,7 +333,7 @@ class ConfigCatClientTest {
         server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
 
         ConfigCatClient cl = ConfigCatClient.get(APIKEY, options -> {
-            options.mode(PollingModes.autoPoll());
+            options.pollingMode(PollingModes.autoPoll());
             options.baseUrl(server.url("/").toString());
         });
 
@@ -353,7 +353,7 @@ class ConfigCatClientTest {
         server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
 
         ConfigCatClient cl = ConfigCatClient.get(APIKEY, options -> {
-            options.mode(PollingModes.lazyLoad());
+            options.pollingMode(PollingModes.lazyLoad());
             options.baseUrl(server.url("/").toString());
         });
 
@@ -373,7 +373,7 @@ class ConfigCatClientTest {
         server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
 
         ConfigCatClient cl = ConfigCatClient.get(APIKEY, options -> {
-            options.mode(PollingModes.manualPoll());
+            options.pollingMode(PollingModes.manualPoll());
             options.baseUrl(server.url("/").toString());
         });
 
@@ -394,7 +394,7 @@ class ConfigCatClientTest {
         server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
 
         ConfigCatClient cl = ConfigCatClient.get(APIKEY, options -> {
-            options.mode(PollingModes.manualPoll());
+            options.pollingMode(PollingModes.manualPoll());
             options.baseUrl(server.url("/").toString());
         });
 
@@ -428,7 +428,7 @@ class ConfigCatClientTest {
         server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
 
         ConfigCatClient cl = ConfigCatClient.get(APIKEY, options -> {
-            options.mode(PollingModes.manualPoll());
+            options.pollingMode(PollingModes.manualPoll());
             options.baseUrl(server.url("/").toString());
             options.offline(true);
         });
@@ -456,7 +456,7 @@ class ConfigCatClientTest {
         server.enqueue(new MockResponse().setResponseCode(200).setBody(Helpers.RULES_JSON));
 
         ConfigCatClient cl = ConfigCatClient.get(APIKEY, options -> {
-            options.mode(PollingModes.manualPoll());
+            options.pollingMode(PollingModes.manualPoll());
             options.baseUrl(server.url("/").toString());
         });
 
@@ -486,7 +486,7 @@ class ConfigCatClientTest {
         server.enqueue(new MockResponse().setResponseCode(200).setBody(Helpers.RULES_JSON));
 
         ConfigCatClient cl = ConfigCatClient.get(APIKEY, options -> {
-            options.mode(PollingModes.manualPoll());
+            options.pollingMode(PollingModes.manualPoll());
             options.baseUrl(server.url("/").toString());
         });
 
@@ -521,7 +521,7 @@ class ConfigCatClientTest {
         AtomicReference<String> error = new AtomicReference<>("");
 
         ConfigCatClient cl = ConfigCatClient.get(APIKEY, options -> {
-            options.mode(PollingModes.manualPoll());
+            options.pollingMode(PollingModes.manualPoll());
             options.baseUrl(server.url("/").toString());
             options.hooks().addOnConfigChanged(map -> changed.set(true));
             options.hooks().addOnClientReady(() -> ready.set(true));
@@ -551,7 +551,7 @@ class ConfigCatClientTest {
         AtomicReference<String> error = new AtomicReference<>("");
 
         ConfigCatClient cl = ConfigCatClient.get(APIKEY, options -> {
-            options.mode(PollingModes.manualPoll());
+            options.pollingMode(PollingModes.manualPoll());
             options.baseUrl(server.url("/").toString());
         });
 
@@ -581,7 +581,7 @@ class ConfigCatClientTest {
         AtomicReference<String> error = new AtomicReference<>("");
 
         ConfigCatClient cl = ConfigCatClient.get(APIKEY, options -> {
-            options.mode(PollingModes.autoPoll());
+            options.pollingMode(PollingModes.autoPoll());
             options.baseUrl(server.url("/").toString());
         });
 
@@ -610,7 +610,7 @@ class ConfigCatClientTest {
         AtomicBoolean called = new AtomicBoolean(false);
 
         ConfigCatClient cl = ConfigCatClient.get(APIKEY, options -> {
-            options.mode(PollingModes.lazyLoad());
+            options.pollingMode(PollingModes.lazyLoad());
             options.baseUrl(server.url("/").toString());
             options.hooks().addOnFlagEvaluated(details -> {
                 assertEquals("", details.getValue());

@@ -674,7 +674,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
          *
          * @param pollingMode the polling mode.
          */
-        public void mode(PollingMode pollingMode) {
+        public void pollingMode(PollingMode pollingMode) {
             this.pollingMode = pollingMode;
         }
 

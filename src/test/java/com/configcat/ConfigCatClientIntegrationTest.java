@@ -30,7 +30,7 @@ class ConfigCatClientIntegrationTest {
         this.server.start();
 
         this.client = ConfigCatClient.get(APIKEY, options -> {
-                    options.mode(PollingModes.lazyLoad(2));
+                    options.pollingMode(PollingModes.lazyLoad(2));
                     options.baseUrl(this.server.url("/").toString());
             });
     }

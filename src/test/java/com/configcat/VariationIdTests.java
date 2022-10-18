@@ -26,7 +26,7 @@ class VariationIdTests {
 
         this.client = ConfigCatClient.get("TEST_KEY", options -> {
             options.httpClient(new OkHttpClient.Builder().build());
-            options.mode(PollingModes.lazyLoad(2));
+            options.pollingMode(PollingModes.lazyLoad(2));
             options.baseUrl(this.server.url("/").toString());
         });
     }

@@ -68,7 +68,7 @@ class LocalTest {
         map.put("nonexisting", true);
 
         ConfigCatClient client = ConfigCatClient.get("localhost", options -> {
-            options.mode(PollingModes.manualPoll());
+            options.pollingMode(PollingModes.manualPoll());
             options.baseUrl(server.url("/").toString());
             options.flagOverrides(OverrideDataSource.map(map), OverrideBehaviour.LOCAL_OVER_REMOTE);
         });
@@ -92,7 +92,7 @@ class LocalTest {
         map.put("fakeKey", true);
         map.put("nonexisting", true);
         ConfigCatClient client = ConfigCatClient.get("localhost", options -> {
-            options.mode(PollingModes.manualPoll());
+            options.pollingMode(PollingModes.manualPoll());
             options.baseUrl(server.url("/").toString());
             options.flagOverrides(OverrideDataSource.map(map), OverrideBehaviour.REMOTE_OVER_LOCAL);
         });
