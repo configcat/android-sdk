@@ -626,4 +626,18 @@ class ConfigCatClientTest {
         server.shutdown();
         cl.close();
     }
+
+    @Test
+    void testSingleton() throws IOException {
+        ConfigCatClient client1 = ConfigCatClient.get("test");
+        ConfigCatClient client2 = ConfigCatClient.get("test");
+
+        assertSame(client1, client2);
+
+        ConfigCatClient.closeAll();
+
+        client1 = ConfigCatClient.get("test");
+
+        assertNotSame(client1, client2);
+    }
 }
