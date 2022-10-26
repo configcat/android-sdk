@@ -640,4 +640,21 @@ class ConfigCatClientTest {
 
         assertNotSame(client1, client2);
     }
+
+    @Test
+    void testCloseRemovesTheClosingInstanceOnly() throws IOException {
+        ConfigCatClient client1 = ConfigCatClient.get("test");
+
+        client1.close();
+
+        ConfigCatClient client2 = ConfigCatClient.get("test");
+
+        assertNotSame(client1, client2);
+
+        client1.close();
+
+        ConfigCatClient client3 = ConfigCatClient.get("test");
+
+        assertSame(client2, client3);
+    }
 }

@@ -396,7 +396,9 @@ public final class ConfigCatClient implements ConfigurationProvider {
     public void close() throws IOException {
         closeResources();
         synchronized (INSTANCES) {
-            INSTANCES.remove(this.sdkKey);
+            if (INSTANCES.get(this.sdkKey) == null) {
+                INSTANCES.remove(this.sdkKey);
+            }
         }
     }
 
