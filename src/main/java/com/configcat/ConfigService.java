@@ -35,9 +35,9 @@ class ConfigService implements Closeable {
     private String cachedEntryString = "";
     private Entry cachedEntry = Entry.empty;
     private CompletableFuture<Result<Entry>> runningTask;
-    private boolean offline = false;
+    private boolean initialized = false;
+    private final AtomicBoolean offline;
     private final AtomicBoolean closed = new AtomicBoolean(false);
-    private final AtomicBoolean initialized = new AtomicBoolean(false);
     private final String cacheKey;
     private final PollingMode mode;
     private final ConfigCache cache;
@@ -59,7 +59,7 @@ class ConfigService implements Closeable {
         this.logger = logger;
         this.fetcher = fetcher;
         this.hooks = hooks;
-        this.offline = offline;
+        this.offline = new AtomicBoolean(offline);
 
         if (mode instanceof AutoPollingMode) {
             AutoPollingMode autoPollingMode = (AutoPollingMode)mode;
@@ -70,11 +70,17 @@ class ConfigService implements Closeable {
 
             initScheduler = Executors.newSingleThreadScheduledExecutor();
             initScheduler.schedule(() -> {
-                if (initialized.compareAndSet(false, true)) {
-                    hooks.invokeOnClientReady();
-                    String message = "Max init wait time for the very first fetch reached (" + autoPollingMode.getMaxInitWaitTimeSeconds() + "s). Returning cached config.";
-                    logger.warn(message);
-                    completeRunningTask(Result.error(message));
+                lock.lock();
+                try {
+                    if (!initialized) {
+                        initialized = true;
+                        hooks.invokeOnClientReady();
+                        String message = "Max init wait time for the very first fetch reached (" + autoPollingMode.getMaxInitWaitTimeSeconds() + "s). Returning cached config.";
+                        logger.warn(message);
+                        completeRunningTask(Result.error(message, cachedEntry));
+                    }
+                } finally {
+                    lock.unlock();
                 }
             }, autoPollingMode.getMaxInitWaitTimeSeconds(), TimeUnit.SECONDS);
         } else {
@@ -86,20 +92,20 @@ class ConfigService implements Closeable {
         if (mode instanceof LazyLoadingMode) {
             LazyLoadingMode lazyLoadingMode = (LazyLoadingMode)mode;
             return fetchIfOlder(System.currentTimeMillis() - (lazyLoadingMode.getCacheRefreshIntervalInSeconds() * 1000L), false)
-                    .thenApply(entryResult -> {
-                       Entry result = entryResult.value() == null ? cachedEntry : entryResult.value();
-                       return new SettingResult(result.config.entries, result.fetchTime);
-                    });
+                    .thenApply(entryResult -> new SettingResult(entryResult.value().config.entries, entryResult.value().fetchTime));
         } else {
             return fetchIfOlder(Constants.DISTANT_PAST, true)
-                    .thenApply(entryResult -> {
-                        Entry result = entryResult.value() == null ? cachedEntry : entryResult.value();
-                        return new SettingResult(result.config.entries, result.fetchTime);
-                    });
+                    .thenApply(entryResult -> new SettingResult(entryResult.value().config.entries, entryResult.value().fetchTime));
         }
     }
 
     public CompletableFuture<RefreshResult> refresh() {
+        if (offline.get()) {
+            String offlineWarning = "The SDK is in offline mode, it can't initiate HTTP calls.";
+            logger.warn(offlineWarning);
+            return CompletableFuture.completedFuture(new RefreshResult(false, offlineWarning));
+        }
+
         return fetchIfOlder(Constants.DISTANT_FUTURE, false)
                 .thenApply(entryResult -> new RefreshResult(entryResult.error() == null, entryResult.error()));
     }
@@ -107,8 +113,7 @@ class ConfigService implements Closeable {
     public void setOnline() {
         lock.lock();
         try {
-            if (!offline) return;
-            offline = false;
+            if (!offline.compareAndSet(true, false)) return;
             if (mode instanceof AutoPollingMode) {
                 startPoll((AutoPollingMode)mode);
             }
@@ -121,8 +126,7 @@ class ConfigService implements Closeable {
     public void setOffline() {
         lock.lock();
         try {
-            if (offline) return;
-            offline = true;
+            if (!offline.compareAndSet(false, true)) return;
             if (pollScheduler != null) pollScheduler.shutdown();
             if (initScheduler != null) initScheduler.shutdown();
             logger.debug("Switched to OFFLINE mode.");
@@ -132,7 +136,7 @@ class ConfigService implements Closeable {
     }
 
     public boolean isOffline() {
-        return offline;
+        return offline.get();
     }
 
     private CompletableFuture<Result<Entry>> fetchIfOlder(long time, boolean preferCached) {
@@ -153,12 +157,12 @@ class ConfigService implements Closeable {
             // Use cache anyway (get calls on auto & manual poll must not initiate fetch).
             // The initialized check ensures that we subscribe for the ongoing fetch during the
             // max init wait time window in case of auto poll.
-            if (preferCached && initialized.get()) {
+            if (preferCached && initialized) {
                 return CompletableFuture.completedFuture(Result.success(cachedEntry));
             }
             // If we are in offline mode we are not allowed to initiate fetch.
-            if (offline) {
-                return CompletableFuture.completedFuture(Result.error("The SDK is in offline mode, it can't initiate HTTP calls."));
+            if (offline.get()) {
+                return CompletableFuture.completedFuture(Result.success(cachedEntry));
             }
 
             if (runningTask == null) {
@@ -190,7 +194,7 @@ class ConfigService implements Closeable {
                 writeCache(cachedEntry);
                 completeRunningTask(Result.success(cachedEntry));
             } else {
-                completeRunningTask(Result.error(response.error()));
+                completeRunningTask(Result.error(response.error(), cachedEntry));
             }
         } finally {
             lock.unlock();
@@ -203,8 +207,10 @@ class ConfigService implements Closeable {
     }
 
     private void setInitialized() {
-        if (!initialized.compareAndSet(false, true)) return;
-        this.hooks.invokeOnClientReady();
+        if (!initialized) {
+            initialized = true;
+            hooks.invokeOnClientReady();
+        }
     }
 
     private void startPoll(AutoPollingMode mode) {

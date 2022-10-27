@@ -283,7 +283,7 @@ class AutoPollingPolicyTest {
 
     @Test
     void testInitWaitTimeIgnoredWhenCacheIsNotExpired() throws Exception {
-        this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")).setBodyDelay(2, TimeUnit.SECONDS));
+        this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test1")).setBodyDelay(2, TimeUnit.SECONDS));
 
         ConfigCache cache = new SingleValueCache(Helpers.entryStringFromConfigString(String.format(TEST_JSON, "test")));
 
@@ -300,6 +300,29 @@ class AutoPollingPolicyTest {
         assertFalse(policy.getSettings().get().settings().isEmpty());
         long duration = System.currentTimeMillis() - start;
         assertTrue(duration < 1000);
+
+        policy.close();
+    }
+
+    @Test
+    void testInitWaitTimeReturnCached() throws Exception {
+        this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test1")).setBodyDelay(2, TimeUnit.SECONDS));
+
+        ConfigCache cache = new SingleValueCache(Helpers.entryStringFromConfigStringAndTime(String.format(TEST_JSON, "test"), Constants.DISTANT_PAST));
+
+        PollingMode pollingMode = PollingModes.autoPoll(60, 1);
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient(),
+                logger,
+                "",
+                this.server.url("/").toString(),
+                false,
+                pollingMode.getPollingIdentifier());
+        ConfigService policy = new ConfigService("", pollingMode, cache, logger, fetcher, new ConfigCatClient.Hooks(), false);
+
+        long start = System.currentTimeMillis();
+        assertEquals("test", policy.getSettings().get().settings().get("fakeKey").value.getAsString());
+        long duration = System.currentTimeMillis() - start;
+        assertTrue(duration < 1500);
 
         policy.close();
     }

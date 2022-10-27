@@ -37,8 +37,8 @@ final class Result<T> {
     T value() { return this.value; }
     String error() { return this.error; }
 
-    static <T> Result<T> error(String error) {
-        return new Result<>(null, error);
+    static <T> Result<T> error(String error, T value) {
+        return new Result<>(value, error);
     }
 
     static <T> Result<T> success(T value) {

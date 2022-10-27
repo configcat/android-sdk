@@ -15,6 +15,11 @@ final class Helpers {
         return entryToJson(new Entry(config, "fakeTag", System.currentTimeMillis()));
     }
 
+    static String entryStringFromConfigStringAndTime(String json, long time) {
+        Config config = Utils.gson.fromJson(json, Config.class);
+        return entryToJson(new Entry(config, "fakeTag", time));
+    }
+
     static String entryToJson(Entry entry) {
         return Utils.gson.toJson(entry);
     }

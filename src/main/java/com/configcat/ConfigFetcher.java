@@ -228,7 +228,7 @@ class ConfigFetcher implements Closeable {
         } catch (Exception e) {
             String message = "JSON parsing failed. " + e.getMessage();
             this.logger.error(message);
-            return Result.error(message);
+            return Result.error(message, null);
         }
     }
 }
