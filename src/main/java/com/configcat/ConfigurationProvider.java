@@ -21,7 +21,7 @@ public interface ConfigurationProvider extends Closeable {
     <T> T getValue(Class<T> classOfT, String key, T defaultValue);
 
     /**
-     * Gets the value of a feature flag or setting as T asynchronously identified by the given {@code key}.
+     * Gets the value of a feature flag or setting as T identified by the given {@code key}.
      *
      * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
      * @param key          the identifier of the configuration value.
@@ -33,7 +33,7 @@ public interface ConfigurationProvider extends Closeable {
     <T> T getValue(Class<T> classOfT, String key, User user, T defaultValue);
 
     /**
-     * Gets the value of a feature flag or setting as T identified by the given {@code key}.
+     * Gets the value of a feature flag or setting as T asynchronously identified by the given {@code key}.
      *
      * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
      * @param key          the identifier of the configuration value.
@@ -54,6 +54,52 @@ public interface ConfigurationProvider extends Closeable {
      * @return a future which computes the configuration value identified by the given key.
      */
     <T> CompletableFuture<T> getValueAsync(Class<T> classOfT, String key, User user, T defaultValue);
+
+    /**
+     * Gets the value of a feature flag or setting as T identified by the given {@code key}.
+     *
+     * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
+     * @param key          the identifier of the configuration value.
+     * @param defaultValue in case of any failure, this value will be returned.
+     * @param <T>          the type of the desired config value.
+     * @return the evaluation details.
+     */
+    <T> EvaluationDetails<T> getValueDetails(Class<T> classOfT, String key, T defaultValue);
+
+    /**
+     * Gets the value of a feature flag or setting as T identified by the given {@code key}.
+     *
+     * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
+     * @param key          the identifier of the configuration value.
+     * @param user         the user object to identify the caller.
+     * @param defaultValue in case of any failure, this value will be returned.
+     * @param <T>          the type of the desired config value.
+     * @return the evaluation details.
+     */
+    <T> EvaluationDetails<T> getValueDetails(Class<T> classOfT, String key, User user, T defaultValue);
+
+    /**
+     * Gets the value of a feature flag or setting as T asynchronously identified by the given {@code key}.
+     *
+     * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
+     * @param key          the identifier of the configuration value.
+     * @param defaultValue in case of any failure, this value will be returned.
+     * @param <T>          the type of the desired config value.
+     * @return a future which computes the the evaluation details.
+     */
+    <T> CompletableFuture<EvaluationDetails<T>> getValueDetailsAsync(Class<T> classOfT, String key, T defaultValue);
+
+    /**
+     * Gets the value of a feature flag or setting as T asynchronously identified by the given {@code key}.
+     *
+     * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
+     * @param key          the identifier of the configuration value.
+     * @param user         the user object to identify the caller.
+     * @param defaultValue in case of any failure, this value will be returned.
+     * @param <T>          the type of the desired config value.
+     * @return a future which computes the the evaluation details.
+     */
+    <T> CompletableFuture<EvaluationDetails<T>> getValueDetailsAsync(Class<T> classOfT, String key, User user, T defaultValue);
 
     /**
      * Gets the Variation ID (analytics) of a feature flag or setting synchronously based on its key.
@@ -176,12 +222,48 @@ public interface ConfigurationProvider extends Closeable {
     /**
      * Initiates a force refresh synchronously on the cached configuration.
      */
-    void forceRefresh();
+    RefreshResult forceRefresh();
 
     /**
      * Initiates a force refresh asynchronously on the cached configuration.
      *
      * @return the future which executes the refresh.
      */
-    CompletableFuture<Void> forceRefreshAsync();
+    CompletableFuture<RefreshResult> forceRefreshAsync();
+
+    /**
+     * Sets the default user.
+     *
+     * @param user the default user.
+     */
+    void setDefaultUser(User user);
+
+    /**
+     * Sets the default user to null.
+     */
+    void clearDefaultUser();
+
+    /**
+     * Configures the SDK to allow HTTP requests.
+     */
+    void setOnline();
+
+    /**
+     * Configures the SDK to not initiate HTTP requests and work only from its cache.
+     */
+    void setOffline();
+
+    /**
+     * Indicates whether the SDK is in offline mode or not.
+     *
+     * @return true when the SDK is configured not to initiate HTTP requests, otherwise false.
+     */
+    boolean isOffline();
+
+    /**
+     * Access to hooks for event subscription.
+     *
+     * @return the hooks object used for event subscription.
+     */
+    ConfigCatClient.Hooks getHooks();
 }

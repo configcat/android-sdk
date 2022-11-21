@@ -1,12 +1,10 @@
 package com.configcat;
 
 import com.google.gson.JsonElement;
+import java9.util.function.Consumer;
 import okhttp3.OkHttpClient;
 import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
-
-import java.security.InvalidParameterException;
 import java.util.*;
 import java9.util.concurrent.CompletableFuture;
 
@@ -16,75 +14,45 @@ import java9.util.concurrent.CompletableFuture;
 public final class ConfigCatClient implements ConfigurationProvider {
     private static final String BASE_URL_GLOBAL = "https://cdn-global.configcat.com";
     private static final String BASE_URL_EU = "https://cdn-eu.configcat.com";
-    private static final Set<String> SDK_KEYS = new HashSet<>();
+    private static final Map<String, ConfigCatClient> INSTANCES = new HashMap<>();
 
-    private final RefreshPolicy refreshPolicy;
     private final ConfigCatLogger logger;
     private final RolloutEvaluator rolloutEvaluator;
     private final OverrideDataSource overrideDataSource;
     private final OverrideBehaviour overrideBehaviour;
     private final String sdkKey;
+    private final Hooks hooks;
+    private User defaultUser;
 
-    private ConfigCatClient(String sdkKey, Builder builder) throws IllegalArgumentException {
-        if (sdkKey == null || sdkKey.isEmpty())
-            throw new IllegalArgumentException("'sdkKey' cannot be null or empty.");
+    private ConfigService configService;
 
-        LogLevel logLevel = builder.logLevel == null ? LogLevel.WARNING : builder.logLevel;
-        DataGovernance dataGovernance = builder.dataGovernance == null ? DataGovernance.GLOBAL : builder.dataGovernance;
-        this.logger = new ConfigCatLogger(LoggerFactory.getLogger(ConfigCatClient.class), logLevel);
-
-        if (SDK_KEYS.contains(sdkKey)) {
-            this.logger.warn("A ConfigCat Client is already initialized with SDK Key '" + sdkKey + "'. We strongly recommend you to use the ConfigCat Client as a Singleton object in your application.");
-        }
-
-        SDK_KEYS.add(sdkKey);
+    private ConfigCatClient(String sdkKey, Options options) throws IllegalArgumentException {
+        this.logger = new ConfigCatLogger(LoggerFactory.getLogger(ConfigCatClient.class), options.logLevel, options.hooks);
 
         this.sdkKey = sdkKey;
-        this.overrideDataSource = builder.overrideDataSource;
-        this.overrideBehaviour = builder.overrideBehaviour;
+        this.overrideDataSource = options.overrideDataSource;
+        this.overrideBehaviour = options.overrideBehaviour;
+        this.hooks = options.hooks;
+        this.defaultUser = options.defaultUser;
         this.rolloutEvaluator = new RolloutEvaluator(this.logger);
 
-        ConfigCache cache = builder.cache == null
-                ? new NullConfigCache()
-                : builder.cache;
-
-        ConfigJsonCache configJsonCache = new ConfigJsonCache(this.logger, cache, sdkKey);
-
-        PollingMode pollingMode = builder.pollingMode == null
-                ? PollingModes.autoPoll(60)
-                : builder.pollingMode;
-
-        if (this.overrideBehaviour == OverrideBehaviour.LOCAL_ONLY) {
-            this.refreshPolicy = new NullRefreshPolicy();
-        } else {
-            boolean hasCustomBaseUrl = builder.baseUrl != null && !builder.baseUrl.isEmpty();
-            ConfigFetcher fetcher = new ConfigFetcher(builder.httpClient == null
-                    ? new OkHttpClient
-                    .Builder()
-                    .build()
-                    : builder.httpClient,
+        if (this.overrideBehaviour != OverrideBehaviour.LOCAL_ONLY) {
+            boolean hasCustomBaseUrl = options.baseUrl != null && !options.baseUrl.isEmpty();
+            ConfigFetcher fetcher = new ConfigFetcher(options.httpClient == null
+                    ? new OkHttpClient()
+                    : options.httpClient,
                     this.logger,
-                    configJsonCache,
                     sdkKey,
                     !hasCustomBaseUrl
-                            ? dataGovernance == DataGovernance.GLOBAL
-                            ? BASE_URL_GLOBAL
-                            : BASE_URL_EU
-                            : builder.baseUrl,
+                            ? options.dataGovernance == DataGovernance.GLOBAL
+                                ? BASE_URL_GLOBAL
+                                : BASE_URL_EU
+                            : options.baseUrl,
                     hasCustomBaseUrl,
-                    pollingMode.getPollingIdentifier());
+                    options.pollingMode.getPollingIdentifier());
 
-            this.refreshPolicy = this.selectPolicy(pollingMode, fetcher, this.logger, configJsonCache);
+            this.configService = new ConfigService(sdkKey, options.pollingMode, options.cache, logger, fetcher, options.hooks, options.offline);
         }
-    }
-
-    /**
-     * Constructs a new client instance with the default configuration.
-     *
-     * @param sdkKey the token which identifies your project configuration.
-     */
-    public ConfigCatClient(String sdkKey) {
-        this(sdkKey, newBuilder());
     }
 
     @Override
@@ -137,7 +105,62 @@ public final class ConfigCatClient implements ConfigurationProvider {
             throw new IllegalArgumentException("Only String, Integer, Double or Boolean types are supported.");
 
         return this.getSettingsAsync()
-                .thenApply(settings -> this.getValueFromSettingsMap(classOfT, settings, key, user, defaultValue));
+                .thenApply(settingsResult -> this.getValueFromSettingsMap(classOfT, settingsResult, key, user, defaultValue));
+    }
+
+    @Override
+    public <T> EvaluationDetails<T> getValueDetails(Class<T> classOfT, String key, T defaultValue) {
+        return this.getValueDetails(classOfT, key, null, defaultValue);
+    }
+
+    @Override
+    public <T> EvaluationDetails<T> getValueDetails(Class<T> classOfT, String key, User user, T defaultValue) {
+        if (key == null || key.isEmpty())
+            throw new IllegalArgumentException("'key' cannot be null or empty.");
+
+        if (classOfT != String.class &&
+                classOfT != Integer.class &&
+                classOfT != int.class &&
+                classOfT != Double.class &&
+                classOfT != double.class &&
+                classOfT != Boolean.class &&
+                classOfT != boolean.class)
+            throw new IllegalArgumentException("Only String, Integer, Double or Boolean types are supported.");
+
+        try {
+            return this.getValueDetailsAsync(classOfT, key, user, defaultValue).get();
+        } catch (InterruptedException e) {
+            String error = "Thread interrupted.";
+            this.logger.error(error, e);
+            Thread.currentThread().interrupt();
+            return EvaluationDetails.fromError(key, defaultValue, error + ": " + e.getMessage(), user);
+        } catch (Exception e) {
+            return EvaluationDetails.fromError(key, defaultValue, e.getMessage(), user);
+        }
+    }
+
+    @Override
+    public <T> CompletableFuture<EvaluationDetails<T>> getValueDetailsAsync(Class<T> classOfT, String key, T defaultValue) {
+        return this.getValueDetailsAsync(classOfT, key, null, defaultValue);
+    }
+
+    @Override
+    public <T> CompletableFuture<EvaluationDetails<T>> getValueDetailsAsync(Class<T> classOfT, String key, User user, T defaultValue) {
+        if (key == null || key.isEmpty())
+            throw new IllegalArgumentException("'key' cannot be null or empty.");
+
+        if (classOfT != String.class &&
+                classOfT != Integer.class &&
+                classOfT != int.class &&
+                classOfT != Double.class &&
+                classOfT != double.class &&
+                classOfT != Boolean.class &&
+                classOfT != boolean.class)
+            throw new IllegalArgumentException("Only String, Integer, Double or Boolean types are supported.");
+
+        return this.getSettingsAsync()
+                .thenApply(settingsResult -> this.evaluate(classOfT, settingsResult.settings().get(key),
+                        key, user != null ? user : this.defaultUser, settingsResult.fetchTime()));
     }
 
     @Override
@@ -172,7 +195,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
             throw new IllegalArgumentException("'key' cannot be null or empty.");
 
         return this.getSettingsAsync()
-                .thenApply(settings -> this.getVariationIdFromSettingsMap(settings, key, user, defaultVariationId));
+                .thenApply(settingsResult -> this.getVariationIdFromSettingsMap(settingsResult, key, user, defaultVariationId));
     }
 
     @Override
@@ -202,13 +225,15 @@ public final class ConfigCatClient implements ConfigurationProvider {
     @Override
     public CompletableFuture<Collection<String>> getAllVariationIdsAsync(User user) {
         return this.getSettingsAsync()
-                .thenApply(settings -> {
+                .thenApply(settingsResult -> {
                     try {
-                        Collection<String> keys = settings.keySet();
+                        User userObject = user != null ? user : this.defaultUser;
+                        Map<String, Setting> settingMap = settingsResult.settings();
+                        Collection<String> keys = settingMap.keySet();
                         ArrayList<String> result = new ArrayList<>();
 
                         for (String key : keys) {
-                            result.add(this.getVariationIdFromSettingsMap(settings, key, user, null));
+                            result.add(this.getVariationIdFromSettingsMap(settingsResult, key, userObject, null));
                         }
 
                         return result;
@@ -236,15 +261,17 @@ public final class ConfigCatClient implements ConfigurationProvider {
     @Override
     public CompletableFuture<Map<String, Object>> getAllValuesAsync(User user) {
         return this.getSettingsAsync()
-                .thenApply(settings -> {
+                .thenApply(settingsResult -> {
                     try {
-                        Collection<String> keys = settings.keySet();
+                        User userObject = user != null ? user : this.defaultUser;
+                        Map<String, Setting> settingMap = settingsResult.settings();
+                        Collection<String> keys = settingMap.keySet();
                         Map<String, Object> result = new HashMap<>();
 
                         for (String key : keys) {
-                            Setting setting = settings.get(key);
-                            JsonElement evaluated = this.rolloutEvaluator.evaluate(setting, key, user).getKey();
-                            Object value = this.parseObject(this.classBySettingType(setting.type), evaluated);
+                            Setting setting = settingMap.get(key);
+                            if (setting == null) continue;
+                            Object value = this.evaluate(classBySettingType(setting.type), setting, key, userObject, settingsResult.fetchTime()).getValue();
                             result.put(key, value);
                         }
 
@@ -278,7 +305,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
             throw new IllegalArgumentException("'variationId' cannot be null or empty.");
 
         return this.getSettingsAsync()
-                .thenApply(settings -> this.getKeyAndValueFromSettingsMap(classOfT, settings, variationId));
+                .thenApply(settingsResult -> this.getKeyAndValueFromSettingsMap(classOfT, settingsResult.settings(), variationId));
     }
 
     @Override
@@ -298,9 +325,9 @@ public final class ConfigCatClient implements ConfigurationProvider {
     @Override
     public CompletableFuture<Collection<String>> getAllKeysAsync() {
         return this.getSettingsAsync()
-                .thenApply(settings -> {
+                .thenApply(settingsResult -> {
                     try {
-                        return settings.keySet();
+                        return settingsResult.settings().keySet();
                     } catch (Exception e) {
                         this.logger.error("An error occurred during getting all the setting keys. Returning empty array.", e);
                         return new ArrayList<>();
@@ -309,91 +336,161 @@ public final class ConfigCatClient implements ConfigurationProvider {
     }
 
     @Override
-    public void forceRefresh() {
+    public RefreshResult forceRefresh() {
         try {
-            this.forceRefreshAsync().get();
+            return forceRefreshAsync().get();
         } catch (InterruptedException e) {
-            this.logger.error("Thread interrupted.", e);
+            logger.error("Thread interrupted.", e);
             Thread.currentThread().interrupt();
         } catch (Exception e) {
-            this.logger.error("An error occurred during the refresh.", e);
+            logger.error("An error occurred during the refresh.", e);
+        }
+        return new RefreshResult(false, "An error occurred during the refresh.");
+    }
+
+    @Override
+    public CompletableFuture<RefreshResult> forceRefreshAsync() {
+        if (configService == null) {
+            return CompletableFuture.completedFuture(new RefreshResult(false,
+                    "The ConfigCat SDK is in local-only mode. Calling .forceRefresh() has no effect."));
+        }
+
+        return configService.refresh();
+    }
+
+    @Override
+    public void setDefaultUser(User user) {
+        this.defaultUser = user;
+    }
+
+    @Override
+    public void clearDefaultUser() {
+        this.defaultUser = null;
+    }
+
+    @Override
+    public void setOnline() {
+        if (this.configService != null) {
+            this.configService.setOnline();
         }
     }
 
     @Override
-    public CompletableFuture<Void> forceRefreshAsync() {
-        return this.refreshPolicy.refreshAsync();
+    public void setOffline() {
+        if (this.configService != null) {
+            this.configService.setOffline();
+        }
+    }
+
+    @Override
+    public boolean isOffline() {
+        return this.configService == null || this.configService.isOffline();
+    }
+
+    @Override
+    public Hooks getHooks() {
+        return this.hooks;
     }
 
     @Override
     public void close() throws IOException {
-        this.refreshPolicy.close();
-        SDK_KEYS.remove(this.sdkKey);
+        closeResources();
+        synchronized (INSTANCES) {
+            if (INSTANCES.get(this.sdkKey) == this) {
+                INSTANCES.remove(this.sdkKey);
+            }
+        }
     }
 
-    private CompletableFuture<Map<String, Setting>> getSettingsAsync() {
+    private void closeResources() throws IOException {
+        if (configService != null) configService.close();
+        this.hooks.clear();
+    }
+
+    private CompletableFuture<SettingResult> getSettingsAsync() {
         if (this.overrideBehaviour != null) {
             switch (this.overrideBehaviour) {
                 case LOCAL_ONLY:
-                    return CompletableFuture.completedFuture(this.overrideDataSource.getLocalConfiguration());
+                    return CompletableFuture.completedFuture(new SettingResult(this.overrideDataSource.getLocalConfiguration(), Constants.DISTANT_PAST));
                 case REMOTE_OVER_LOCAL:
-                    return this.refreshPolicy.getSettingsAsync()
-                            .thenApply(settings -> {
+                    if (configService == null) return CompletableFuture.completedFuture(new SettingResult(this.overrideDataSource.getLocalConfiguration(), Constants.DISTANT_PAST));
+                    return configService.getSettings()
+                            .thenApply(settingResult -> {
                                 Map<String, Setting> localSettings = new HashMap<>(this.overrideDataSource.getLocalConfiguration());
-                                localSettings.putAll(settings);
-                                return localSettings;
+                                localSettings.putAll(settingResult.settings());
+                                return new SettingResult(localSettings, settingResult.fetchTime());
                             });
                 case LOCAL_OVER_REMOTE:
-                    return this.refreshPolicy.getSettingsAsync()
-                            .thenApply(settings -> {
+                    if (configService == null) return CompletableFuture.completedFuture(new SettingResult(this.overrideDataSource.getLocalConfiguration(), Constants.DISTANT_PAST));
+                    return configService.getSettings()
+                            .thenApply(settingResult -> {
                                 Map<String, Setting> localSettings = this.overrideDataSource.getLocalConfiguration();
-                                Map<String, Setting> remoteSettings = new HashMap<>(settings);
+                                Map<String, Setting> remoteSettings = new HashMap<>(settingResult.settings());
                                 remoteSettings.putAll(localSettings);
-                                return remoteSettings;
+                                return new SettingResult(remoteSettings, settingResult.fetchTime());
                             });
             }
         }
 
-        return this.refreshPolicy.getSettingsAsync();
+        return configService == null
+                ? CompletableFuture.completedFuture(new SettingResult(new HashMap<>(), Constants.DISTANT_PAST))
+                : configService.getSettings();
     }
 
-    private <T> T getValueFromSettingsMap(Class<T> classOfT, Map<String, Setting> settings, String key, User user, T defaultValue) {
+    private <T> T getValueFromSettingsMap(Class<T> classOfT, SettingResult settingResult, String key, User user, T defaultValue) {
+        User userObject = user != null ? user : this.defaultUser;
         try {
+            Map<String, Setting> settings = settingResult.settings();
             if (settings.isEmpty()) {
-                this.logger.error("Config JSON is not present. Returning defaultValue: [" + defaultValue + "].");
+                String error = "Config JSON is not present. Returning defaultValue: [" + defaultValue + "].";
+                this.hooks.invokeOnFlagEvaluated(EvaluationDetails.fromError(key, defaultValue, error, userObject));
+                this.logger.error(error);
                 return defaultValue;
             }
 
             Setting setting = settings.get(key);
             if (setting == null) {
-                this.logger.error("Value not found for key " + key + ". Here are the available keys: " + String.join(", ", settings.keySet()));
+                String error = "Value not found for key " + key + ". Here are the available keys: " + String.join(", ", settings.keySet());
+                this.hooks.invokeOnFlagEvaluated(EvaluationDetails.fromError(key, defaultValue, error, userObject));
+                this.logger.error(error);
                 return defaultValue;
             }
 
-            return (T) this.parseObject(classOfT, this.rolloutEvaluator.evaluate(setting, key, user).getKey());
+            return this.evaluate(classOfT, setting, key, userObject, settingResult.fetchTime()).getValue();
         } catch (Exception e) {
-            this.logger.error("Evaluating getValue('" + key + "') failed. Returning defaultValue: [" + defaultValue + "]. "
-                    + e.getMessage(), e);
+            String error = "Evaluating getValue('" + key + "') failed. Returning defaultValue: [" + defaultValue + "]. "
+                    + e.getMessage();
+            this.hooks.invokeOnFlagEvaluated(EvaluationDetails.fromError(key, defaultValue, error, userObject));
+            this.logger.error(error, e);
             return defaultValue;
         }
     }
 
-    private String getVariationIdFromSettingsMap(Map<String, Setting> settings, String key, User user, String defaultVariationId) {
+    private String getVariationIdFromSettingsMap(SettingResult settingResult, String key, User user, String defaultVariationId) {
+        User userObject = user != null ? user : this.defaultUser;
         try {
+            Map<String, Setting> settings = settingResult.settings();
             if (settings.isEmpty()) {
-                this.logger.error("Config JSON is not present. Returning defaultVariationId: [" + defaultVariationId + "].");
+                String error = "Config JSON is not present. Returning defaultVariationId: [" + defaultVariationId + "].";
+                this.hooks.invokeOnFlagEvaluated(EvaluationDetails.fromError(key, null, error, userObject));
+                this.logger.error(error);
                 return defaultVariationId;
             }
 
             Setting setting = settings.get(key);
             if (setting == null) {
-                this.logger.error("Variation ID not found for key " + key + ". Here are the available keys: " + String.join(", ", settings.keySet()));
+                String error = "Variation ID not found for key " + key + ". Here are the available keys: " + String.join(", ", settings.keySet());
+                this.hooks.invokeOnFlagEvaluated(EvaluationDetails.fromError(key, null, error, userObject));
+                this.logger.error(error);
                 return defaultVariationId;
             }
-            return this.rolloutEvaluator.evaluate(setting, key, user).getValue();
+
+            return this.rolloutEvaluator.evaluate(setting, key, userObject).variationId;
         } catch (Exception e) {
-            this.logger.error("Evaluating getVariationId('" + key + "') failed. Returning defaultVariationId: [" + defaultVariationId + "]. "
-                    + e.getMessage(), e);
+            String error = "Evaluating getVariationId('" + key + "') failed. Returning defaultVariationId: [" + defaultVariationId + "]. "
+                    + e.getMessage();
+            this.hooks.invokeOnFlagEvaluated(EvaluationDetails.fromError(key, null, error, userObject));
+            this.logger.error(error, e);
             return defaultVariationId;
         }
     }
@@ -418,7 +515,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                     }
                 }
 
-                for (RolloutPercentageItem percentageRule : setting.percentageItems) {
+                for (PercentageRule percentageRule : setting.percentageItems) {
                     if (variationId.equals(percentageRule.variationId)) {
                         return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, percentageRule.value));
                     }
@@ -432,16 +529,20 @@ public final class ConfigCatClient implements ConfigurationProvider {
         }
     }
 
-    private RefreshPolicyBase selectPolicy(PollingMode mode, ConfigFetcher fetcher, ConfigCatLogger logger, ConfigJsonCache configJsonCache) {
-        if (mode instanceof AutoPollingMode) {
-            return new AutoPollingPolicy(fetcher, logger, configJsonCache, (AutoPollingMode) mode);
-        } else if (mode instanceof LazyLoadingMode) {
-            return new LazyLoadingPolicy(fetcher, logger, configJsonCache, (LazyLoadingMode) mode);
-        } else if (mode instanceof ManualPollingMode) {
-            return new ManualPollingPolicy(fetcher, logger, configJsonCache);
-        } else {
-            throw new InvalidParameterException("The polling mode parameter is invalid.");
-        }
+    private <T> EvaluationDetails<T> evaluate(Class<T> classOfT, Setting setting, String key, User user, Long fetchTime) {
+        EvaluationResult evaluationResult = this.rolloutEvaluator.evaluate(setting, key, user);
+        EvaluationDetails<Object> details = new EvaluationDetails<>(
+                this.parseObject(classOfT, evaluationResult.value),
+                key,
+                evaluationResult.variationId,
+                user,
+                false,
+                null,
+                fetchTime,
+                evaluationResult.targetingRule,
+                evaluationResult.percentageRule);
+        this.hooks.invokeOnFlagEvaluated(details);
+        return details.asTypeSpecific();
     }
 
     private Object parseObject(Class<?> classOfT, JsonElement element) {
@@ -471,69 +572,112 @@ public final class ConfigCatClient implements ConfigurationProvider {
     }
 
     /**
-     * Creates a new builder instance.
+     * Creates a new or gets an already existing ConfigCatClient for the given sdkKey.
      *
-     * @return the new builder.
+     * @param sdkKey the SDK Key for to communicate with the ConfigCat services.
+     * @return the ConfigCatClient instance.
      */
-    public static Builder newBuilder() {
-        return new Builder();
+    public static ConfigCatClient get(String sdkKey) {
+        return get(sdkKey, null);
     }
 
     /**
-     * A builder that helps construct a {@link ConfigCatClient} instance.
+     * Creates a new or gets an already existing ConfigCatClient for the given sdkKey.
+     *
+     * @param sdkKey the SDK Key for to communicate with the ConfigCat services.
+     * @param optionsCallback the options callback to configure the created ConfigCatClient instance.
+     * @return the ConfigCatClient instance.
      */
-    public static class Builder {
+    public static ConfigCatClient get(String sdkKey, Consumer<Options> optionsCallback) {
+        if (sdkKey == null || sdkKey.isEmpty())
+            throw new IllegalArgumentException("'sdkKey' cannot be null or empty.");
+
+        synchronized (INSTANCES) {
+            ConfigCatClient existing = INSTANCES.get(sdkKey);
+            if (existing != null) {
+                if (optionsCallback != null) {
+                    existing.logger.warn("Client for '"+ sdkKey +"' is already created and will be reused; options passed are being ignored.");
+                }
+                return existing;
+            }
+
+            ConfigCatClient client;
+            if (optionsCallback != null) {
+                Options options = new Options();
+                optionsCallback.accept(options);
+                client = new ConfigCatClient(sdkKey, options);
+            } else {
+                client = new ConfigCatClient(sdkKey, new Options());
+            }
+
+            INSTANCES.put(sdkKey, client);
+            return client;
+        }
+    }
+
+    /**
+     * Closes all ConfigCatClient instances.
+     */
+    public static void closeAll() throws IOException {
+        synchronized (INSTANCES) {
+            for (ConfigCatClient client : INSTANCES.values()) {
+                client.closeResources();
+            }
+            INSTANCES.clear();
+        }
+    }
+
+    /**
+     * Configuration options for a {@link ConfigCatClient} instance.
+     */
+    public static class Options {
         private OkHttpClient httpClient;
-        private ConfigCache cache;
+        private ConfigCache cache = new NullConfigCache();
         private String baseUrl;
-        private PollingMode pollingMode;
-        private LogLevel logLevel;
-        private DataGovernance dataGovernance;
+        private PollingMode pollingMode = PollingModes.autoPoll(60);
+        private LogLevel logLevel = LogLevel.WARNING;
+        private DataGovernance dataGovernance = DataGovernance.GLOBAL;
         private OverrideDataSource overrideDataSource;
         private OverrideBehaviour overrideBehaviour;
+        private User defaultUser;
+        private boolean offline;
+
+        private final Hooks hooks = new Hooks();
 
         /**
          * Sets the underlying http client which will be used to fetch the latest configuration.
          *
          * @param httpClient the http client.
-         * @return the builder.
          */
-        public Builder httpClient(OkHttpClient httpClient) {
+        public void httpClient(OkHttpClient httpClient) {
             this.httpClient = httpClient;
-            return this;
         }
 
         /**
          * Sets the internal cache implementation.
          *
          * @param cache a {@link ConfigCache} implementation used to cache the configuration.
-         * @return the builder.
          */
-        public Builder cache(ConfigCache cache) {
+        public void cache(ConfigCache cache) {
             this.cache = cache;
-            return this;
         }
 
         /**
          * Sets the base ConfigCat CDN url.
          *
          * @param baseUrl the base ConfigCat CDN url.
-         * @return the builder.
          */
-        public Builder baseUrl(String baseUrl) {
+        public void baseUrl(String baseUrl) {
             this.baseUrl = baseUrl;
-            return this;
         }
 
         /**
          * Sets the internal refresh policy implementation.
          *
          * @param pollingMode the polling mode.
-         * @return the builder.
          */
-        public Builder mode(PollingMode pollingMode) {
+        public void pollingMode(PollingMode pollingMode) {
             this.pollingMode = pollingMode;
-            return this;
         }
 
         /**
@@ -541,22 +685,18 @@ public final class ConfigCatClient implements ConfigurationProvider {
          * https://app.configcat.com/organization/data-governance (Only Organization Admins have access)
          *
          * @param dataGovernance the {@link DataGovernance} parameter.
-         * @return the builder.
          */
-        public Builder dataGovernance(DataGovernance dataGovernance) {
+        public void dataGovernance(DataGovernance dataGovernance) {
             this.dataGovernance = dataGovernance;
-            return this;
         }
 
         /**
          * Default: Warning. Sets the internal log level.
          *
          * @param logLevel the {@link LogLevel} parameter.
-         * @return the builder.
          */
-        public Builder logLevel(LogLevel logLevel) {
+        public void logLevel(LogLevel logLevel) {
             this.logLevel = logLevel;
-            return this;
         }
 
         /**
@@ -566,11 +706,10 @@ public final class ConfigCatClient implements ConfigurationProvider {
          * @param behaviour the override behaviour. It can be used to set preference on whether the local values should
          *                  override the remote values, or use local values only when a remote value doesn't exist,
          *                  or use it for local only mode.
-         * @return the builder.
          *
          * @throws IllegalArgumentException when the dataSourceBuilder or behaviour parameter is null.
          */
-        public Builder flagOverrides(OverrideDataSource overrideDataSource, OverrideBehaviour behaviour) {
+        public void flagOverrides(OverrideDataSource overrideDataSource, OverrideBehaviour behaviour) {
             if (overrideDataSource == null) {
                 throw new IllegalArgumentException("'overrideDataSource' cannot be null.");
             }
@@ -581,17 +720,132 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
             this.overrideDataSource = overrideDataSource;
             this.overrideBehaviour = behaviour;
-            return this;
         }
 
         /**
-         * Builds the configured {@link ConfigCatClient} instance.
+         * The default user, used as fallback when there's no user parameter is passed to the getValue() method.
          *
-         * @param sdkKey the project token.
-         * @return the configured {@link ConfigCatClient} instance.
+         * @param user the default user.
          */
-        public ConfigCatClient build(String sdkKey) {
-            return new ConfigCatClient(sdkKey, this);
+        public void defaultUser(User user) {
+            this.defaultUser = user;
+        }
+
+        /**
+         * Indicates whether the SDK should be initialized in offline mode or not.
+         *
+         * @param isOffline true when the SDK should be initialized in offline mode, otherwise false.
+         */
+        public void offline(boolean isOffline) {
+            this.offline = isOffline;
+        }
+
+        /**
+         * Hooks for events sent by ConfigCatClient.
+         *
+         * @return the hooks object used to subscribe to SDK events.
+         */
+        public Hooks hooks() {
+            return this.hooks;
+        }
+    }
+
+    public static class Hooks {
+        private final Object sync = new Object();
+        private final List<Consumer<Map<String, Setting>>> onConfigChanged = new ArrayList<>();
+        private final List<Runnable> onClientReady = new ArrayList<>();
+        private final List<Consumer<EvaluationDetails<Object>>> onFlagEvaluated = new ArrayList<>();
+        private final List<Consumer<String>> onError = new ArrayList<>();
+
+        /**
+         * Subscribes to the onReady event. This event is sent when the SDK reaches the ready state.
+         * If the SDK is configured with lazy load or manual polling it's considered ready right after instantiation.
+         * If it's using auto polling, the ready state is reached when the SDK has a valid config.json loaded
+         * into memory either from cache or from HTTP. If the config couldn't be loaded neither from cache nor from HTTP the
+         * onReady event fires when the auto polling's maxInitWaitTimeInSeconds is reached.
+         *
+         * @param callback the method to call when the event fires.
+         */
+        public void addOnClientReady(Runnable callback) {
+            synchronized (sync) {
+                this.onClientReady.add(callback);
+            }
+        }
+
+        /**
+         * Subscribes to the onConfigChanged event. This event is sent when the SDK loads a valid config.json
+         * into memory from cache, and each subsequent time when the loaded config.json changes via HTTP.
+         *
+         * @param callback the method to call when the event fires.
+         */
+        public void addOnConfigChanged(Consumer<Map<String, Setting>> callback) {
+            synchronized (sync) {
+                this.onConfigChanged.add(callback);
+            }
+        }
+
+        /**
+         * Subscribes to the onError event. This event is sent when an error occurs within the ConfigCat SDK.
+         *
+         * @param callback the method to call when the event fires.
+         */
+        public void addOnError(Consumer<String> callback) {
+            synchronized (sync) {
+                this.onError.add(callback);
+            }
+        }
+
+        /**
+         * Subscribes to the onFlagEvaluated event. This event is sent each time when the SDK evaluates a feature flag or setting.
+         * The event sends the same evaluation details that you would get from getValueDetails().
+         *
+         * @param callback the method to call when the event fires.
+         */
+        public void addOnFlagEvaluated(Consumer<EvaluationDetails<Object>> callback) {
+            synchronized (sync) {
+                this.onFlagEvaluated.add(callback);
+            }
+        }
+
+        void invokeOnClientReady() {
+            synchronized (sync) {
+                for (Runnable func : this.onClientReady) {
+                    func.run();
+                }
+            }
+        }
+
+        void invokeOnError(String error) {
+            synchronized (sync) {
+                for (Consumer<String> func : this.onError) {
+                    func.accept(error);
+                }
+            }
+        }
+
+        void invokeOnConfigChanged(Map<String, Setting> settingMap) {
+            synchronized (sync) {
+                for (Consumer<Map<String, Setting>> func : this.onConfigChanged) {
+                    func.accept(settingMap);
+                }
+            }
+        }
+
+        void invokeOnFlagEvaluated(EvaluationDetails<Object> evaluationDetails) {
+            synchronized (sync) {
+                for (Consumer<EvaluationDetails<Object>> func : this.onFlagEvaluated) {
+                    func.accept(evaluationDetails);
+                }
+            }
+        }
+
+        void clear() {
+            synchronized (sync) {
+                this.onConfigChanged.clear();
+                this.onError.clear();
+                this.onFlagEvaluated.clear();
+                this.onClientReady.clear();
+            }
         }
     }
 }

@@ -1,13 +1,12 @@
 package com.configcat;
 
-import static org.junit.Assert.assertEquals;
-
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -29,10 +28,9 @@ class RolloutIntegrationTests {
             "testmatrix_sensitive.csv,PKDVCLf-Hq-h-kCzMp-L7Q/qX3TP2dTj06ZpCCT1h_SPA," + ValueTestKind,
             "testmatrix_variationId.csv, PKDVCLf-Hq-h-kCzMp-L7Q/nQ5qkhRAUEa6beEyyrVLBA," + VariationTestKind,
     })
-    void testMatrixTest(String file, String sdkKey, String kind) throws FileNotFoundException {
+    void testMatrixTest(String file, String sdkKey, String kind) throws IOException {
 
-        ConfigCatClient client = ConfigCatClient.newBuilder()
-                .build(sdkKey);
+        ConfigCatClient client = ConfigCatClient.get(sdkKey);
 
         Scanner csvScanner = new Scanner(new File("src/test/resources/" + file));
 
@@ -87,5 +85,6 @@ class RolloutIntegrationTests {
             errors.forEach(System.out::println);
         }
         Assertions.assertEquals(0, errors.size(), "Errors found: " + errors.size());
+        client.close();
     }
 }
