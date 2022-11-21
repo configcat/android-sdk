@@ -14,21 +14,19 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        this.client = ConfigCatClient.newBuilder()
-                .pollingMode(PollingModes.autoPoll(5) {
-                    run {
-                        this.fetchNewConfig()
-                    }
-                })
-                // Info level logging helps to inspect the feature flag evaluation process.
-                // Use the default Warning level to avoid too detailed logging in your application.
-                .logLevel(LogLevel.INFO)
-                .build("PKDVCLf-Hq-h-kCzMp-L7Q/HhOWfwVtZ0mb30i9wi17GQ")
-    }
+        this.client = ConfigCatClient.get("PKDVCLf-Hq-h-kCzMp-L7Q/HhOWfwVtZ0mb30i9wi17GQ") { options ->
+            options.pollingMode(PollingModes.autoPoll(5))
 
-    override fun onDestroy() {
-        client.close()
-        super.onDestroy()
+            // Info level logging helps to inspect the feature flag evaluation process.
+            // Use the default Warning level to avoid too detailed logging in your application.
+            options.logLevel(LogLevel.INFO)
+
+            options.hooks().addOnConfigChanged {
+                run {
+                    this.fetchNewConfig()
+                }
+            }
+        }
     }
 
     @SuppressLint("SetTextI18n")
