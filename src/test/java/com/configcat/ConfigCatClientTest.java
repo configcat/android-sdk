@@ -449,6 +449,28 @@ class ConfigCatClientTest {
     }
 
     @Test
+    void testInitOfflineCallsReady() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.start();
+
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
+
+        AtomicBoolean ready = new AtomicBoolean(false);
+        ConfigCatClient cl = ConfigCatClient.get(APIKEY, options -> {
+            options.pollingMode(PollingModes.autoPoll());
+            options.baseUrl(server.url("/").toString());
+            options.offline(true);
+            options.hooks().addOnClientReady(() -> ready.set(true));
+        });
+
+        assertEquals(0, server.getRequestCount());
+        Helpers.waitFor(ready::get);
+
+        server.shutdown();
+        cl.close();
+    }
+
+    @Test
     void testDefaultUser() throws IOException {
         MockWebServer server = new MockWebServer();
         server.start();

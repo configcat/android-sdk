@@ -61,12 +61,10 @@ class ConfigService implements Closeable {
         this.hooks = hooks;
         this.offline = new AtomicBoolean(offline);
 
-        if (mode instanceof AutoPollingMode) {
+        if (mode instanceof AutoPollingMode && !offline) {
             AutoPollingMode autoPollingMode = (AutoPollingMode)mode;
 
-            if (!offline) {
-                startPoll(autoPollingMode);
-            }
+            startPoll(autoPollingMode);
 
             initScheduler = Executors.newSingleThreadScheduledExecutor();
             initScheduler.schedule(() -> {
@@ -151,6 +149,7 @@ class ConfigService implements Closeable {
                 }
                 // Cache isn't expired
                 if (cachedEntry.fetchTime > time) {
+                    setInitialized();
                     return CompletableFuture.completedFuture(Result.success(cachedEntry));
                 }
             }
