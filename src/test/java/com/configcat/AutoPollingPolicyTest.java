@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -218,6 +219,29 @@ class AutoPollingPolicyTest {
         assertEquals(0, this.server.getRequestCount());
 
         Helpers.waitFor(3000, () -> this.server.getRequestCount() == 1);
+
+        policy.close();
+    }
+
+    @Test
+    void testNonExpiredCacheCallsReady() throws Exception {
+        ConfigCache cache = new SingleValueCache(Helpers.entryStringFromConfigString(String.format(TEST_JSON, "test")));
+
+        AtomicBoolean ready = new AtomicBoolean(false);
+        ConfigCatClient.Hooks hooks = new ConfigCatClient.Hooks();
+        hooks.addOnClientReady(() -> ready.set(true));
+        PollingMode pollingMode = PollingModes.autoPoll(2);
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient(),
+                logger,
+                "",
+                this.server.url("/").toString(),
+                false,
+                pollingMode.getPollingIdentifier());
+        ConfigService policy = new ConfigService("", pollingMode, cache, logger, fetcher, hooks, false);
+
+        assertEquals(0, this.server.getRequestCount());
+
+        Helpers.waitFor(ready::get);
 
         policy.close();
     }
