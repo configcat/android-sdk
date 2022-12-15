@@ -24,7 +24,7 @@ import static org.mockito.Mockito.doThrow;
 
 class ConfigFetcherTest {
     private MockWebServer server;
-    private final ConfigCatLogger logger = new ConfigCatLogger(LoggerFactory.getLogger(ConfigFetcherTest.class), LogLevel.WARNING, new ConfigCatClient.Hooks());
+    private final ConfigCatLogger logger = new ConfigCatLogger(LoggerFactory.getLogger(ConfigFetcherTest.class), LogLevel.WARNING, new ConfigCatHooks());
     private static final String TEST_JSON = "{ f: { fakeKey: { v: fakeValue, s: 0, p: [] ,r: [] } } }";
     private static final String TEST_JSON2 = "{ f: { fakeKey: { v: fakeValue2, s: 0, p: [] ,r: [] } } }";
 
@@ -49,12 +49,12 @@ class ConfigFetcherTest {
 
         FetchResponse fResult = fetcher.fetchAsync(null).get();
 
-        assertEquals("fakeValue", fResult.entry().config.entries.get("fakeKey").value.getAsString());
+        assertEquals("fakeValue", fResult.entry().getConfig().getEntries().get("fakeKey").getValue().getAsString());
         assertTrue(fResult.isFetched());
         assertFalse(fResult.isNotModified());
         assertFalse(fResult.isFailed());
 
-        FetchResponse notModifiedResponse = fetcher.fetchAsync(fResult.entry().eTag).get();
+        FetchResponse notModifiedResponse = fetcher.fetchAsync(fResult.entry().getETag()).get();
         assertTrue(notModifiedResponse.isNotModified());
         assertFalse(notModifiedResponse.isFailed());
         assertFalse(notModifiedResponse.isFetched());
@@ -81,7 +81,7 @@ class ConfigFetcherTest {
 
         FetchResponse response = fetch.fetchAsync(null).get();
         assertTrue(response.isFailed());
-        assertEquals(Entry.empty, response.entry());
+        assertEquals(Entry.EMPTY, response.entry());
 
         fetch.close();
     }
@@ -100,8 +100,8 @@ class ConfigFetcherTest {
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger,
                 "", this.server.url("/").toString(), false, PollingModes.manualPoll().getPollingIdentifier());
 
-        ConfigService policy = new ConfigService("", PollingModes.autoPoll(2), cache, logger, fetcher, new ConfigCatClient.Hooks(), false);
-        assertEquals("fakeValue", policy.getSettings().get().settings().get("fakeKey").value.getAsString());
+        ConfigService policy = new ConfigService("", PollingModes.autoPoll(2), cache, logger, fetcher, new ConfigCatHooks(), false);
+        assertEquals("fakeValue", policy.getSettings().get().settings().get("fakeKey").getValue().getAsString());
 
         verify(cache, never()).write(anyString(), eq(TEST_JSON));
 
@@ -117,8 +117,8 @@ class ConfigFetcherTest {
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger,
                 "", this.server.url("/").toString(), false, PollingModes.manualPoll().getPollingIdentifier());
 
-        ConfigService policy = new ConfigService("", PollingModes.autoPoll(2), cache, logger, fetcher, new ConfigCatClient.Hooks(), false);
-        assertEquals("fakeValue", policy.getSettings().get().settings().get("fakeKey").value.getAsString());
+        ConfigService policy = new ConfigService("", PollingModes.autoPoll(2), cache, logger, fetcher, new ConfigCatHooks(), false);
+        assertEquals("fakeValue", policy.getSettings().get().settings().get("fakeKey").getValue().getAsString());
 
         verify(cache, never()).write(anyString(), eq(TEST_JSON));
 
@@ -138,7 +138,7 @@ class ConfigFetcherTest {
 
         FetchResponse response = fetcher.fetchAsync(null).get();
         assertTrue(response.isFetched());
-        assertEquals("fakeValue", response.entry().config.entries.get("fakeKey").value.getAsString());
+        assertEquals("fakeValue", response.entry().getConfig().getEntries().get("fakeKey").getValue().getAsString());
 
         fetcher.close();
     }
@@ -156,7 +156,7 @@ class ConfigFetcherTest {
 
         FetchResponse result = fetch.fetchAsync(null).get();
         assertTrue(result.isFetched());
-        assertTrue(fetch.fetchAsync(result.entry().eTag).get().isNotModified());
+        assertTrue(fetch.fetchAsync(result.entry().getETag()).get().isNotModified());
 
         fetch.close();
     }

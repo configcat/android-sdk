@@ -5,9 +5,9 @@ import org.slf4j.Logger;
 class ConfigCatLogger {
     private final Logger logger;
     private final LogLevel logLevel;
-    private final ConfigCatClient.Hooks hooks;
+    private final ConfigCatHooks hooks;
 
-    public ConfigCatLogger(Logger logger, LogLevel logLevel, ConfigCatClient.Hooks hooks) {
+    public ConfigCatLogger(Logger logger, LogLevel logLevel, ConfigCatHooks hooks) {
         this.logger = logger;
         this.logLevel = logLevel;
         this.hooks = hooks;

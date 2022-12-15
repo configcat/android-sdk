@@ -19,6 +19,7 @@ class FetchResponse {
     private final Status status;
     private final Entry entry;
     private final String error;
+    private final boolean fetchTimeUpdatable;
 
     public boolean isFetched() {
         return this.status == Status.FETCHED;
@@ -32,28 +33,39 @@ class FetchResponse {
         return this.status == Status.FAILED;
     }
 
+    public boolean isFetchTimeUpdatable() { return fetchTimeUpdatable; }
+
     public Entry entry() {
         return this.entry;
     }
 
     public String error() { return this.error; }
 
-    FetchResponse(Status status, Entry entry, String error) {
+    FetchResponse(Status status, Entry entry, String error, boolean fetchTimeUpdatable) {
         this.status = status;
         this.entry = entry;
         this.error = error;
+        this.fetchTimeUpdatable = fetchTimeUpdatable;
     }
 
     public static FetchResponse fetched(Entry entry) {
-        return new FetchResponse(Status.FETCHED, entry, null);
+        return new FetchResponse(Status.FETCHED, entry, null, false);
     }
 
     public static FetchResponse notModified() {
-        return new FetchResponse(Status.NOT_MODIFIED, Entry.empty, null);
+        return new FetchResponse(Status.NOT_MODIFIED, Entry.EMPTY, null, false);
+    }
+
+    public static FetchResponse notModified(boolean fetchTimeUpdatable) {
+        return new FetchResponse(Status.NOT_MODIFIED, Entry.EMPTY, null, fetchTimeUpdatable);
     }
 
     public static FetchResponse failed(String error) {
-        return new FetchResponse(Status.FAILED, Entry.empty, error);
+        return new FetchResponse(Status.FAILED, Entry.EMPTY, error, false);
+    }
+
+    public static FetchResponse failed(String error, boolean fetchTimeUpdatable) {
+        return new FetchResponse(Status.FAILED, Entry.EMPTY, error, fetchTimeUpdatable);
     }
 }
 
@@ -98,17 +110,17 @@ class ConfigFetcher implements Closeable {
             }
             try {
                 Entry entry = fetchResponse.entry();
-                Config config = entry.config;
-                if (config.preferences == null) {
+                Config config = entry.getConfig();
+                if (config.getPreferences() == null) {
                     return CompletableFuture.completedFuture(fetchResponse);
                 }
 
-                String newUrl = config.preferences.baseUrl;
+                String newUrl = config.getPreferences().getBaseUrl();
                 if (newUrl.equals(this.url)) {
                     return CompletableFuture.completedFuture(fetchResponse);
                 }
 
-                int redirect = config.preferences.redirect;
+                int redirect = config.getPreferences().getRedirect();
 
                 // we have a custom url set, and we didn't get a forced redirect
                 if (this.urlIsCustom && redirect != RedirectMode.FORCE_REDIRECT.ordinal()) {
@@ -128,7 +140,7 @@ class ConfigFetcher implements Closeable {
                     }
 
                     if (executionCount > 0) {
-                        return this.executeFetchAsync(executionCount - 1, entry.eTag);
+                        return this.executeFetchAsync(executionCount - 1, entry.getETag());
                     }
                 }
 
@@ -176,9 +188,13 @@ class ConfigFetcher implements Closeable {
                         future.complete(FetchResponse.fetched(new Entry(result.value(), eTag, System.currentTimeMillis())));
                     } else if (response.code() == 304) {
                         logger.debug("Fetch was successful: config not modified.");
-                        future.complete(FetchResponse.notModified());
+                        future.complete(FetchResponse.notModified(true));
+                    } else if (response.code() == 403 || response.code() == 404) {
+                        String message = "Double-check your API KEY at https://app.configcat.com/apikey.";
+                        logger.error(message);
+                        future.complete(FetchResponse.failed(message, true));
                     } else {
-                        String message = "Double-check your SDK Key at https://app.configcat.com/sdkkey. Received unexpected response: " + response.code();
+                        String message = "Unexpected HTTP response was received: " + response.code() + " " + response.message();
                         logger.error(message);
                         future.complete(FetchResponse.failed(message));
                     }

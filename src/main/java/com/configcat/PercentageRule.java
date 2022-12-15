@@ -11,17 +11,29 @@ public class PercentageRule {
      * Value served when the rule is selected during evaluation.
      */
     @SerializedName(value = "v")
-    public JsonElement value;
+    private JsonElement value;
 
     /**
      * The rule's percentage value.
      */
     @SerializedName(value = "p")
-    public double percentage;
+    private double percentage;
 
     /**
      * The rule's variation ID (for analytical purposes).
      */
     @SerializedName(value = "i")
-    public String variationId;
+    private String variationId;
+
+    public JsonElement getValue() {
+        return value;
+    }
+
+    public double getPercentage() {
+        return percentage;
+    }
+
+    public String getVariationId() {
+        return variationId;
+    }
 }

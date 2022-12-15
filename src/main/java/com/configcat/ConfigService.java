@@ -33,7 +33,7 @@ class ConfigService implements Closeable {
     private ScheduledExecutorService initScheduler;
     private ScheduledExecutorService pollScheduler;
     private String cachedEntryString = "";
-    private Entry cachedEntry = Entry.empty;
+    private Entry cachedEntry = Entry.EMPTY;
     private CompletableFuture<Result<Entry>> runningTask;
     private boolean initialized = false;
     private final AtomicBoolean offline;
@@ -43,7 +43,7 @@ class ConfigService implements Closeable {
     private final ConfigCache cache;
     private final ConfigCatLogger logger;
     private final ConfigFetcher fetcher;
-    private final ConfigCatClient.Hooks hooks;
+    private final ConfigCatHooks hooks;
     private final ReentrantLock lock = new ReentrantLock(true);
 
     public ConfigService(String sdkKey,
@@ -51,7 +51,7 @@ class ConfigService implements Closeable {
                          ConfigCache cache,
                          ConfigCatLogger logger,
                          ConfigFetcher fetcher,
-                         ConfigCatClient.Hooks hooks,
+                         ConfigCatHooks hooks,
                          boolean offline) {
         this.cacheKey = new String(Hex.encodeHex(DigestUtils.sha1(String.format(CACHE_BASE, sdkKey))));
         this.mode = mode;
@@ -90,10 +90,10 @@ class ConfigService implements Closeable {
         if (mode instanceof LazyLoadingMode) {
             LazyLoadingMode lazyLoadingMode = (LazyLoadingMode)mode;
             return fetchIfOlder(System.currentTimeMillis() - (lazyLoadingMode.getCacheRefreshIntervalInSeconds() * 1000L), false)
-                    .thenApply(entryResult -> new SettingResult(entryResult.value().config.entries, entryResult.value().fetchTime));
+                    .thenApply(entryResult -> new SettingResult(entryResult.value().getConfig().getEntries(), entryResult.value().getFetchTime()));
         } else {
             return fetchIfOlder(Constants.DISTANT_PAST, true)
-                    .thenApply(entryResult -> new SettingResult(entryResult.value().config.entries, entryResult.value().fetchTime));
+                    .thenApply(entryResult -> new SettingResult(entryResult.value().getConfig().getEntries(), entryResult.value().getFetchTime()));
         }
     }
 
@@ -141,14 +141,14 @@ class ConfigService implements Closeable {
         lock.lock();
         try {
             // Sync up with the cache and use it when it's not expired.
-            if (cachedEntry.isEmpty() || cachedEntry.fetchTime > time) {
+            if (cachedEntry.isEmpty() || cachedEntry.getFetchTime() > time) {
                 Entry fromCache = readCache();
-                if (!fromCache.isEmpty() && !fromCache.eTag.equals(cachedEntry.eTag)) {
-                    hooks.invokeOnConfigChanged(fromCache.config.entries);
+                if (!fromCache.isEmpty() && !fromCache.getETag().equals(cachedEntry.getETag())) {
+                    hooks.invokeOnConfigChanged(fromCache.getConfig().getEntries());
                     cachedEntry = fromCache;
                 }
                 // Cache isn't expired
-                if (cachedEntry.fetchTime > time) {
+                if (cachedEntry.getFetchTime() > time) {
                     setInitialized();
                     return CompletableFuture.completedFuture(Result.success(cachedEntry));
                 }
@@ -167,7 +167,7 @@ class ConfigService implements Closeable {
             if (runningTask == null) {
                 // No fetch is running, initiate a new one.
                 runningTask = new CompletableFuture<>();
-                fetcher.fetchAsync(cachedEntry.eTag)
+                fetcher.fetchAsync(cachedEntry.getETag())
                         .thenAccept(this::processResponse);
             }
 
@@ -187,12 +187,17 @@ class ConfigService implements Closeable {
                 cachedEntry = entry;
                 writeCache(entry);
                 completeRunningTask(Result.success(entry));
-                hooks.invokeOnConfigChanged(entry.config.entries);
+                hooks.invokeOnConfigChanged(entry.getConfig().getEntries());
             } else if (response.isNotModified()) {
-                cachedEntry.fetchTime = System.currentTimeMillis();
+                if (response.isFetchTimeUpdatable()) {
+                    cachedEntry = cachedEntry.withFetchTime(System.currentTimeMillis());
+                }
                 writeCache(cachedEntry);
                 completeRunningTask(Result.success(cachedEntry));
             } else {
+                if (response.isFetchTimeUpdatable()) {
+                    cachedEntry = cachedEntry.withFetchTime(System.currentTimeMillis());
+                }
                 completeRunningTask(Result.error(response.error(), cachedEntry));
             }
         } finally {
@@ -233,14 +238,14 @@ class ConfigService implements Closeable {
         try {
             String json = cache.read(cacheKey);
             if (json != null && json.equals(cachedEntryString)) {
-                return Entry.empty;
+                return Entry.EMPTY;
             }
             cachedEntryString = json;
             Entry deserialized = Utils.gson.fromJson(json, Entry.class);
-            return deserialized == null || deserialized.config == null ? Entry.empty : deserialized;
+            return deserialized == null || deserialized.getConfig() == null ? Entry.EMPTY : deserialized;
         } catch (Exception e) {
             this.logger.error("An error occurred during the cache read.", e);
-            return Entry.empty;
+            return Entry.EMPTY;
         }
     }
 

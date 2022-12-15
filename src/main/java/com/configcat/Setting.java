@@ -11,29 +11,57 @@ public class Setting {
      * Value of the feature flag / setting.
      */
     @SerializedName(value = "v")
-    public JsonElement value;
+    private JsonElement value;
 
     /**
      * Type of the feature flag / setting.
      */
     @SerializedName(value = "t")
-    public SettingType type;
+    private SettingType type;
 
     /**
      * Collection of percentage rules that belongs to the feature flag / setting.
      */
     @SerializedName(value = "p")
-    public PercentageRule[] percentageItems;
+    private PercentageRule[] percentageItems;
 
     /**
      * Collection of targeting rules that belongs to the feature flag / setting.
      */
     @SerializedName(value = "r")
-    public RolloutRule[] rolloutRules;
+    private RolloutRule[] rolloutRules;
 
     /**
      * Variation ID (for analytical purposes).
      */
     @SerializedName(value = "i")
-    public String variationId = "";
+    private String variationId = "";
+
+    public void setValue(JsonElement value) {
+        this.value = value;
+    }
+
+    public void setType(SettingType type) {
+        this.type = type;
+    }
+
+    public JsonElement getValue() {
+        return value;
+    }
+
+    public SettingType getType() {
+        return type;
+    }
+
+    public PercentageRule[] getPercentageItems() {
+        return percentageItems;
+    }
+
+    public RolloutRule[] getRolloutRules() {
+        return rolloutRules;
+    }
+
+    public String getVariationId() {
+        return variationId;
+    }
 }

@@ -6,6 +6,7 @@ import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -555,7 +556,7 @@ class ConfigCatClientTest {
 
         assertTrue(changed.get());
         assertTrue(ready.get());
-        assertEquals("Double-check your SDK Key at https://app.configcat.com/sdkkey. Received unexpected response: 500", error.get());
+        assertEquals("Unexpected HTTP response was received: 500 Server Error", error.get());
 
         server.shutdown();
         cl.close();
@@ -584,7 +585,7 @@ class ConfigCatClientTest {
         cl.forceRefresh();
 
         assertTrue(changed.get());
-        assertEquals("Double-check your SDK Key at https://app.configcat.com/sdkkey. Received unexpected response: 500", error.get());
+        assertEquals("Unexpected HTTP response was received: 500 Server Error", error.get());
 
         server.shutdown();
         cl.close();
@@ -616,7 +617,7 @@ class ConfigCatClientTest {
 
         assertTrue(changed.get());
         assertTrue(ready.get());
-        assertEquals("Double-check your SDK Key at https://app.configcat.com/sdkkey. Received unexpected response: 500", error.get());
+        assertEquals("Unexpected HTTP response was received: 500 Server Error", error.get());
 
         server.shutdown();
         cl.close();
@@ -678,5 +679,42 @@ class ConfigCatClientTest {
         ConfigCatClient client3 = ConfigCatClient.get("test");
 
         assertSame(client2, client3);
+    }
+
+    @Test
+    public void getAllValueDetails() throws IOException {
+        MockWebServer server = new MockWebServer();
+        server.start();
+
+        ConfigCatClient cl = ConfigCatClient.get(APIKEY, options -> {
+            options.pollingMode(PollingModes.manualPoll());
+            options.baseUrl(server.url("/").toString());
+        });
+
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON_MULTIPLE));
+        cl.forceRefresh();
+
+        List<EvaluationDetails<?>> allValuesDetails = cl.getAllValueDetails(null);
+
+        //assert result list
+        assertEquals(2, allValuesDetails.size());
+
+        //assert result 1
+        EvaluationDetails<?> element = allValuesDetails.get(0);
+        assertEquals("key1", element.getKey());
+        assertTrue((boolean) element.getValue());
+        assertFalse(element.isDefaultValue());
+        assertNull(element.getError());
+        assertEquals("fakeId1", element.getVariationId());
+
+        //assert result 2
+        element = allValuesDetails.get(1);
+        assertEquals("key2", element.getKey());
+        assertFalse((boolean) element.getValue());
+        assertFalse(element.isDefaultValue());
+        assertNull(element.getError());
+        assertEquals("fakeId2", element.getVariationId());
+        server.shutdown();
+        cl.close();
     }
 }
