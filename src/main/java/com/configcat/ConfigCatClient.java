@@ -292,7 +292,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
             Thread.currentThread().interrupt();
             return new ArrayList<>();
         } catch (Exception e) {
-            this.logger.error("An error occurred during getting all detailed values. Returning empty map.", e);
+            this.logger.error("An error occurred while getting the detailed values. Returning an empty map.", e);
             return new ArrayList<>();
         }
     }
@@ -315,7 +315,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
                         return result;
                     } catch (Exception e) {
-                        this.logger.error("An error occurred during getting all detailed values. Returning empty map.", e);
+                        this.logger.error("An error occurred while getting the detailed values. Returning an empty map.", e);
                         return new ArrayList<>();
                     }
                 });
