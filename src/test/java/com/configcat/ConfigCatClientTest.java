@@ -556,7 +556,7 @@ class ConfigCatClientTest {
 
         assertTrue(changed.get());
         assertTrue(ready.get());
-        assertEquals("Unexpected HTTP response was received: 500 Server Error", error.get());
+        assertEquals("Unexpected HTTP response received: 500 Server Error", error.get());
 
         server.shutdown();
         cl.close();
@@ -585,7 +585,7 @@ class ConfigCatClientTest {
         cl.forceRefresh();
 
         assertTrue(changed.get());
-        assertEquals("Unexpected HTTP response was received: 500 Server Error", error.get());
+        assertEquals("Unexpected HTTP response received: 500 Server Error", error.get());
 
         server.shutdown();
         cl.close();
@@ -617,7 +617,7 @@ class ConfigCatClientTest {
 
         assertTrue(changed.get());
         assertTrue(ready.get());
-        assertEquals("Unexpected HTTP response was received: 500 Server Error", error.get());
+        assertEquals("Unexpected HTTP response received: 500 Server Error", error.get());
 
         server.shutdown();
         cl.close();
