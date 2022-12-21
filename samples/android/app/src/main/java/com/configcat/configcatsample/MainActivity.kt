@@ -17,6 +17,9 @@ class MainActivity : AppCompatActivity() {
         this.client = ConfigCatClient.get("PKDVCLf-Hq-h-kCzMp-L7Q/HhOWfwVtZ0mb30i9wi17GQ") { options ->
             options.pollingMode(PollingModes.autoPoll(5))
 
+            // Use ConfigCat's shared preferences cache.
+            options.cache(ConfigCatPreferencesCache(this@MainActivity))
+
             // Info level logging helps to inspect the feature flag evaluation process.
             // Use the default Warning level to avoid too detailed logging in your application.
             options.logLevel(LogLevel.INFO)
