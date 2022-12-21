@@ -669,16 +669,23 @@ class ConfigCatClientTest {
         ConfigCatClient client1 = ConfigCatClient.get("test");
 
         client1.close();
+        assertTrue(client1.isClosed());
 
         ConfigCatClient client2 = ConfigCatClient.get("test");
 
         assertNotSame(client1, client2);
 
         client1.close();
+        assertFalse(client2.isClosed());
+
 
         ConfigCatClient client3 = ConfigCatClient.get("test");
 
         assertSame(client2, client3);
+
+        client2.close();
+        assertTrue(client3.isClosed());
+
     }
 
     @Test
@@ -716,5 +723,13 @@ class ConfigCatClientTest {
         assertEquals("fakeId2", element.getVariationId());
         server.shutdown();
         cl.close();
+    }
+
+    @Test
+    void testClose() throws IOException {
+        ConfigCatClient client1 = ConfigCatClient.get("test");
+        assertFalse(client1.isClosed());
+        client1.close();
+        assertTrue(client1.isClosed());
     }
 }

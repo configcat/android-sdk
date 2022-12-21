@@ -451,6 +451,9 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
     @Override
     public void close() throws IOException {
+        if (!this.isClosed.compareAndSet(false, true)) {
+            return;
+        }
         closeResources();
         synchronized (INSTANCES) {
             if (INSTANCES.get(this.sdkKey) == this) {
