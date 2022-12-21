@@ -6,6 +6,8 @@ import okhttp3.OkHttpClient;
 import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import java9.util.concurrent.CompletableFuture;
 
 /**
@@ -16,6 +18,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
     private static final String BASE_URL_EU = "https://cdn-eu.configcat.com";
     private static final Map<String, ConfigCatClient> INSTANCES = new HashMap<>();
 
+    private final AtomicBoolean isClosed = new AtomicBoolean(false);
     private final ConfigCatLogger logger;
     private final RolloutEvaluator rolloutEvaluator;
     private final OverrideDataSource overrideDataSource;
@@ -398,31 +401,47 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
     @Override
     public void setDefaultUser(User user) {
+        if (isClosed()) {
+            logger.warn("Client has already been closed, the 'setDefaultUser' has no effect.");
+            return;
+        }
         this.defaultUser = user;
     }
 
     @Override
     public void clearDefaultUser() {
+        if (isClosed()) {
+            logger.warn("Client has already been closed, the 'clearDefaultUser' has no effect.");
+            return;
+        }
         this.defaultUser = null;
     }
 
-    @Override
     public void setOnline() {
-        if (this.configService != null) {
+        if (this.configService != null && !isClosed()) {
             this.configService.setOnline();
+        } else {
+            logger.warn("Client has already been closed, the 'setOnline' has no effect.");
         }
     }
 
     @Override
     public void setOffline() {
-        if (this.configService != null) {
+        if (this.configService != null && !isClosed()) {
             this.configService.setOffline();
+        } else {
+            logger.warn("Client has already been closed, the 'setOffline' has no effect.");
         }
     }
 
     @Override
     public boolean isOffline() {
         return this.configService == null || this.configService.isOffline();
+    }
+
+    @Override
+    public boolean isClosed() {
+        return isClosed.get();
     }
 
     @Override
@@ -634,7 +653,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
             ConfigCatClient existing = INSTANCES.get(sdkKey);
             if (existing != null) {
                 if (optionsCallback != null) {
-                    existing.logger.warn("Client for '"+ sdkKey +"' is already created and will be reused; options passed are being ignored.");
+                    existing.logger.warn("The passed options are ignored because the client for '" + sdkKey + "' is already created and will be reused.");
                 }
                 return existing;
             }
