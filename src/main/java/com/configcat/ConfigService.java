@@ -232,7 +232,7 @@ class ConfigService implements Closeable {
     private Entry readCache() {
         try {
             String json = cache.read(cacheKey);
-            if (json != null && json.equals(cachedEntryString)) {
+            if (json == null || json.isEmpty() || json.equals(cachedEntryString)) {
                 return Entry.empty;
             }
             cachedEntryString = json;
