@@ -220,7 +220,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
             Thread.currentThread().interrupt();
             return new ArrayList<>();
         } catch (Exception e) {
-            this.logger.error("An error occurred during getting all the variation ids. Returning empty array.", e);
+            this.logger.error("An error occurred while getting all the variation ids. Returning empty array.", e);
             return new ArrayList<>();
         }
     }
@@ -241,7 +241,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
                         return result;
                     } catch (Exception e) {
-                        this.logger.error("An error occurred during getting all the variation ids. Returning empty array.", e);
+                        this.logger.error("An error occurred while getting all the variation ids. Returning empty array.", e);
                         return new ArrayList<>();
                     }
                 });
@@ -256,7 +256,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
             Thread.currentThread().interrupt();
             return new HashMap<>();
         } catch (Exception e) {
-            this.logger.error("An error occurred during getting all values. Returning empty map.", e);
+            this.logger.error("An error occurred while getting all values. Returning empty map.", e);
             return new HashMap<>();
         }
     }
@@ -280,7 +280,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
                         return result;
                     } catch (Exception e) {
-                        this.logger.error("An error occurred during getting all values. Returning empty map.", e);
+                        this.logger.error("An error occurred while getting all values. Returning empty map.", e);
                         return new HashMap<>();
                     }
                 });
@@ -358,7 +358,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
             this.logger.error("Thread interrupted.", e);
             return new ArrayList<>();
         } catch (Exception e) {
-            this.logger.error("An error occurred during getting all the setting keys. Returning empty array.", e);
+            this.logger.error("An error occurred while getting all the setting keys. Returning empty array.", e);
             return new ArrayList<>();
         }
     }
@@ -370,7 +370,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                     try {
                         return settingsResult.settings().keySet();
                     } catch (Exception e) {
-                        this.logger.error("An error occurred during getting all the setting keys. Returning empty array.", e);
+                        this.logger.error("An error occurred while getting all the setting keys. Returning empty array.", e);
                         return new ArrayList<>();
                     }
                 });
@@ -402,7 +402,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
     @Override
     public void setDefaultUser(User user) {
         if (isClosed()) {
-            logger.warn("Client has already been closed, the 'setDefaultUser' has no effect.");
+            logger.warn("The 'setDefaultUser' method has no effect because the client has already been closed");
             return;
         }
         this.defaultUser = user;
@@ -411,7 +411,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
     @Override
     public void clearDefaultUser() {
         if (isClosed()) {
-            logger.warn("Client has already been closed, the 'clearDefaultUser' has no effect.");
+            logger.warn("The 'clearDefaultUser' method has no effect because the client has already been closed");
             return;
         }
         this.defaultUser = null;
@@ -421,7 +421,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         if (this.configService != null && !isClosed()) {
             this.configService.setOnline();
         } else {
-            logger.warn("Client has already been closed, the 'setOnline' has no effect.");
+            logger.warn("The 'setOnline' method has no effect because the client has already been closed");
         }
     }
 
@@ -430,7 +430,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         if (this.configService != null && !isClosed()) {
             this.configService.setOffline();
         } else {
-            logger.warn("Client has already been closed, the 'setOffline' has no effect.");
+            logger.warn("The 'setOffline' method has no effect because the client has already been closed");
         }
     }
 
@@ -645,7 +645,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
      * Creates a new or gets an already existing ConfigCatClient for the given sdkKey.
      *
      * @param sdkKey the SDK Key for to communicate with the ConfigCat services.
-     * @param optionsCallback the options callback to configure the created ConfigCatClient instance.
+     * @param optionsCallback the options callback to set up the created ConfigCatClient instance.
      * @return the ConfigCatClient instance.
      */
     public static ConfigCatClient get(String sdkKey, Consumer<Options> optionsCallback) {

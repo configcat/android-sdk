@@ -137,7 +137,7 @@ class ConfigFetcher implements Closeable {
                 }
 
             } catch (Exception exception) {
-                this.logger.error("Exception while try to fetch the config.json.", exception);
+                this.logger.error("Exception while trying to fetch the config.json.", exception);
                 return CompletableFuture.completedFuture(fetchResponse);
             }
 
@@ -152,7 +152,7 @@ class ConfigFetcher implements Closeable {
         this.httpClient.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                String generalMessage = "An error occurred during fetching of the latest config.json.";
+                String generalMessage = "Exception while trying to fetch the config.json.";
                 if (!closed.get()) {
                     if (e instanceof SocketTimeoutException) {
                         String message = "Request timed out. Timeout values: [connect: " + httpClient.connectTimeoutMillis() + "ms, read: " + httpClient.readTimeoutMillis() + "ms, write: " + httpClient.writeTimeoutMillis() + "ms]";
@@ -195,7 +195,7 @@ class ConfigFetcher implements Closeable {
                     logger.error(message, e);
                     future.complete(FetchResponse.failed(message, false));
                 } catch (Exception e) {
-                    String message = "Exception while try to fetch the config.json.";
+                    String message = "Exception while trying to fetch the config.json.";
                     logger.error(message, e);
                     future.complete(FetchResponse.failed(message + ": " + e.getMessage() , false));
                 }

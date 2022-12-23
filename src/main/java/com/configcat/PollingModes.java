@@ -7,58 +7,58 @@ public final class PollingModes {
     private PollingModes() { /* prevent from instantiating */ }
 
     /**
-     * Creates a configured auto polling configuration.
+     * Set up the auto polling mode with default parameters.
      *
-     * @return the auto polling configuration.
+     * @return the auto polling mode.
      */
     public static PollingMode autoPoll() {
         return new AutoPollingMode(60, 5);
     }
 
     /**
-     * Creates a configured auto polling configuration.
+     * Set up the auto polling mode with custom parameters.
      *
-     * @param autoPollIntervalInSeconds Sets at least how often this policy should fetch the latest configuration and refresh the cache.
-     * @return the auto polling configuration.
+     * @param autoPollIntervalInSeconds Sets how often the config.json should be fetched and cached.
+     * @return the auto polling mode.
      */
     public static PollingMode autoPoll(int autoPollIntervalInSeconds) {
         return new AutoPollingMode(autoPollIntervalInSeconds, 5);
     }
 
     /**
-     * Creates a configured auto polling configuration.
+     * Set up the auto polling mode with custom parameters.
      *
-     * @param autoPollIntervalInSeconds Sets at least how often this policy should fetch the latest configuration and refresh the cache.
-     * @param maxInitWaitTimeSeconds    Sets the maximum waiting time between initialization and the first config acquisition in seconds.
-     * @return the auto polling configuration.
+     * @param autoPollIntervalInSeconds Sets how often the config.json should be fetched and cached.
+     * @param maxInitWaitTimeSeconds    Sets the time limit between the initialization of the client and the first config.json acquisition.
+     * @return the auto polling mode.
      */
     public static PollingMode autoPoll(int autoPollIntervalInSeconds, int maxInitWaitTimeSeconds) {
         return new AutoPollingMode(autoPollIntervalInSeconds, maxInitWaitTimeSeconds);
     }
 
     /**
-     * Creates a configured lazy loading polling configuration.
+     * Set up a lazy polling mode with default parameters.
      *
-     * @return the lazy loading polling configuration.
+     * @return the lazy polling mode.
      */
     public static PollingMode lazyLoad() {
         return new LazyLoadingMode(60);
     }
 
     /**
-     * Creates a configured lazy loading polling configuration.
+     * Set up a lazy polling mode with custom parameters.
      *
      * @param cacheRefreshIntervalInSeconds Sets how long the cache will store its value before fetching the latest from the network again.
-     * @return the lazy loading polling configuration.
+     * @return the lazy polling mode.
      */
     public static PollingMode lazyLoad(int cacheRefreshIntervalInSeconds) {
         return new LazyLoadingMode(cacheRefreshIntervalInSeconds);
     }
 
     /**
-     * Creates a configured manual polling configuration.
+     * Set up the manual polling mode.
      *
-     * @return the manual polling configuration.
+     * @return the manual polling mode.
      */
     public static PollingMode manualPoll() {
         return new ManualPollingMode();
@@ -71,7 +71,7 @@ class AutoPollingMode implements PollingMode {
 
     AutoPollingMode(int autoPollRateInSeconds, int maxInitWaitTimeSeconds) {
         if (autoPollRateInSeconds < 1)
-            throw new IllegalArgumentException("autoPollRateInSeconds cannot be less than 1 seconds");
+            throw new IllegalArgumentException("autoPollRateInSeconds cannot be less than 1 second");
 
         this.autoPollRateInSeconds = autoPollRateInSeconds;
         this.maxInitWaitTimeSeconds = maxInitWaitTimeSeconds;
@@ -96,7 +96,7 @@ class LazyLoadingMode implements PollingMode {
 
     LazyLoadingMode(int cacheRefreshIntervalInSeconds) {
         if (cacheRefreshIntervalInSeconds < 1)
-            throw new IllegalArgumentException("cacheRefreshIntervalInSeconds cannot be less than 1 seconds");
+            throw new IllegalArgumentException("cacheRefreshIntervalInSeconds cannot be less than 1 second");
 
         this.cacheRefreshIntervalInSeconds = cacheRefreshIntervalInSeconds;
     }
