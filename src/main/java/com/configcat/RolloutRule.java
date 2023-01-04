@@ -11,13 +11,13 @@ public class RolloutRule {
      * Value served when the rule is selected during evaluation.
      */
     @SerializedName(value = "v")
-    public JsonElement value;
+    private JsonElement value;
 
     /**
      * The user attribute used in the comparison during evaluation.
      */
     @SerializedName(value = "a")
-    public String comparisonAttribute;
+    private String comparisonAttribute;
 
     /**
      * The operator used in the comparison.
@@ -42,17 +42,37 @@ public class RolloutRule {
      * 17: 'IS NOT ONE OF (Sensitive)'
      */
     @SerializedName(value = "t")
-    public int comparator;
+    private int comparator;
 
     /**
      * The comparison value compared to the given user attribute.
      */
     @SerializedName(value = "c")
-    public String comparisonValue;
+    private String comparisonValue;
 
     /**
      * The rule's variation ID (for analytical purposes).
      */
     @SerializedName(value = "i")
-    public String variationId;
+    private String variationId;
+
+    public JsonElement getValue() {
+        return value;
+    }
+
+    public String getComparisonAttribute() {
+        return comparisonAttribute;
+    }
+
+    public int getComparator() {
+        return comparator;
+    }
+
+    public String getComparisonValue() {
+        return comparisonValue;
+    }
+
+    public String getVariationId() {
+        return variationId;
+    }
 }

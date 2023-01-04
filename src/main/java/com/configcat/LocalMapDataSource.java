@@ -16,8 +16,8 @@ class LocalMapDataSource extends OverrideDataSource {
         Gson gson = new GsonBuilder().create();
         for (Map.Entry<String, Object> entry : source.entrySet()) {
             Setting setting = new Setting();
-            setting.value = gson.toJsonTree(entry.getValue());
-            setting.type = determineSettingType(entry.getValue());
+            setting.setValue(gson.toJsonTree(entry.getValue()));
+            setting.setType(determineSettingType(entry.getValue()));
             this.loadedSettings.put(entry.getKey(), setting);
         }
     }

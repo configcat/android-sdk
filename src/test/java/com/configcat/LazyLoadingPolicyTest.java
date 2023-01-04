@@ -30,7 +30,7 @@ class LazyLoadingPolicyTest {
         PollingMode mode = PollingModes
                 .lazyLoad(5);
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
-        this.policy = new ConfigService("", mode, new NullConfigCache(), logger, fetcher, new ConfigCatClient.Hooks(), false);
+        this.policy = new ConfigService("", mode, new NullConfigCache(), logger, fetcher, new ConfigCatHooks(), false);
     }
 
     @AfterEach
@@ -45,13 +45,13 @@ class LazyLoadingPolicyTest {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test2")).setBodyDelay(3, TimeUnit.SECONDS));
 
         //first call
-        assertEquals("test", this.policy.getSettings().get().settings().get("fakeKey").value.getAsString());
+        assertEquals("test", this.policy.getSettings().get().settings().get("fakeKey").getValue().getAsString());
 
         //wait for cache invalidation
         Thread.sleep(6000);
 
         //next call will block until the new value is fetched
-        assertEquals("test2", this.policy.getSettings().get().settings().get("fakeKey").value.getAsString());
+        assertEquals("test2", this.policy.getSettings().get().settings().get("fakeKey").getValue().getAsString());
     }
 
     @Test
@@ -59,19 +59,19 @@ class LazyLoadingPolicyTest {
         PollingMode mode = PollingModes
                 .lazyLoad(5);
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
-        ConfigService lPolicy = new ConfigService("", mode, new NullConfigCache(), logger, fetcher, new ConfigCatClient.Hooks(), false);
+        ConfigService lPolicy = new ConfigService("", mode, new NullConfigCache(), logger, fetcher, new ConfigCatHooks(), false);
 
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test2")).setBodyDelay(3, TimeUnit.SECONDS));
 
         //first call
-        assertEquals("test", lPolicy.getSettings().get().settings().get("fakeKey").value.getAsString());
+        assertEquals("test", lPolicy.getSettings().get().settings().get("fakeKey").getValue().getAsString());
 
         //wait for cache invalidation
         Thread.sleep(6000);
 
         //next call will block until the new value is fetched
-        assertEquals("test2", lPolicy.getSettings().get().settings().get("fakeKey").value.getAsString());
+        assertEquals("test2", lPolicy.getSettings().get().settings().get("fakeKey").getValue().getAsString());
     }
 
     @Test
@@ -80,13 +80,13 @@ class LazyLoadingPolicyTest {
         this.server.enqueue(new MockResponse().setResponseCode(500));
 
         //first call
-        assertEquals("test", this.policy.getSettings().get().settings().get("fakeKey").value.getAsString());
+        assertEquals("test", this.policy.getSettings().get().settings().get("fakeKey").getValue().getAsString());
 
         //wait for cache invalidation
         Thread.sleep(6000);
 
         //previous value returned because of the refresh failure
-        assertEquals("test", this.policy.getSettings().get().settings().get("fakeKey").value.getAsString());
+        assertEquals("test", this.policy.getSettings().get().settings().get("fakeKey").getValue().getAsString());
     }
 
     @Test
@@ -98,7 +98,7 @@ class LazyLoadingPolicyTest {
         PollingMode mode = PollingModes
                 .lazyLoad(1);
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
-        ConfigService service = new ConfigService("", mode, cache, logger, fetcher, new ConfigCatClient.Hooks(), false);
+        ConfigService service = new ConfigService("", mode, cache, logger, fetcher, new ConfigCatHooks(), false);
 
         assertFalse(service.getSettings().get().settings().isEmpty());
         assertFalse(service.getSettings().get().settings().isEmpty());
@@ -122,7 +122,7 @@ class LazyLoadingPolicyTest {
         PollingMode mode = PollingModes
                 .lazyLoad(1);
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
-        ConfigService service = new ConfigService("", mode, cache, logger, fetcher, new ConfigCatClient.Hooks(), false);
+        ConfigService service = new ConfigService("", mode, cache, logger, fetcher, new ConfigCatHooks(), false);
 
         assertFalse(service.getSettings().get().settings().isEmpty());
         assertFalse(service.getSettings().get().settings().isEmpty());
@@ -149,7 +149,7 @@ class LazyLoadingPolicyTest {
                 this.server.url("/").toString(),
                 false,
                 pollingMode.getPollingIdentifier());
-        ConfigService service = new ConfigService("", pollingMode, new NullConfigCache(), logger, fetcher, new ConfigCatClient.Hooks(), false);
+        ConfigService service = new ConfigService("", pollingMode, new NullConfigCache(), logger, fetcher, new ConfigCatHooks(), false);
 
         assertFalse(service.getSettings().get().settings().isEmpty());
         assertEquals(1, this.server.getRequestCount());
@@ -183,7 +183,7 @@ class LazyLoadingPolicyTest {
                 this.server.url("/").toString(),
                 false,
                 pollingMode.getPollingIdentifier());
-        ConfigService service = new ConfigService("", pollingMode, new NullConfigCache(), logger, fetcher, new ConfigCatClient.Hooks(), true);
+        ConfigService service = new ConfigService("", pollingMode, new NullConfigCache(), logger, fetcher, new ConfigCatHooks(), true);
 
         assertTrue(service.getSettings().get().settings().isEmpty());
         assertEquals(0, this.server.getRequestCount());

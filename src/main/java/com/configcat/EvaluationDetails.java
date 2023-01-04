@@ -57,7 +57,7 @@ public class EvaluationDetails<T> {
     }
 
     /**
-     * The evaluated variation ID (analytics).
+     * The variationID is the identifier of the evaluated value. Usually used for analytics.
      */
     public String getVariationId() {
         return variationId;
@@ -71,7 +71,7 @@ public class EvaluationDetails<T> {
     }
 
     /**
-     * True when the default value passed to getValueDetails() is returned due to an error.
+     * True when the default value was returned, possibly due to an error.
      */
     public boolean isDefaultValue() {
         return isDefaultValue;

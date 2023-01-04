@@ -6,6 +6,8 @@ import okhttp3.OkHttpClient;
 import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import java9.util.concurrent.CompletableFuture;
 
 /**
@@ -16,12 +18,13 @@ public final class ConfigCatClient implements ConfigurationProvider {
     private static final String BASE_URL_EU = "https://cdn-eu.configcat.com";
     private static final Map<String, ConfigCatClient> INSTANCES = new HashMap<>();
 
+    private final AtomicBoolean isClosed = new AtomicBoolean(false);
     private final ConfigCatLogger logger;
     private final RolloutEvaluator rolloutEvaluator;
     private final OverrideDataSource overrideDataSource;
     private final OverrideBehaviour overrideBehaviour;
     private final String sdkKey;
-    private final Hooks hooks;
+    private final ConfigCatHooks hooks;
     private User defaultUser;
 
     private ConfigService configService;
@@ -217,7 +220,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
             Thread.currentThread().interrupt();
             return new ArrayList<>();
         } catch (Exception e) {
-            this.logger.error("An error occurred during getting all the variation ids. Returning empty array.", e);
+            this.logger.error("An error occurred while getting all the variation ids. Returning empty array.", e);
             return new ArrayList<>();
         }
     }
@@ -238,7 +241,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
                         return result;
                     } catch (Exception e) {
-                        this.logger.error("An error occurred during getting all the variation ids. Returning empty array.", e);
+                        this.logger.error("An error occurred while getting all the variation ids. Returning empty array.", e);
                         return new ArrayList<>();
                     }
                 });
@@ -253,7 +256,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
             Thread.currentThread().interrupt();
             return new HashMap<>();
         } catch (Exception e) {
-            this.logger.error("An error occurred during getting all values. Returning empty map.", e);
+            this.logger.error("An error occurred while getting all values. Returning empty map.", e);
             return new HashMap<>();
         }
     }
@@ -271,14 +274,52 @@ public final class ConfigCatClient implements ConfigurationProvider {
                         for (String key : keys) {
                             Setting setting = settingMap.get(key);
                             if (setting == null) continue;
-                            Object value = this.evaluate(classBySettingType(setting.type), setting, key, userObject, settingsResult.fetchTime()).getValue();
+                            Object value = this.evaluate(classBySettingType(setting.getType()), setting, key, userObject, settingsResult.fetchTime()).getValue();
                             result.put(key, value);
                         }
 
                         return result;
                     } catch (Exception e) {
-                        this.logger.error("An error occurred during getting all values. Returning empty map.", e);
+                        this.logger.error("An error occurred while getting all values. Returning empty map.", e);
                         return new HashMap<>();
+                    }
+                });
+    }
+
+    @Override
+    public List<EvaluationDetails<?>> getAllValueDetails(User user) {
+        try {
+            return this.getAllValueDetailsAsync(user).get();
+        } catch (InterruptedException e) {
+            this.logger.error("Thread interrupted.", e);
+            Thread.currentThread().interrupt();
+            return new ArrayList<>();
+        } catch (Exception e) {
+            this.logger.error("An error occurred while getting the detailed values. Returning an empty map.", e);
+            return new ArrayList<>();
+        }
+    }
+
+    @Override
+    public CompletableFuture<List<EvaluationDetails<?>>> getAllValueDetailsAsync(User user) {
+        return this.getSettingsAsync()
+                .thenApply(settingResult -> {
+                    try {
+                        Map<String, Setting> settings = settingResult.settings();
+                        List<EvaluationDetails<?>> result = new ArrayList<>();
+
+                        for (String key : settings.keySet()) {
+                            Setting setting = settings.get(key);
+
+                            EvaluationDetails<?> evaluationDetails = this.evaluate(this.classBySettingType(setting.getType()), setting,
+                                    key, user != null ? user : this.defaultUser, settingResult.fetchTime());
+                            result.add(evaluationDetails);
+                        }
+
+                        return result;
+                    } catch (Exception e) {
+                        this.logger.error("An error occurred while getting the detailed values. Returning an empty map.", e);
+                        return new ArrayList<>();
                     }
                 });
     }
@@ -317,7 +358,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
             this.logger.error("Thread interrupted.", e);
             return new ArrayList<>();
         } catch (Exception e) {
-            this.logger.error("An error occurred during getting all the setting keys. Returning empty array.", e);
+            this.logger.error("An error occurred while getting all the setting keys. Returning empty array.", e);
             return new ArrayList<>();
         }
     }
@@ -329,7 +370,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                     try {
                         return settingsResult.settings().keySet();
                     } catch (Exception e) {
-                        this.logger.error("An error occurred during getting all the setting keys. Returning empty array.", e);
+                        this.logger.error("An error occurred while getting all the setting keys. Returning empty array.", e);
                         return new ArrayList<>();
                     }
                 });
@@ -360,25 +401,36 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
     @Override
     public void setDefaultUser(User user) {
+        if (isClosed()) {
+            logger.warn("The 'setDefaultUser' method has no effect because the client has already been closed");
+            return;
+        }
         this.defaultUser = user;
     }
 
     @Override
     public void clearDefaultUser() {
+        if (isClosed()) {
+            logger.warn("The 'clearDefaultUser' method has no effect because the client has already been closed");
+            return;
+        }
         this.defaultUser = null;
     }
 
-    @Override
     public void setOnline() {
-        if (this.configService != null) {
+        if (this.configService != null && !isClosed()) {
             this.configService.setOnline();
+        } else {
+            logger.warn("The 'setOnline' method has no effect because the client has already been closed");
         }
     }
 
     @Override
     public void setOffline() {
-        if (this.configService != null) {
+        if (this.configService != null && !isClosed()) {
             this.configService.setOffline();
+        } else {
+            logger.warn("The 'setOffline' method has no effect because the client has already been closed");
         }
     }
 
@@ -388,12 +440,20 @@ public final class ConfigCatClient implements ConfigurationProvider {
     }
 
     @Override
-    public Hooks getHooks() {
+    public boolean isClosed() {
+        return isClosed.get();
+    }
+
+    @Override
+    public ConfigCatHooks getHooks() {
         return this.hooks;
     }
 
     @Override
     public void close() throws IOException {
+        if (!this.isClosed.compareAndSet(false, true)) {
+            return;
+        }
         closeResources();
         synchronized (INSTANCES) {
             if (INSTANCES.get(this.sdkKey) == this) {
@@ -505,19 +565,19 @@ public final class ConfigCatClient implements ConfigurationProvider {
             for (Map.Entry<String, Setting> node : settings.entrySet()) {
                 String settingKey = node.getKey();
                 Setting setting = node.getValue();
-                if (variationId.equals(setting.variationId)) {
-                    return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, setting.value));
+                if (variationId.equals(setting.getVariationId())) {
+                    return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, setting.getValue()));
                 }
 
-                for (RolloutRule rolloutRule : setting.rolloutRules) {
-                    if (variationId.equals(rolloutRule.variationId)) {
-                        return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, rolloutRule.value));
+                for (RolloutRule rolloutRule : setting.getRolloutRules()) {
+                    if (variationId.equals(rolloutRule.getVariationId())) {
+                        return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, rolloutRule.getValue()));
                     }
                 }
 
-                for (PercentageRule percentageRule : setting.percentageItems) {
-                    if (variationId.equals(percentageRule.variationId)) {
-                        return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, percentageRule.value));
+                for (PercentageRule percentageRule : setting.getPercentageItems()) {
+                    if (variationId.equals(percentageRule.getVariationId())) {
+                        return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, percentageRule.getValue()));
                     }
                 }
             }
@@ -585,7 +645,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
      * Creates a new or gets an already existing ConfigCatClient for the given sdkKey.
      *
      * @param sdkKey the SDK Key for to communicate with the ConfigCat services.
-     * @param optionsCallback the options callback to configure the created ConfigCatClient instance.
+     * @param optionsCallback the options callback to set up the created ConfigCatClient instance.
      * @return the ConfigCatClient instance.
      */
     public static ConfigCatClient get(String sdkKey, Consumer<Options> optionsCallback) {
@@ -596,7 +656,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
             ConfigCatClient existing = INSTANCES.get(sdkKey);
             if (existing != null) {
                 if (optionsCallback != null) {
-                    existing.logger.warn("Client for '"+ sdkKey +"' is already created and will be reused; options passed are being ignored.");
+                    existing.logger.warn("The passed options are ignored because the client for '" + sdkKey + "' is already created and will be reused.");
                 }
                 return existing;
             }
@@ -642,7 +702,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         private User defaultUser;
         private boolean offline;
 
-        private final Hooks hooks = new Hooks();
+        private final ConfigCatHooks hooks = new ConfigCatHooks();
 
         /**
          * Sets the underlying http client which will be used to fetch the latest configuration.
@@ -745,107 +805,9 @@ public final class ConfigCatClient implements ConfigurationProvider {
          *
          * @return the hooks object used to subscribe to SDK events.
          */
-        public Hooks hooks() {
+        public ConfigCatHooks hooks() {
             return this.hooks;
         }
     }
 
-    public static class Hooks {
-        private final Object sync = new Object();
-        private final List<Consumer<Map<String, Setting>>> onConfigChanged = new ArrayList<>();
-        private final List<Runnable> onClientReady = new ArrayList<>();
-        private final List<Consumer<EvaluationDetails<Object>>> onFlagEvaluated = new ArrayList<>();
-        private final List<Consumer<String>> onError = new ArrayList<>();
-
-        /**
-         * Subscribes to the onReady event. This event is sent when the SDK reaches the ready state.
-         * If the SDK is configured with lazy load or manual polling it's considered ready right after instantiation.
-         * If it's using auto polling, the ready state is reached when the SDK has a valid config.json loaded
-         * into memory either from cache or from HTTP. If the config couldn't be loaded neither from cache nor from HTTP the
-         * onReady event fires when the auto polling's maxInitWaitTimeInSeconds is reached.
-         *
-         * @param callback the method to call when the event fires.
-         */
-        public void addOnClientReady(Runnable callback) {
-            synchronized (sync) {
-                this.onClientReady.add(callback);
-            }
-        }
-
-        /**
-         * Subscribes to the onConfigChanged event. This event is sent when the SDK loads a valid config.json
-         * into memory from cache, and each subsequent time when the loaded config.json changes via HTTP.
-         *
-         * @param callback the method to call when the event fires.
-         */
-        public void addOnConfigChanged(Consumer<Map<String, Setting>> callback) {
-            synchronized (sync) {
-                this.onConfigChanged.add(callback);
-            }
-        }
-
-        /**
-         * Subscribes to the onError event. This event is sent when an error occurs within the ConfigCat SDK.
-         *
-         * @param callback the method to call when the event fires.
-         */
-        public void addOnError(Consumer<String> callback) {
-            synchronized (sync) {
-                this.onError.add(callback);
-            }
-        }
-
-        /**
-         * Subscribes to the onFlagEvaluated event. This event is sent each time when the SDK evaluates a feature flag or setting.
-         * The event sends the same evaluation details that you would get from getValueDetails().
-         *
-         * @param callback the method to call when the event fires.
-         */
-        public void addOnFlagEvaluated(Consumer<EvaluationDetails<Object>> callback) {
-            synchronized (sync) {
-                this.onFlagEvaluated.add(callback);
-            }
-        }
-
-        void invokeOnClientReady() {
-            synchronized (sync) {
-                for (Runnable func : this.onClientReady) {
-                    func.run();
-                }
-            }
-        }
-
-        void invokeOnError(String error) {
-            synchronized (sync) {
-                for (Consumer<String> func : this.onError) {
-                    func.accept(error);
-                }
-            }
-        }
-
-        void invokeOnConfigChanged(Map<String, Setting> settingMap) {
-            synchronized (sync) {
-                for (Consumer<Map<String, Setting>> func : this.onConfigChanged) {
-                    func.accept(settingMap);
-                }
-            }
-        }
-
-        void invokeOnFlagEvaluated(EvaluationDetails<Object> evaluationDetails) {
-            synchronized (sync) {
-                for (Consumer<EvaluationDetails<Object>> func : this.onFlagEvaluated) {
-                    func.accept(evaluationDetails);
-                }
-            }
-        }
-
-        void clear() {
-            synchronized (sync) {
-                this.onConfigChanged.clear();
-                this.onError.clear();
-                this.onFlagEvaluated.clear();
-                this.onClientReady.clear();
-            }
-        }
-    }
 }
