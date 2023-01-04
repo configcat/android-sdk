@@ -1,7 +1,7 @@
 # Steps to deploy
 ## Preparation
 1. Run tests
-3. Increase the version in the `gradle.properties` and `src/main/java/com.configcat/ConfigFetcher.java` file.
+3. Increase the version in the `gradle.properties` and `src/main/java/com.configcat/Constants.java` file.
 4. Commit & Push
 ## Publish
 Use the **same version** for the git tag as in the properties file.
