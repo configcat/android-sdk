@@ -26,35 +26,35 @@ implementation 'com.configcat:configcat-android-client:8.+'
 ![SDK-KEY](https://raw.githubusercontent.com/ConfigCat/android-sdk/master/media/readme02-3.png  "SDK-KEY")
 
 ### 3. Import *com.configcat.** to your application
-```kotlin
-import com.configcat.*
+```java
+import com.configcat.*;
 ```
 
 ### 4. Create the *ConfigCat* client instance
-```kotlin
-val client = new ConfigCatClient("#YOUR-SDK-KEY#")
+```java
+ConfigCatClient client = ConfigCatClient.get("#YOUR-SDK-KEY#");
 ```
 
 ### 5. Get your setting value:
-```kotlin
-val isMyAwesomeFeatureEnabled = client.getValue(Boolean::class.java, "isMyAwesomeFeatureEnabled", false)
-if (isMyAwesomeFeatureEnabled) {
-    doTheNewThing()
+```java
+boolean isMyAwesomeFeatureEnabled = client.getValue(Boolean.class, "isMyAwesomeFeatureEnabled", false);
+if(isMyAwesomeFeatureEnabled) {
+    doTheNewThing();
 } else {
-    doTheOldThing()
+    doTheOldThing();
 }
 ```
 Or use the async APIs:
 
-```kotlin
-client.getValueAsync(Boolean::class.java, "isMyAwesomeFeatureEnabled", false)
-    .thenAccept { isMyAwesomeFeatureEnabled ->
-        if (isMyAwesomeFeatureEnabled) {
-            doTheNewThing()
+```java
+client.getValueAsync(Boolean.class, "isMyAwesomeFeatureEnabled", false)
+    .thenAccept(isMyAwesomeFeatureEnabled -> {
+        if(isMyAwesomeFeatureEnabled) {
+            doTheNewThing();
         } else {
-            doTheOldThing()
+            doTheOldThing();
         }
-    }
+    });
 ```
 
 ## Compatibility
@@ -72,17 +72,16 @@ Read more about [Targeting here](https://configcat.com/docs/advanced/targeting/)
 ## User object
 Percentage and targeted rollouts are calculated by the user object you can optionally pass to the configuration requests.
 The user object must be created with a **mandatory** identifier parameter which should uniquely identify each user:
-```kotlin
-val user = User.newBuilder().build("#USER-IDENTIFIER#") // mandatory
+```java
+User user = User.newBuilder()
+        .build("#USER-IDENTIFIER#"); // mandatory
 
-val isMyAwesomeFeatureEnabled = client.getValue(Boolean::class.java, "isMyAwesomeFeatureEnabled", user, false)
-    .thenAccept { isMyAwesomeFeatureEnabled ->
-        if (isMyAwesomeFeatureEnabled) {
-            doTheNewThing()
-        } else {
-            doTheOldThing()
-        }
-    }
+boolean isMyAwesomeFeatureEnabled = client.getValue(Boolean.class, "isMyAwesomeFeatureEnabled", user, false);
+if(isMyAwesomeFeatureEnabled) {
+    doTheNewThing();
+} else{
+    doTheOldThing();
+}
 ```
 
 ## Sample/Demo app
