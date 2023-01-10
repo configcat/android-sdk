@@ -6,10 +6,10 @@ import android.content.SharedPreferences;
 /**
  * {@link ConfigCache} implementation that uses {@link SharedPreferences} for persistent storage.
  */
-public class ConfigCatPreferencesCache extends ConfigCache {
+public class SharedPreferencesCache extends ConfigCache {
     private final SharedPreferences sharedPreferences;
 
-    public ConfigCatPreferencesCache(android.content.Context context) {
+    public SharedPreferencesCache(android.content.Context context) {
         this.sharedPreferences = context.getApplicationContext().getSharedPreferences("configcat_preferences", Context.MODE_PRIVATE);
     }
 

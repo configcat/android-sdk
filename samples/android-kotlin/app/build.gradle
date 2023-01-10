@@ -36,7 +36,7 @@ dependencies {
     implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.7.21'
     implementation 'androidx.appcompat:appcompat:1.5.1'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-    implementation 'com.configcat:configcat-android-client:8.0.0-SNAPSHOT'
+    implementation 'com.configcat:configcat-android-client:8.2.0-SNAPSHOT'
     implementation 'org.slf4j:slf4j-android:1.7.36'
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.4'
