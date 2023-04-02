@@ -125,7 +125,7 @@ class ConfigFetcher implements Closeable {
                     return CompletableFuture.completedFuture(fetchResponse);
                 } else { // redirect
                     if (redirect == RedirectMode.SHOULD_REDIRECT.ordinal()) {
-                        this.logger.warn(3002, "The `builder.dataGovernance()` parameter specified at the client initialization is not in sync with the preferences on the ConfigCat Dashboard. Read more: https://configcat.com/docs/advanced/data-governance/");
+                        this.logger.warn(3002, ConfigCatLogMessages.DATA_GOVERNANCE_IS_OUT_OF_SYNC_WARN);
                     }
 
                     if (executionCount > 0) {
@@ -134,11 +134,11 @@ class ConfigFetcher implements Closeable {
                 }
 
             } catch (Exception exception) {
-                this.logger.error(1103, "Unexpected error occurred while trying to fetch config JSON.", exception);
+                this.logger.error(1103, ConfigCatLogMessages.FETCH_FAILED_DUE_TO_UNEXPECTED_ERROR, exception);
                 return CompletableFuture.completedFuture(fetchResponse);
             }
 
-            this.logger.error(1104, "Redirection loop encountered while trying to fetch config JSON. Please contact us at https://configcat.com/support/");
+            this.logger.error(1104, ConfigCatLogMessages.FETCH_FAILED_DUE_TO_REDIRECT_LOOP_ERROR);
             return CompletableFuture.completedFuture(fetchResponse);
         });
     }
@@ -149,10 +149,10 @@ class ConfigFetcher implements Closeable {
         this.httpClient.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                String generalMessage = "Unexpected error occurred while trying to fetch config JSON.";
+                String generalMessage = ConfigCatLogMessages.FETCH_FAILED_DUE_TO_UNEXPECTED_ERROR;
                 if (!closed.get()) {
                     if (e instanceof SocketTimeoutException) {
-                        String message = "Request timed out while trying to fetch config JSON. Timeout values: [connect: " + httpClient.connectTimeoutMillis() + "ms, read: " + httpClient.readTimeoutMillis() + "ms, write: " + httpClient.writeTimeoutMillis() + "ms]";
+                        String message = ConfigCatLogMessages.getFetchFailedDueToRequestTimeout(httpClient.connectTimeoutMillis() ,httpClient.readTimeoutMillis() ,httpClient.writeTimeoutMillis());
                         logger.error(1102, message, e);
                         future.complete(FetchResponse.failed(message, false));
                         return;
@@ -179,20 +179,20 @@ class ConfigFetcher implements Closeable {
                         logger.debug("Fetch was successful: config not modified.");
                         future.complete(FetchResponse.notModified());
                     } else if (response.code() == 403 || response.code() == 404) {
-                        String message = "Your SDK Key seems to be wrong. You can find the valid SDK Key at https://app.configcat.com/sdkkey";
+                        String message = ConfigCatLogMessages.FETCH_FAILED_DUE_TO_INVALID_SDK_KEY_ERROR;
                         logger.error(1100, message);
                         future.complete(FetchResponse.failed(message, true));
                     } else {
-                        String message = "Unexpected HTTP response was received while trying to fetch config JSON: "  + response.code() + " " + response.message();
+                        String message = ConfigCatLogMessages.getFetchFailedDueToUnexpectedHttpResponse(response.code(),response.message());
                         logger.error(1101, message);
                         future.complete(FetchResponse.failed(message, false));
                     }
                 } catch (SocketTimeoutException e) {
-                    String message = "Request timed out while trying to fetch config JSON. Timeout values: [connect: " + httpClient.connectTimeoutMillis() + "ms, read: " + httpClient.readTimeoutMillis() + "ms, write: " + httpClient.writeTimeoutMillis() + "ms]";
+                    String message = ConfigCatLogMessages.getFetchFailedDueToRequestTimeout(httpClient.connectTimeoutMillis() ,httpClient.readTimeoutMillis() ,httpClient.writeTimeoutMillis());
                     logger.error(1102, message, e);
                     future.complete(FetchResponse.failed(message, false));
                 } catch (Exception e) {
-                    String message = "Unexpected error occurred while trying to fetch config JSON.";
+                    String message = ConfigCatLogMessages.FETCH_FAILED_DUE_TO_UNEXPECTED_ERROR;
                     logger.error(1103, message, e);
                     future.complete(FetchResponse.failed(message + " " + e.getMessage() , false));
                 }
@@ -231,8 +231,8 @@ class ConfigFetcher implements Closeable {
         try {
             return Result.success(Utils.gson.fromJson(json, Config.class));
         } catch (Exception e) {
-            String message = "Fetching config JSON was successful but the HTTP response content was invalid. JSON parsing failed. " + e.getMessage();
-            this.logger.error(1105, message);
+            String message = ConfigCatLogMessages.FETCH_RECEIVED_200_WITH_INVALID_BODY_ERROR;
+            this.logger.error(1105, message, e);
             return Result.error(message, null);
         }
     }

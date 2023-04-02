@@ -29,8 +29,8 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
     defaultConfig {
-        compileSdkVersion(32)
-        minSdkVersion(21)
+        compileSdk 32
+        minSdk 24
         consumerProguardFiles("configcat-proguard-rules.pro")
     }
 }
