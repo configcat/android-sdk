@@ -663,7 +663,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
             ConfigCatClient existing = INSTANCES.get(sdkKey);
             if (existing != null) {
                 if (optionsCallback != null) {
-                    existing.logger.warn(3000, "There is an existing client instance for the specified SDK Key. No new client instance will be created and the specified options callback is ignored. Returning the existing client instance. SDK Key: '" + sdkKey + "'.");
+                    existing.logger.warn(3000, ConfigCatLogMessages.getClientIsAlreadyCreated(sdkKey));
                 }
                 return existing;
             }
