@@ -511,7 +511,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         try {
             Map<String, Setting> settings = settingResult.settings();
             if (settings.isEmpty()) {
-                String error = ConfigCatLogMessages.getConfigJsonIsNotPresentedWitDefaultValue("defaultValue", defaultValue);
+                String error = ConfigCatLogMessages.getConfigJsonIsNotPresentedWitDefaultValue(key,"defaultValue", defaultValue);
                 this.hooks.invokeOnFlagEvaluated(EvaluationDetails.fromError(key, defaultValue, error, userObject));
                 this.logger.error(1000, error);
                 return defaultValue;
@@ -539,7 +539,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         try {
             Map<String, Setting> settings = settingResult.settings();
             if (settings.isEmpty()) {
-                String error = ConfigCatLogMessages.getConfigJsonIsNotPresentedWitDefaultValue("defaultVariationId", defaultVariationId);
+                String error = ConfigCatLogMessages.getConfigJsonIsNotPresentedWitDefaultValue(key, "defaultVariationId", defaultVariationId);
                 this.hooks.invokeOnFlagEvaluated(EvaluationDetails.fromError(key, null, error, userObject));
                 this.logger.error(1000, error);
                 return defaultVariationId;

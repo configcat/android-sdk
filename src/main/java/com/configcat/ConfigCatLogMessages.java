@@ -46,12 +46,13 @@ final class ConfigCatLogMessages {
     /**
      * Log message for Config Json Is Not Presented errors when the method returns with default value. The log eventId is 1000.
      *
+     * @param key The feature flag key.
      * @param defaultParamName  The default parameter name.
      * @param defaultParamValue The default parameter value.
      * @return The formatted error message.
      */
-    public static String getConfigJsonIsNotPresentedWitDefaultValue(final String defaultParamName, final Object defaultParamValue) {
-        return "Config JSON is not present. Returning the `" + defaultParamName + "` parameter that you specified in your application: '" + defaultParamValue + "'.";
+    public static String getConfigJsonIsNotPresentedWitDefaultValue(final String key, final String defaultParamName, final Object defaultParamValue) {
+        return "Config JSON is not present when evaluating setting '" + key + "'. Returning the `" + defaultParamName + "` parameter that you specified in your application: '" + defaultParamValue + "'.";
     }
 
     /**
@@ -129,8 +130,8 @@ final class ConfigCatLogMessages {
      * @param variationId The variation id.
      * @return The formatted error message.
      */
-    public static String getSettingForVariationIdIsNotPresent(final String variationId){
-        return  "Could not find the setting for the specified variation ID: '" + variationId + "'.";
+    public static String getSettingForVariationIdIsNotPresent(final String variationId) {
+        return "Could not find the setting for the specified variation ID: '" + variationId + "'.";
     }
 
     /**
@@ -218,11 +219,12 @@ final class ConfigCatLogMessages {
 
     /**
      * Log message for Config Service Status Changed info. The log eventId 5200.
+     *
      * @param mode The change mode.
      * @return The formatted info message.
      */
-    public static  String getConfigServiceStatusChanged(final String mode){
-        return "Switched to " +mode + " mode.";
+    public static String getConfigServiceStatusChanged(final String mode) {
+        return "Switched to " + mode + " mode.";
     }
 
 }
