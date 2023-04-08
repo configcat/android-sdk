@@ -1,7 +1,8 @@
 package com.configcat;
 
+import java.util.Iterator;
 import java.util.Set;
-import java.util.stream.Collectors;
+
 
 final class ConfigCatLogMessages {
 
@@ -46,7 +47,7 @@ final class ConfigCatLogMessages {
     /**
      * Log message for Config Json Is Not Presented errors when the method returns with default value. The log eventId is 1000.
      *
-     * @param key The feature flag key.
+     * @param key               The feature flag key.
      * @param defaultParamName  The default parameter name.
      * @param defaultParamValue The default parameter value.
      * @return The formatted error message.
@@ -75,8 +76,22 @@ final class ConfigCatLogMessages {
      * @return The formatted error message.
      */
     public static String getSettingEvaluationFailedDueToMissingKey(final String key, final String defaultParamName, final Object defaultParamValue, final Set<String> availableKeysSet) {
-        return "Failed to evaluate setting '" + key + "' (the key was not found in config JSON). Returning the `" + defaultParamName + "` parameter that you specified in your application: '" + defaultParamValue + "'. Available keys: [" + availableKeysSet.stream().map(keyTo -> "'" + keyTo + "'").collect(Collectors.joining(",")) + "].";
+        return "Failed to evaluate setting '" + key + "' (the key was not found in config JSON). Returning the `" + defaultParamName + "` parameter that you specified in your application: '" + defaultParamValue + "'. Available keys: [" + convertKeysSetToFormatedString(availableKeysSet) +"].";
     }
+
+    private static String convertKeysSetToFormatedString(final Set<String> availableKeys){
+        StringBuilder sb = new StringBuilder();
+        Iterator<String> it = availableKeys.iterator();
+        if(it.hasNext()) {
+            sb.append("'").append(it.next()).append("'");
+        }
+        while(it.hasNext()) {
+            sb.append(",").append("'").append(it.next()).append("'");
+        }
+        return sb.toString();
+    }
+
+
 
     /**
      * Log message for Setting Evaluation errors when the method returns with default value. The log eventId is 1002.
