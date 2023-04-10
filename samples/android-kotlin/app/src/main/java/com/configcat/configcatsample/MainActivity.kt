@@ -22,7 +22,7 @@ class MainActivity : AppCompatActivity() {
 
             // Info level logging helps to inspect the feature flag evaluation process.
             // Use the default Warning level to avoid too detailed logging in your application.
-            options.logLevel(LogLevel.INFO)
+            options.logLevel(LogLevel.DEBUG)
 
             options.hooks().addOnConfigChanged {
                 run {
