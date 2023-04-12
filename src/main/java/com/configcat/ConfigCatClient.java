@@ -142,7 +142,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
             Thread.currentThread().interrupt();
             return EvaluationDetails.fromError(key, defaultValue, error + ": " + e.getMessage(), user);
         } catch (Exception e) {
-            this.logger.error(2001, ConfigCatLogMessages.getSettingEvaluationFailedForOtherReason(key, "defaultValue", defaultValue), e);
+            this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithDefaultValue("getValueDetails", key, "defaultValue", defaultValue), e);
             return EvaluationDetails.fromError(key, defaultValue, e.getMessage(), user);
         }
     }
@@ -511,7 +511,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         try {
             Map<String, Setting> settings = settingResult.settings();
             if (settings.isEmpty()) {
-                String error = ConfigCatLogMessages.getConfigJsonIsNotPresentedWitDefaultValue(key,"defaultValue", defaultValue);
+                String error = ConfigCatLogMessages.getConfigJsonIsNotPresentedWithDefaultValue(key, "defaultValue", defaultValue);
                 this.hooks.invokeOnFlagEvaluated(EvaluationDetails.fromError(key, defaultValue, error, userObject));
                 this.logger.error(1000, error);
                 return defaultValue;
@@ -539,7 +539,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         try {
             Map<String, Setting> settings = settingResult.settings();
             if (settings.isEmpty()) {
-                String error = ConfigCatLogMessages.getConfigJsonIsNotPresentedWitDefaultValue(key, "defaultVariationId", defaultVariationId);
+                String error = ConfigCatLogMessages.getConfigJsonIsNotPresentedWithDefaultValue(key, "defaultVariationId", defaultVariationId);
                 this.hooks.invokeOnFlagEvaluated(EvaluationDetails.fromError(key, null, error, userObject));
                 this.logger.error(1000, error);
                 return defaultVariationId;
