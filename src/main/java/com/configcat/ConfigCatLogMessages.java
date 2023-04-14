@@ -62,7 +62,7 @@ final class ConfigCatLogMessages {
      * @param emptyResult The empty result.
      * @return The formatted error message.
      */
-    public static String getConfigJsonIsNotPresentedWitEmptyResult(final String emptyResult) {
+    public static String getConfigJsonIsNotPresentedWithEmptyResult(final String emptyResult) {
         return "Config JSON is not present. Returning " + emptyResult + ".";
     }
 

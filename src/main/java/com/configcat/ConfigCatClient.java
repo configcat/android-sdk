@@ -565,7 +565,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
     private <T> Map.Entry<String, T> getKeyAndValueFromSettingsMap(Class<T> classOfT, Map<String, Setting> settings, String variationId) {
         try {
             if (settings.isEmpty()) {
-                this.logger.error(1000, ConfigCatLogMessages.getConfigJsonIsNotPresentedWitEmptyResult("null"));
+                this.logger.error(1000, ConfigCatLogMessages.getConfigJsonIsNotPresentedWithEmptyResult("null"));
                 return null;
             }
 
