@@ -167,8 +167,16 @@ public final class ConfigCatClient implements ConfigurationProvider {
             throw new IllegalArgumentException("Only String, Integer, Double or Boolean types are supported.");
 
         return this.getSettingsAsync()
-                .thenApply(settingsResult -> this.evaluate(classOfT, settingsResult.settings().get(key),
-                        key, user != null ? user : this.defaultUser, settingsResult.fetchTime()));
+                .thenApply(settingsResult ->{
+                    Result<Setting> checkSettingResult = checkSettingAvailable(settingsResult, key, defaultValue);
+                    if (checkSettingResult.error() != null) {
+                        EvaluationDetails<Object> evaluationDetails = EvaluationDetails.fromError(key, defaultValue, checkSettingResult.error(), user);
+                        this.hooks.invokeOnFlagEvaluated(evaluationDetails);
+                        return evaluationDetails.asTypeSpecific();
+                    }
+                    return this.evaluate(classOfT, checkSettingResult.value(),
+                            key, user != null ? user : this.defaultUser, settingsResult.fetchTime());
+                });
     }
 
     @Override
@@ -272,6 +280,9 @@ public final class ConfigCatClient implements ConfigurationProvider {
         return this.getSettingsAsync()
                 .thenApply(settingsResult -> {
                     try {
+                        if (!checkSettingsAvailable(settingsResult, "empty map")) {
+                            return new HashMap<>();
+                        }
                         User userObject = user != null ? user : this.defaultUser;
                         Map<String, Setting> settingMap = settingsResult.settings();
                         Collection<String> keys = settingMap.keySet();
@@ -311,6 +322,9 @@ public final class ConfigCatClient implements ConfigurationProvider {
         return this.getSettingsAsync()
                 .thenApply(settingResult -> {
                     try {
+                        if (!checkSettingsAvailable(settingResult, "empty list")) {
+                            return new ArrayList<>();
+                        }
                         Map<String, Setting> settings = settingResult.settings();
                         List<EvaluationDetails<?>> result = new ArrayList<>();
 
@@ -353,7 +367,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
             throw new IllegalArgumentException("'variationId' cannot be null or empty.");
 
         return this.getSettingsAsync()
-                .thenApply(settingsResult -> this.getKeyAndValueFromSettingsMap(classOfT, settingsResult.settings(), variationId));
+                .thenApply(settingsResult -> this.getKeyAndValueFromSettingsMap(classOfT, settingsResult, variationId));
     }
 
     @Override
@@ -375,6 +389,9 @@ public final class ConfigCatClient implements ConfigurationProvider {
         return this.getSettingsAsync()
                 .thenApply(settingsResult -> {
                     try {
+                        if (!checkSettingsAvailable(settingsResult, "empty array")) {
+                            return new ArrayList<>();
+                        }
                         return settingsResult.settings().keySet();
                     } catch (Exception e) {
                         this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithEmptyValue("getAllKeysAsync", "empty array"), e);
@@ -502,30 +519,20 @@ public final class ConfigCatClient implements ConfigurationProvider {
         }
 
         return configService == null
-                ? CompletableFuture.completedFuture(new SettingResult(new HashMap<>(), Constants.DISTANT_PAST))
+                ? CompletableFuture.completedFuture(SettingResult.EMPTY)
                 : configService.getSettings();
     }
 
     private <T> T getValueFromSettingsMap(Class<T> classOfT, SettingResult settingResult, String key, User user, T defaultValue) {
         User userObject = user != null ? user : this.defaultUser;
         try {
-            Map<String, Setting> settings = settingResult.settings();
-            if (settings.isEmpty()) {
-                String error = ConfigCatLogMessages.getConfigJsonIsNotPresentedWithDefaultValue(key, "defaultValue", defaultValue);
-                this.hooks.invokeOnFlagEvaluated(EvaluationDetails.fromError(key, defaultValue, error, userObject));
-                this.logger.error(1000, error);
+            Result<Setting> checkSettingResult = checkSettingAvailable(settingResult, key, defaultValue);
+            if (checkSettingResult.error() != null) {
+                this.hooks.invokeOnFlagEvaluated(EvaluationDetails.fromError(key, defaultValue, checkSettingResult.error(), user));
                 return defaultValue;
             }
 
-            Setting setting = settings.get(key);
-            if (setting == null) {
-                String error = ConfigCatLogMessages.getSettingEvaluationFailedDueToMissingKey(key, "defaultValue", defaultValue, settings.keySet());
-                this.hooks.invokeOnFlagEvaluated(EvaluationDetails.fromError(key, defaultValue, error, userObject));
-                this.logger.error(1001, error);
-                return defaultValue;
-            }
-
-            return this.evaluate(classOfT, setting, key, userObject, settingResult.fetchTime()).getValue();
+            return this.evaluate(classOfT, checkSettingResult.value(), key, userObject, settingResult.fetchTime()).getValue();
         } catch (Exception e) {
             String error = ConfigCatLogMessages.getSettingEvaluationFailedForOtherReason(key, "defaultValue", defaultValue);
             this.hooks.invokeOnFlagEvaluated(EvaluationDetails.fromError(key, defaultValue, error + " " + e.getMessage(), userObject));
@@ -562,13 +569,12 @@ public final class ConfigCatClient implements ConfigurationProvider {
         }
     }
 
-    private <T> Map.Entry<String, T> getKeyAndValueFromSettingsMap(Class<T> classOfT, Map<String, Setting> settings, String variationId) {
+    private <T> Map.Entry<String, T> getKeyAndValueFromSettingsMap(Class<T> classOfT, SettingResult settingsResult, String variationId) {
         try {
-            if (settings.isEmpty()) {
-                this.logger.error(1000, ConfigCatLogMessages.getConfigJsonIsNotPresentedWithEmptyResult("null"));
+            if (!checkSettingsAvailable(settingsResult, "null")) {
                 return null;
             }
-
+            Map<String, Setting> settings = settingsResult.settings();
             for (Map.Entry<String, Setting> node : settings.entrySet()) {
                 String settingKey = node.getKey();
                 Setting setting = node.getValue();
@@ -588,10 +594,10 @@ public final class ConfigCatClient implements ConfigurationProvider {
                     }
                 }
             }
-
+            this.logger.error(2011, ConfigCatLogMessages.getSettingForVariationIdIsNotPresent(variationId));
             return null;
         } catch (Exception e) {
-            this.logger.error(2011, ConfigCatLogMessages.getSettingForVariationIdIsNotPresent(variationId));
+            this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithEmptyValue("getKeyAndValueFromSettingsMap", "null"), e);
             return null;
         }
     }
@@ -636,6 +642,33 @@ public final class ConfigCatClient implements ConfigurationProvider {
             return double.class;
         else
             throw new IllegalArgumentException("Only String, Integer, Double or Boolean types are supported");
+    }
+
+    private boolean checkSettingsAvailable(SettingResult settingResult, String emptyResult) {
+        if (settingResult.isEmpty()) {
+            this.logger.error(1000, ConfigCatLogMessages.getConfigJsonIsNotPresentedWithEmptyResult(emptyResult));
+            return false;
+        }
+
+        return true;
+    }
+
+    private <T> Result<Setting> checkSettingAvailable(SettingResult settingResult, String key, T defaultValue) {
+        if (settingResult.isEmpty()) {
+            String errorMessage = ConfigCatLogMessages.getConfigJsonIsNotPresentedWithDefaultValue(key, "defaultValue", defaultValue);
+            this.logger.error(1000, errorMessage);
+            return Result.error(errorMessage, null);
+        }
+
+        Map<String, Setting> settings = settingResult.settings();
+        Setting setting = settings.get(key);
+        if (setting == null) {
+            String errorMessage = ConfigCatLogMessages.getSettingEvaluationFailedDueToMissingKey(key, "defaultValue", defaultValue, settings.keySet());
+            this.logger.error(1001, errorMessage);
+            return Result.error(errorMessage, null);
+        }
+
+        return Result.success(setting);
     }
 
     /**

@@ -7,6 +7,7 @@ import java9.util.concurrent.CompletableFuture;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -25,6 +26,12 @@ class SettingResult {
 
     public Map<String, Setting> settings() { return settings; }
     public long fetchTime() { return fetchTime; }
+
+    boolean isEmpty() {
+        return EMPTY.equals(this);
+    }
+
+    public static final SettingResult EMPTY = new SettingResult(new HashMap<>(), Constants.DISTANT_PAST);
 }
 
 class ConfigService implements Closeable {
@@ -90,10 +97,14 @@ class ConfigService implements Closeable {
         if (mode instanceof LazyLoadingMode) {
             LazyLoadingMode lazyLoadingMode = (LazyLoadingMode)mode;
             return fetchIfOlder(System.currentTimeMillis() - (lazyLoadingMode.getCacheRefreshIntervalInSeconds() * 1000L), false)
-                    .thenApply(entryResult -> new SettingResult(entryResult.value().getConfig().getEntries(), entryResult.value().getFetchTime()));
+                    .thenApply(entryResult -> !entryResult.value().isEmpty()
+                            ? new SettingResult(entryResult.value().getConfig().getEntries(), entryResult.value().getFetchTime())
+                            : SettingResult.EMPTY);
         } else {
             return fetchIfOlder(Constants.DISTANT_PAST, true)
-                    .thenApply(entryResult -> new SettingResult(entryResult.value().getConfig().getEntries(), entryResult.value().getFetchTime()));
+                    .thenApply(entryResult -> !entryResult.value().isEmpty()
+                            ? new SettingResult(entryResult.value().getConfig().getEntries(), entryResult.value().getFetchTime())
+                            : SettingResult.EMPTY);
         }
     }
 
