@@ -86,7 +86,7 @@ final class ConfigCatLogMessages {
             sb.append("'").append(it.next()).append("'");
         }
         while(it.hasNext()) {
-            sb.append(",").append("'").append(it.next()).append("'");
+            sb.append(", ").append("'").append(it.next()).append("'");
         }
         return sb.toString();
     }
