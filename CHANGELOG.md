@@ -1,0 +1,1 @@
+Please check the [Github Releases](https://github.com/configcat/android-sdk/releases) page for the changelog of the ConfigCat Android SDK.
