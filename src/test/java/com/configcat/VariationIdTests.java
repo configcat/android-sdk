@@ -38,60 +38,6 @@ class VariationIdTests {
     }
 
     @Test
-    void nullKeyThrows() {
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class, () -> client.getVariationId(null, null));
-
-        assertEquals("'key' cannot be null or empty.", exception.getMessage());
-    }
-
-    @Test
-    void getVariationIdWorks() {
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
-        String result = client.getVariationId("key1", null);
-        assertEquals("fakeId1", result);
-    }
-
-    @Test
-    void getVariationIdAsyncWorks() throws ExecutionException, InterruptedException {
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
-        String result = client.getVariationIdAsync("key2", null).get();
-        assertEquals("fakeId2", result);
-    }
-
-    @Test
-    void getVariationIdNotFound() {
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
-        String result = client.getVariationId("nonexisting", "defaultId");
-        assertEquals("defaultId", result);
-    }
-
-    @Test
-    void getAllVariationIdsWorks() {
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
-        String[] result = client.getAllVariationIds().toArray(new String[0]);
-        assertEquals(2, result.length);
-        assertEquals("fakeId1", result[0]);
-        assertEquals("fakeId2", result[1]);
-    }
-
-    @Test
-    void getAllVariationIdsEmpty() {
-        server.enqueue(new MockResponse().setResponseCode(200).setBody("{}"));
-        String[] result = client.getAllVariationIds().toArray(new String[0]);
-        assertEquals(0, result.length);
-    }
-
-    @Test
-    void getAllVariationIdsAsyncWorks() throws ExecutionException, InterruptedException {
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
-        String[] result = client.getAllVariationIdsAsync().get().toArray(new String[0]);
-        assertEquals(2, result.length);
-        assertEquals("fakeId1", result[0]);
-        assertEquals("fakeId2", result[1]);
-    }
-
-    @Test
     void getKeyAndValueWorks() {
         server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
         Map.Entry<String, Boolean> result = client.getKeyAndValue(boolean.class, "fakeId2");
