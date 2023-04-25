@@ -520,12 +520,12 @@ class ConfigCatClientTest {
 
         cl.setDefaultUser(user1);
 
-        assertEquals("id1", cl.getVariationId("key", ""));
-        assertEquals("id2", cl.getVariationId("key", user2, ""));
+        assertEquals("id1", cl.getValueDetails(String.class, "key", "").getVariationId());
+        assertEquals("id2", cl.getValueDetails(String.class,"key", user2, "").getVariationId());
 
         cl.clearDefaultUser();
 
-        assertEquals("defVar", cl.getVariationId("key", ""));
+        assertEquals("defVar", cl.getValueDetails(String.class,"key", "").getVariationId());
 
         server.shutdown();
         cl.close();
