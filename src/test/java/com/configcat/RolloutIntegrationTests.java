@@ -5,7 +5,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -16,17 +15,17 @@ import java.util.Scanner;
 
 class RolloutIntegrationTests {
 
-    static final String VariationTestKind = "variation";
-    static final String ValueTestKind = "value";
+    static final String VARIATION_TEST_KIND = "variation";
+    static final String VALUE_TEST_KIND = "value";
 
     @ParameterizedTest
     @CsvSource({
-            "testmatrix.csv,PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A," + ValueTestKind,
-            "testmatrix_semantic.csv,PKDVCLf-Hq-h-kCzMp-L7Q/BAr3KgLTP0ObzKnBTo5nhA," + ValueTestKind,
-            "testmatrix_number.csv,PKDVCLf-Hq-h-kCzMp-L7Q/uGyK3q9_ckmdxRyI7vjwCw," + ValueTestKind,
-            "testmatrix_semantic_2.csv,PKDVCLf-Hq-h-kCzMp-L7Q/q6jMCFIp-EmuAfnmZhPY7w," + ValueTestKind,
-            "testmatrix_sensitive.csv,PKDVCLf-Hq-h-kCzMp-L7Q/qX3TP2dTj06ZpCCT1h_SPA," + ValueTestKind,
-            "testmatrix_variationId.csv, PKDVCLf-Hq-h-kCzMp-L7Q/nQ5qkhRAUEa6beEyyrVLBA," + VariationTestKind,
+            "testmatrix.csv,PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A," + VALUE_TEST_KIND,
+            "testmatrix_semantic.csv,PKDVCLf-Hq-h-kCzMp-L7Q/BAr3KgLTP0ObzKnBTo5nhA," + VALUE_TEST_KIND,
+            "testmatrix_number.csv,PKDVCLf-Hq-h-kCzMp-L7Q/uGyK3q9_ckmdxRyI7vjwCw," + VALUE_TEST_KIND,
+            "testmatrix_semantic_2.csv,PKDVCLf-Hq-h-kCzMp-L7Q/q6jMCFIp-EmuAfnmZhPY7w," + VALUE_TEST_KIND,
+            "testmatrix_sensitive.csv,PKDVCLf-Hq-h-kCzMp-L7Q/qX3TP2dTj06ZpCCT1h_SPA," + VALUE_TEST_KIND,
+            "testmatrix_variationId.csv, PKDVCLf-Hq-h-kCzMp-L7Q/nQ5qkhRAUEa6beEyyrVLBA," + VARIATION_TEST_KIND,
     })
     void testMatrixTest(String file, String sdkKey, String kind) throws IOException {
 
@@ -72,9 +71,13 @@ class RolloutIntegrationTests {
 
             int i = 0;
             for (String settingKey: settingKeys) {
-                String value = kind.equals(VariationTestKind)
-                        ? client.getVariationId(settingKey, user, null)
-                        : client.getValue(String.class, settingKey, user, null);
+                String value;
+                if (kind.equals(VARIATION_TEST_KIND)) {
+                    EvaluationDetails<String> valueDetails = client.getValueDetails(String.class, settingKey, user, null);
+                    value = valueDetails.getVariationId();
+                } else {
+                    value = client.getValue(String.class, settingKey, user, null);
+                }
                 if(!value.equalsIgnoreCase(testObject[i + 4])) {
                     errors.add(String.format("Identifier: %s, Key: %s. Expected: %s, Result: %s \n", testObject[0], settingKey, testObject[i + 4], value));
                 }
