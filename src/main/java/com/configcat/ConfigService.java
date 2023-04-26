@@ -35,8 +35,7 @@ class SettingResult {
 }
 
 class ConfigService implements Closeable {
-    private static final String CACHE_BASE = "android_" + Constants.CONFIG_JSON_NAME + "_%s";
-
+    private static final String CACHE_BASE = "%s_" + Constants.CONFIG_JSON_NAME + "_" + Constants.SERIALIZATION_FORMAT_VERSION;
     private ScheduledExecutorService initScheduler;
     private ScheduledExecutorService pollScheduler;
     private String cachedEntryString = "";
