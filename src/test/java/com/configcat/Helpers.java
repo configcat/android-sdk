@@ -1,7 +1,5 @@
 package com.configcat;
 
-import com.google.gson.JsonElement;
-
 import java.util.function.Supplier;
 
 final class Helpers {
@@ -10,14 +8,16 @@ final class Helpers {
             "{ v: 'fake2', i: 'id2', a: 'Identifier', t: 2, c: '@test2.com' }," +
             "] } } }";
 
-    static String entryStringFromConfigString(String json) {
+    static String cacheValueFromConfigJson(String json) {
         Config config = Utils.gson.fromJson(json, Config.class);
-        return entryToJson(new Entry(config, "fakeTag", System.currentTimeMillis()));
+        Entry entry = new Entry(config, "fakeTag", json, DateTimeUtils.format(System.currentTimeMillis()));
+        return entry.serialize();
     }
 
-    static String entryStringFromConfigStringAndTime(String json, long time) {
+    static String cacheValueFromConfigJsonAndTime(String json, long time) {
         Config config = Utils.gson.fromJson(json, Config.class);
-        return entryToJson(new Entry(config, "fakeTag", time));
+        Entry entry = new Entry(config, "fakeTag", json, DateTimeUtils.format(time));
+        return entry.serialize();
     }
 
     static String entryToJson(Entry entry) {

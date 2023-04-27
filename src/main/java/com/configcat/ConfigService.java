@@ -24,8 +24,13 @@ class SettingResult {
         this.fetchTime = fetchTime;
     }
 
-    public Map<String, Setting> settings() { return settings; }
-    public long fetchTime() { return fetchTime; }
+    public Map<String, Setting> settings() {
+        return settings;
+    }
+
+    public long fetchTime() {
+        return fetchTime;
+    }
 
     boolean isEmpty() {
         return EMPTY.equals(this);
@@ -68,7 +73,7 @@ class ConfigService implements Closeable {
         this.offline = new AtomicBoolean(offline);
 
         if (mode instanceof AutoPollingMode && !offline) {
-            AutoPollingMode autoPollingMode = (AutoPollingMode)mode;
+            AutoPollingMode autoPollingMode = (AutoPollingMode) mode;
 
             startPoll(autoPollingMode);
 
@@ -94,7 +99,7 @@ class ConfigService implements Closeable {
 
     public CompletableFuture<SettingResult> getSettings() {
         if (mode instanceof LazyLoadingMode) {
-            LazyLoadingMode lazyLoadingMode = (LazyLoadingMode)mode;
+            LazyLoadingMode lazyLoadingMode = (LazyLoadingMode) mode;
             return fetchIfOlder(System.currentTimeMillis() - (lazyLoadingMode.getCacheRefreshIntervalInSeconds() * 1000L), false)
                     .thenApply(entryResult -> !entryResult.value().isEmpty()
                             ? new SettingResult(entryResult.value().getConfig().getEntries(), entryResult.value().getFetchTime())
@@ -123,7 +128,7 @@ class ConfigService implements Closeable {
         try {
             if (!offline.compareAndSet(true, false)) return;
             if (mode instanceof AutoPollingMode) {
-                startPoll((AutoPollingMode)mode);
+                startPoll((AutoPollingMode) mode);
             }
             logger.info(5200, ConfigCatLogMessages.getConfigServiceStatusChanged("ONLINE"));
         } finally {
@@ -198,9 +203,9 @@ class ConfigService implements Closeable {
                 writeCache(entry);
                 completeRunningTask(Result.success(entry));
                 hooks.invokeOnConfigChanged(entry.getConfig().getEntries());
-            }  else {
+            } else {
                 if (response.isFetchTimeUpdatable()) {
-                    cachedEntry = cachedEntry.withFetchTime(System.currentTimeMillis());
+                    cachedEntry = cachedEntry.withFetchTime(response.getFetchTime());
                     writeCache(cachedEntry);
                 }
                 completeRunningTask(response.isFailed()
@@ -225,7 +230,7 @@ class ConfigService implements Closeable {
     }
 
     private void startPoll(AutoPollingMode mode) {
-        long ageThreshold = (long)((mode.getAutoPollRateInSeconds() * 1000L) * 0.7);
+        long ageThreshold = (long) ((mode.getAutoPollRateInSeconds() * 1000L) * 0.7);
         pollScheduler = Executors.newSingleThreadScheduledExecutor();
         pollScheduler.scheduleAtFixedRate(() -> this.fetchIfOlder(System.currentTimeMillis() - ageThreshold, false),
                 0, mode.getAutoPollRateInSeconds(), TimeUnit.SECONDS);
@@ -233,7 +238,7 @@ class ConfigService implements Closeable {
 
     private void writeCache(Entry entry) {
         try {
-            String configToCache = Utils.gson.toJson(entry);
+            String configToCache = entry.serialize();
             cachedEntryString = configToCache;
             cache.write(cacheKey, configToCache);
         } catch (Exception e) {
@@ -243,12 +248,12 @@ class ConfigService implements Closeable {
 
     private Entry readCache() {
         try {
-            String json = cache.read(cacheKey);
-            if (json != null && json.equals(cachedEntryString)) {
+            String cachedConfigJson = cache.read(cacheKey);
+            if (cachedConfigJson != null && cachedConfigJson.equals(cachedEntryString)) {
                 return Entry.EMPTY;
             }
-            cachedEntryString = json;
-            Entry deserialized = Utils.gson.fromJson(json, Entry.class);
+            cachedEntryString = cachedConfigJson;
+            Entry deserialized = Entry.fromString(cachedConfigJson);
             return deserialized == null || deserialized.getConfig() == null ? Entry.EMPTY : deserialized;
         } catch (Exception e) {
             this.logger.error(2200, ConfigCatLogMessages.CONFIG_SERVICE_CACHE_READ_ERROR, e);
