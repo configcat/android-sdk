@@ -19,7 +19,7 @@ public class DateTimeUtils {
 
     public static boolean isValidDate(String date) {
         try {
-            SimpleDateFormat simpleDateFormat= new SimpleDateFormat(HTTP_HEADER_DATE_FORMAT, Locale.ENGLISH);
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat(HTTP_HEADER_DATE_FORMAT, Locale.ENGLISH);
             simpleDateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
             simpleDateFormat.parse(date);
         } catch (ParseException e) {
@@ -28,18 +28,14 @@ public class DateTimeUtils {
         return true;
     }
 
-    public static long parseToMillis(String dateTime) {
-        try {
-            SimpleDateFormat simpleDateFormat= new SimpleDateFormat(HTTP_HEADER_DATE_FORMAT, Locale.ENGLISH);
-            simpleDateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
-            return simpleDateFormat.parse(dateTime).getTime();
-        } catch (ParseException e) {
-            throw new RuntimeException(e);
-        }
+    public static long parseToMillis(String dateTime) throws ParseException {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(HTTP_HEADER_DATE_FORMAT, Locale.ENGLISH);
+        simpleDateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
+        return simpleDateFormat.parse(dateTime).getTime();
     }
 
     public static String format(long timeInMilliseconds) {
-        SimpleDateFormat simpleDateFormat= new SimpleDateFormat(HTTP_HEADER_DATE_FORMAT, Locale.ENGLISH);
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(HTTP_HEADER_DATE_FORMAT, Locale.ENGLISH);
         simpleDateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
         return simpleDateFormat.format(new Date(timeInMilliseconds));
 

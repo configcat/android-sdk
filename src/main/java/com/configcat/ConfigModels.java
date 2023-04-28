@@ -2,6 +2,7 @@ package com.configcat;
 
 import com.google.gson.annotations.SerializedName;
 
+import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -20,7 +21,14 @@ class Entry {
     }
 
     public long getFetchTime() {
-        return fetchTimeRaw == null || fetchTimeRaw.isEmpty() ? 0 : DateTimeUtils.parseToMillis(fetchTimeRaw);
+        if(fetchTimeRaw == null || fetchTimeRaw.isEmpty()){
+            return 0;
+        }
+        try {
+            return  DateTimeUtils.parseToMillis(fetchTimeRaw);
+        } catch (ParseException e) {
+            return 0;
+        }
     }
 
     public String getConfigJson() {
