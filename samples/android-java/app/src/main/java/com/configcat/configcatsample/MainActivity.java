@@ -38,9 +38,9 @@ public class MainActivity extends AppCompatActivity {
                 .email("someone@example.com")
                 .build("key");
 
-        this.client.getValueAsync(Boolean.class, "isPOCFeatureEnabled1", user, false)
-                .thenAccept( value ->{
-                    this.runOnUiThread( () -> {
+        this.client.getValueAsync(Boolean.class, "isPOCFeatureEnabled", user, false)
+                .thenAccept(value -> {
+                    this.runOnUiThread(() -> {
                         TextView viewById = this.findViewById(R.id.editText);
                         viewById.setText("isPOCFeatureEnabled: " + value);
                     });

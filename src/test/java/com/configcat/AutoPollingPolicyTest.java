@@ -8,6 +8,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ExecutionException;
@@ -203,7 +204,7 @@ class AutoPollingPolicyTest {
     void testPollIntervalRespectsCacheExpiration() throws Exception {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
 
-        ConfigCache cache = new SingleValueCache(Helpers.entryStringFromConfigString(String.format(TEST_JSON, "test")));
+        ConfigCache cache = new SingleValueCache(Helpers.cacheValueFromConfigJson(String.format(TEST_JSON, "test")));
 
         PollingMode pollingMode = PollingModes.autoPoll(2);
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient(),
@@ -225,7 +226,7 @@ class AutoPollingPolicyTest {
 
     @Test
     void testNonExpiredCacheCallsReady() throws Exception {
-        ConfigCache cache = new SingleValueCache(Helpers.entryStringFromConfigString(String.format(TEST_JSON, "test")));
+        ConfigCache cache = new SingleValueCache(Helpers.cacheValueFromConfigJson(String.format(TEST_JSON, "test")));
 
         AtomicBoolean ready = new AtomicBoolean(false);
         ConfigCatHooks hooks = new ConfigCatHooks();
@@ -309,7 +310,7 @@ class AutoPollingPolicyTest {
     void testInitWaitTimeIgnoredWhenCacheIsNotExpired() throws Exception {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test1")).setBodyDelay(2, TimeUnit.SECONDS));
 
-        ConfigCache cache = new SingleValueCache(Helpers.entryStringFromConfigString(String.format(TEST_JSON, "test")));
+        ConfigCache cache = new SingleValueCache(Helpers.cacheValueFromConfigJson(String.format(TEST_JSON, "test")));
 
         PollingMode pollingMode = PollingModes.autoPoll(60, 1);
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient(),
@@ -332,7 +333,7 @@ class AutoPollingPolicyTest {
     void testInitWaitTimeReturnCached() throws Exception {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test1")).setBodyDelay(2, TimeUnit.SECONDS));
 
-        ConfigCache cache = new SingleValueCache(Helpers.entryStringFromConfigStringAndTime(String.format(TEST_JSON, "test"), Constants.DISTANT_PAST));
+        ConfigCache cache = new SingleValueCache(Helpers.cacheValueFromConfigJsonAndTime(String.format(TEST_JSON, "test"), Constants.DISTANT_PAST));
 
         PollingMode pollingMode = PollingModes.autoPoll(60, 1);
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient(),
