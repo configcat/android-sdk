@@ -2,6 +2,8 @@ package com.configcat;
 
 import com.configcat.log.ConfigCatLogMessages;
 import com.configcat.log.ConfigCatLogger;
+import com.configcat.models.Config;
+import com.configcat.models.Entry;
 import java9.util.concurrent.CompletableFuture;
 import okhttp3.*;
 import org.jetbrains.annotations.NotNull;

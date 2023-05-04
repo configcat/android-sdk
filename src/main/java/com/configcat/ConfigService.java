@@ -3,6 +3,8 @@ package com.configcat;
 import com.configcat.hooks.ConfigCatHooks;
 import com.configcat.log.ConfigCatLogMessages;
 import com.configcat.log.ConfigCatLogger;
+import com.configcat.models.Entry;
+import com.configcat.models.Setting;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 

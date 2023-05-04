@@ -2,6 +2,9 @@ package com.configcat;
 
 import com.configcat.log.ConfigCatLogMessages;
 import com.configcat.log.ConfigCatLogger;
+import com.configcat.models.PercentageRule;
+import com.configcat.models.RolloutRule;
+import com.configcat.models.Setting;
 import com.google.gson.JsonElement;
 import de.skuzzle.semantic.Version;
 import org.apache.commons.codec.digest.DigestUtils;

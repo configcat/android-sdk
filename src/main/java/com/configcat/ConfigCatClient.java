@@ -4,6 +4,10 @@ import com.configcat.hooks.ConfigCatHooks;
 import com.configcat.log.ConfigCatLogMessages;
 import com.configcat.log.ConfigCatLogger;
 import com.configcat.log.LogLevel;
+import com.configcat.models.PercentageRule;
+import com.configcat.models.RolloutRule;
+import com.configcat.models.Setting;
+import com.configcat.models.SettingType;
 import com.google.gson.JsonElement;
 
 import java9.util.function.Consumer;

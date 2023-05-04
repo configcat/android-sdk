@@ -1,5 +1,7 @@
 package com.configcat;
 
+import com.configcat.models.Setting;
+import com.configcat.models.SettingType;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 

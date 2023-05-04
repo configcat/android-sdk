@@ -1,7 +1,7 @@
 # ConfigCat Android SDK Proguard rules
 
--keep class com.configcat.Config { *; }
--keep class com.configcat.Preferences { *; }
--keep class com.configcat.Setting { *; }
--keep class com.configcat.RolloutRule { *; }
--keep class com.configcat.PercentageRule { *; }
+-keep class com.configcat.models.Config { *; }
+-keep class com.configcat.models.Preferences { *; }
+-keep class com.configcat.models.Setting { *; }
+-keep class com.configcat.models.RolloutRule { *; }
+-keep class com.configcat.models.PercentageRule { *; }

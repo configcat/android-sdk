@@ -1,12 +1,11 @@
-package com.configcat;
+package com.configcat.models;
 
-import com.google.gson.annotations.SerializedName;
+import com.configcat.DateTimeUtils;
+import com.configcat.Utils;
 
 import java.text.ParseException;
-import java.util.HashMap;
-import java.util.Map;
 
-class Entry {
+public class Entry {
     private Config config;
     private String eTag;
     private String configJson;
@@ -50,7 +49,7 @@ class Entry {
         this.fetchTimeRaw = fetchTimeRaw;
     }
 
-    boolean isEmpty() {
+    public boolean isEmpty() {
         return EMPTY.equals(this);
     }
 
@@ -93,38 +92,3 @@ class Entry {
 
 }
 
-class Config {
-    @SerializedName(value = "p")
-    private Preferences preferences;
-    @SerializedName(value = "f")
-    private Map<String, Setting> entries = new HashMap<>();
-
-    public Preferences getPreferences() {
-        return preferences;
-    }
-
-    public Map<String, Setting> getEntries() {
-        return entries;
-    }
-
-    boolean isEmpty() {
-        return EMPTY.equals(this);
-    }
-
-    public static final Config EMPTY = new Config();
-}
-
-class Preferences {
-    @SerializedName(value = "u")
-    private String baseUrl;
-    @SerializedName(value = "r")
-    private int redirect;
-
-    public String getBaseUrl() {
-        return baseUrl;
-    }
-
-    public int getRedirect() {
-        return redirect;
-    }
-}

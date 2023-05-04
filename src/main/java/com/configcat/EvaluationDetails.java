@@ -1,5 +1,8 @@
 package com.configcat;
 
+import com.configcat.models.PercentageRule;
+import com.configcat.models.RolloutRule;
+
 /**
  * Additional information about flag evaluation.
  */

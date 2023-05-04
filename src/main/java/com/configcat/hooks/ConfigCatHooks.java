@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.configcat.EvaluationDetails;
-import com.configcat.Setting;
+import com.configcat.models.Setting;
 import java9.util.function.Consumer;
 
 public class ConfigCatHooks {

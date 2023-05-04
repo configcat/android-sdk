@@ -1,5 +1,8 @@
 package com.configcat;
 
+import com.configcat.models.Config;
+import com.configcat.models.Entry;
+
 import java.util.function.Supplier;
 
 final class Helpers {
@@ -14,14 +17,10 @@ final class Helpers {
         return entry.serialize();
     }
 
-    static String cacheValueFromConfigJsonAndTime(String json, long time) {
+    static String cacheValueFromConfigJsonWithDistantPast(String json) {
         Config config = Utils.gson.fromJson(json, Config.class);
-        Entry entry = new Entry(config, "fakeTag", json, DateTimeUtils.format(time));
+        Entry entry = new Entry(config, "fakeTag", json, DateTimeUtils.format(Constants.DISTANT_PAST));
         return entry.serialize();
-    }
-
-    static String entryToJson(Entry entry) {
-        return Utils.gson.toJson(entry);
     }
 
     static void waitFor(Supplier<Boolean> predicate) throws InterruptedException {

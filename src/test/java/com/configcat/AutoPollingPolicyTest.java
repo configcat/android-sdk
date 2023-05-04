@@ -336,7 +336,7 @@ class AutoPollingPolicyTest {
     void testInitWaitTimeReturnCached() throws Exception {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test1")).setBodyDelay(2, TimeUnit.SECONDS));
 
-        ConfigCache cache = new SingleValueCache(Helpers.cacheValueFromConfigJsonAndTime(String.format(TEST_JSON, "test"), Constants.DISTANT_PAST));
+        ConfigCache cache = new SingleValueCache(Helpers.cacheValueFromConfigJsonWithDistantPast(String.format(TEST_JSON, "test")));
 
         PollingMode pollingMode = PollingModes.autoPoll(60, 1);
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient(),
