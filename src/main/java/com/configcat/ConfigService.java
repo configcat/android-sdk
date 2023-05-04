@@ -1,11 +1,12 @@
 package com.configcat;
 
 import com.configcat.cache.ConfigCache;
+import com.configcat.fetch.ConfigFetcher;
+import com.configcat.fetch.FetchResponse;
 import com.configcat.hooks.ConfigCatHooks;
 import com.configcat.log.ConfigCatLogMessages;
 import com.configcat.log.ConfigCatLogger;
 import com.configcat.models.Entry;
-import com.configcat.models.Setting;
 import com.configcat.polling.AutoPollingMode;
 import com.configcat.polling.LazyLoadingMode;
 import com.configcat.polling.PollingMode;
@@ -16,37 +17,11 @@ import java9.util.concurrent.CompletableFuture;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
-
-class SettingResult {
-    private final Map<String, Setting> settings;
-    private final long fetchTime;
-
-    public SettingResult(Map<String, Setting> settings, long fetchTime) {
-        this.settings = settings;
-        this.fetchTime = fetchTime;
-    }
-
-    public Map<String, Setting> settings() {
-        return settings;
-    }
-
-    public long fetchTime() {
-        return fetchTime;
-    }
-
-    boolean isEmpty() {
-        return EMPTY.equals(this);
-    }
-
-    public static final SettingResult EMPTY = new SettingResult(new HashMap<>(), Constants.DISTANT_PAST);
-}
 
 class ConfigService implements Closeable {
     private static final String CACHE_BASE = "%s_" + Constants.CONFIG_JSON_NAME + "_" + Constants.SERIALIZATION_FORMAT_VERSION;

@@ -4,6 +4,7 @@ import com.configcat.cache.CacheException;
 import com.configcat.cache.ConfigCache;
 import com.configcat.cache.NullConfigCache;
 import com.configcat.cache.SingleValueCache;
+import com.configcat.fetch.ConfigFetcher;
 import com.configcat.hooks.ConfigCatHooks;
 import com.configcat.log.ConfigCatLogger;
 import com.configcat.log.LogLevel;
