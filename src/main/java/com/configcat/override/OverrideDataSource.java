@@ -1,4 +1,4 @@
-package com.configcat;
+package com.configcat.override;
 
 import com.configcat.models.Setting;
 
