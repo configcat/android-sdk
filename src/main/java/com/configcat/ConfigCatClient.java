@@ -2,6 +2,9 @@ package com.configcat;
 
 import com.configcat.cache.ConfigCache;
 import com.configcat.cache.NullConfigCache;
+import com.configcat.evaluation.EvaluationDetails;
+import com.configcat.evaluation.EvaluationResult;
+import com.configcat.evaluation.RolloutEvaluator;
 import com.configcat.hooks.ConfigCatHooks;
 import com.configcat.log.ConfigCatLogMessages;
 import com.configcat.log.ConfigCatLogger;

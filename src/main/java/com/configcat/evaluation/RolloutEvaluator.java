@@ -1,5 +1,7 @@
-package com.configcat;
+package com.configcat.evaluation;
 
+import com.configcat.User;
+import com.configcat.Utils;
 import com.configcat.log.ConfigCatLogMessages;
 import com.configcat.log.ConfigCatLogger;
 import com.configcat.models.PercentageRule;
@@ -12,21 +14,7 @@ import org.apache.commons.codec.binary.Hex;
 
 import java.util.*;
 
-class EvaluationResult {
-    public final JsonElement value;
-    public final String variationId;
-    public final RolloutRule targetingRule;
-    public final PercentageRule percentageRule;
-
-    EvaluationResult(JsonElement value, String variationId, RolloutRule targetingRule, PercentageRule percentageRule) {
-        this.value = value;
-        this.variationId = variationId;
-        this.targetingRule = targetingRule;
-        this.percentageRule = percentageRule;
-    }
-}
-
-class RolloutEvaluator {
+public class RolloutEvaluator {
     protected static final String[] COMPARATOR_TEXTS = new String[]{
             "IS ONE OF",
             "IS NOT ONE OF",

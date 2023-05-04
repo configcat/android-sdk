@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import com.configcat.EvaluationDetails;
+import com.configcat.evaluation.EvaluationDetails;
 import com.configcat.models.Setting;
 import java9.util.function.Consumer;
 

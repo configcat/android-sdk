@@ -1,5 +1,6 @@
 package com.configcat;
 
+import com.configcat.evaluation.EvaluationDetails;
 import com.configcat.log.LogLevel;
 import com.configcat.polling.PollingModes;
 import okhttp3.OkHttpClient;
