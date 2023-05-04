@@ -1,4 +1,4 @@
-package com.configcat;
+package com.configcat.cache;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -6,7 +6,7 @@ import android.content.SharedPreferences;
 /**
  * {@link ConfigCache} implementation that uses {@link SharedPreferences} for persistent storage.
  */
-public class SharedPreferencesCache extends ConfigCache {
+public class SharedPreferencesCache implements ConfigCache {
     private final SharedPreferences sharedPreferences;
 
     public SharedPreferencesCache(android.content.Context context) {
@@ -14,12 +14,12 @@ public class SharedPreferencesCache extends ConfigCache {
     }
 
     @Override
-    protected String read(String key) {
+    public String read(String key) {
         return this.sharedPreferences.getString(key, null);
     }
 
     @Override
-    protected void write(String key, String value) {
+    public void write(String key, String value) {
         this.sharedPreferences.edit().putString(key, value).apply();
     }
 }

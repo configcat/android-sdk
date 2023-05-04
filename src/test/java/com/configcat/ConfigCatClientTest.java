@@ -1,5 +1,6 @@
 package com.configcat;
 
+import com.configcat.cache.FailingCache;
 import okhttp3.OkHttpClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
