@@ -1,5 +1,6 @@
 package com.configcat;
 
+import com.configcat.hooks.ConfigCatHooks;
 import com.configcat.log.ConfigCatLogMessages;
 import com.configcat.log.ConfigCatLogger;
 import com.configcat.log.LogLevel;
@@ -675,7 +676,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
         /**
          * Default: Global. Set this parameter to be in sync with the Data Governance preference on the Dashboard. (Only Organization Admins have access)
-         * 
+         *
          * @see <a href="https://app.configcat.com/organization/data-governance">Data Governance</a>
          *
          * @param dataGovernance the {@link DataGovernance} parameter.

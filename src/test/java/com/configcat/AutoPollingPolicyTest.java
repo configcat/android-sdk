@@ -1,5 +1,6 @@
 package com.configcat;
 
+import com.configcat.hooks.ConfigCatHooks;
 import com.configcat.log.ConfigCatLogger;
 import com.configcat.log.LogLevel;
 import okhttp3.OkHttpClient;

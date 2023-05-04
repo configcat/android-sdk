@@ -1,5 +1,6 @@
 package com.configcat;
 
+import com.configcat.hooks.ConfigCatHooks;
 import com.configcat.log.ConfigCatLogMessages;
 import com.configcat.log.ConfigCatLogger;
 import org.apache.commons.codec.binary.Hex;
