@@ -63,7 +63,7 @@ public class ConfigCatHooks {
         }
     }
 
-    void invokeOnClientReady() {
+    public void invokeOnClientReady() {
         synchronized (sync) {
             for (Runnable func : this.onClientReady) {
                 func.run();
@@ -71,7 +71,7 @@ public class ConfigCatHooks {
         }
     }
 
-    void invokeOnError(String error) {
+    public void invokeOnError(String error) {
         synchronized (sync) {
             for (Consumer<String> func : this.onError) {
                 func.accept(error);
@@ -79,7 +79,7 @@ public class ConfigCatHooks {
         }
     }
 
-    void invokeOnConfigChanged(Map<String, Setting> settingMap) {
+    public void invokeOnConfigChanged(Map<String, Setting> settingMap) {
         synchronized (sync) {
             for (Consumer<Map<String, Setting>> func : this.onConfigChanged) {
                 func.accept(settingMap);
@@ -87,7 +87,7 @@ public class ConfigCatHooks {
         }
     }
 
-    void invokeOnFlagEvaluated(EvaluationDetails<Object> evaluationDetails) {
+    public void invokeOnFlagEvaluated(EvaluationDetails<Object> evaluationDetails) {
         synchronized (sync) {
             for (Consumer<EvaluationDetails<Object>> func : this.onFlagEvaluated) {
                 func.accept(evaluationDetails);
@@ -95,7 +95,7 @@ public class ConfigCatHooks {
         }
     }
 
-    void clear() {
+    public void clear() {
         synchronized (sync) {
             this.onConfigChanged.clear();
             this.onError.clear();
