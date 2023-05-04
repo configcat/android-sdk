@@ -1,4 +1,4 @@
-package com.configcat;
+package com.configcat.polling;
 
 /**
  * Describes the polling modes.
@@ -62,58 +62,5 @@ public final class PollingModes {
      */
     public static PollingMode manualPoll() {
         return new ManualPollingMode();
-    }
-}
-
-class AutoPollingMode implements PollingMode {
-    private final int autoPollRateInSeconds;
-    private final int maxInitWaitTimeSeconds;
-
-    AutoPollingMode(int autoPollRateInSeconds, int maxInitWaitTimeSeconds) {
-        if (autoPollRateInSeconds < 1)
-            throw new IllegalArgumentException("autoPollRateInSeconds cannot be less than 1 second");
-
-        this.autoPollRateInSeconds = autoPollRateInSeconds;
-        this.maxInitWaitTimeSeconds = maxInitWaitTimeSeconds;
-    }
-
-    int getAutoPollRateInSeconds() {
-        return autoPollRateInSeconds;
-    }
-
-    public int getMaxInitWaitTimeSeconds() {
-        return maxInitWaitTimeSeconds;
-    }
-
-    @Override
-    public String getPollingIdentifier() {
-        return "a";
-    }
-}
-
-class LazyLoadingMode implements PollingMode {
-    private final int cacheRefreshIntervalInSeconds;
-
-    LazyLoadingMode(int cacheRefreshIntervalInSeconds) {
-        if (cacheRefreshIntervalInSeconds < 1)
-            throw new IllegalArgumentException("cacheRefreshIntervalInSeconds cannot be less than 1 second");
-
-        this.cacheRefreshIntervalInSeconds = cacheRefreshIntervalInSeconds;
-    }
-
-    int getCacheRefreshIntervalInSeconds() {
-        return cacheRefreshIntervalInSeconds;
-    }
-
-    @Override
-    public String getPollingIdentifier() {
-        return "l";
-    }
-}
-
-class ManualPollingMode implements PollingMode {
-    @Override
-    public String getPollingIdentifier() {
-        return "m";
     }
 }

@@ -1,4 +1,4 @@
-package com.configcat;
+package com.configcat.polling;
 
 /**
  * The base class of a polling mode configuration.

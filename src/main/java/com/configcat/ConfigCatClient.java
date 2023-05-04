@@ -10,6 +10,8 @@ import com.configcat.models.PercentageRule;
 import com.configcat.models.RolloutRule;
 import com.configcat.models.Setting;
 import com.configcat.models.SettingType;
+import com.configcat.polling.PollingMode;
+import com.configcat.polling.PollingModes;
 import com.google.gson.JsonElement;
 
 import java9.util.function.Consumer;

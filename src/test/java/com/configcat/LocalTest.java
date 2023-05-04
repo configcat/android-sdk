@@ -1,5 +1,6 @@
 package com.configcat;
 
+import com.configcat.polling.PollingModes;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.Test;

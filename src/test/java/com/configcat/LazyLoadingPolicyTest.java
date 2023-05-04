@@ -5,6 +5,8 @@ import com.configcat.cache.NullConfigCache;
 import com.configcat.cache.SingleValueCache;
 import com.configcat.hooks.ConfigCatHooks;
 import com.configcat.log.ConfigCatLogger;
+import com.configcat.polling.PollingMode;
+import com.configcat.polling.PollingModes;
 import okhttp3.OkHttpClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -32,8 +34,7 @@ class LazyLoadingPolicyTest {
         this.server = new MockWebServer();
         this.server.start();
 
-        PollingMode mode = PollingModes
-                .lazyLoad(5);
+        PollingMode mode = PollingModes.lazyLoad(5);
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
         this.policy = new ConfigService("", mode, new NullConfigCache(), logger, fetcher, new ConfigCatHooks(), false);
     }
