@@ -66,7 +66,7 @@ public interface ConfigurationProvider extends Closeable {
      * @param key          the identifier of a feature flag or setting.
      * @param defaultValue in case of any failure, this value will be returned.
      * @param <T>          the type of the desired feature flag or setting.
-     * @return  the result of the evaluation
+     * @return the result of the evaluation
      */
     <T> EvaluationDetails<T> getValueDetails(Class<T> classOfT, String key, T defaultValue);
 
@@ -78,7 +78,7 @@ public interface ConfigurationProvider extends Closeable {
      * @param user         the user object.
      * @param defaultValue in case of any failure, this value will be returned.
      * @param <T>          the type of the desired feature flag or setting.
-     * @return  the result of the evaluation
+     * @return the result of the evaluation
      */
     <T> EvaluationDetails<T> getValueDetails(Class<T> classOfT, String key, User user, T defaultValue);
 

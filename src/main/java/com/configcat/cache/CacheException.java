@@ -1,4 +1,7 @@
 package com.configcat.cache;
 
-public class CacheException extends Exception{
+/**
+ * ConfigCat Cache Exception.
+ */
+public class CacheException extends Exception {
 }

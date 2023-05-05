@@ -185,7 +185,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
             throw new IllegalArgumentException("Only String, Integer, Double or Boolean types are supported.");
 
         return this.getSettingsAsync()
-                .thenApply(settingsResult ->{
+                .thenApply(settingsResult -> {
                     Result<Setting> checkSettingResult = checkSettingAvailable(settingsResult, key, defaultValue);
                     if (checkSettingResult.error() != null) {
                         EvaluationDetails<Object> evaluationDetails = EvaluationDetails.fromError(key, defaultValue, checkSettingResult.error(), user);
@@ -691,9 +691,8 @@ public final class ConfigCatClient implements ConfigurationProvider {
         /**
          * Default: Global. Set this parameter to be in sync with the Data Governance preference on the Dashboard. (Only Organization Admins have access)
          *
-         * @see <a href="https://app.configcat.com/organization/data-governance">Data Governance</a>
-         *
          * @param dataGovernance the {@link DataGovernance} parameter.
+         * @see <a href="https://app.configcat.com/organization/data-governance">Data Governance</a>
          */
         public void dataGovernance(DataGovernance dataGovernance) {
             this.dataGovernance = dataGovernance;

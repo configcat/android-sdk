@@ -34,7 +34,7 @@ class RolloutIntegrationTests {
 
         Scanner csvScanner = new Scanner(new File("src/test/resources/" + file));
 
-        if(!csvScanner.hasNext())
+        if (!csvScanner.hasNext())
             Assertions.fail();
 
         String[] header = csvScanner.nextLine().split(";");
@@ -46,21 +46,20 @@ class RolloutIntegrationTests {
             String[] testObject = csvScanner.nextLine().split(";");
 
             User user = null;
-            if(!testObject[0].equals("##null##"))
-            {
+            if (!testObject[0].equals("##null##")) {
                 String email = "";
                 String country = "";
 
                 String identifier = testObject[0];
 
-                if(!testObject[1].isEmpty() && !testObject[1].equals("##null##"))
+                if (!testObject[1].isEmpty() && !testObject[1].equals("##null##"))
                     email = testObject[1];
 
-                if(!testObject[2].isEmpty() && !testObject[2].equals("##null##"))
+                if (!testObject[2].isEmpty() && !testObject[2].equals("##null##"))
                     country = testObject[2];
 
                 Map<String, String> customAttributes = new HashMap<>();
-                if(!testObject[3].isEmpty() && !testObject[3].equals("##null##"))
+                if (!testObject[3].isEmpty() && !testObject[3].equals("##null##"))
                     customAttributes.put(customKey, testObject[3]);
 
                 user = User.newBuilder()
@@ -71,7 +70,7 @@ class RolloutIntegrationTests {
             }
 
             int i = 0;
-            for (String settingKey: settingKeys) {
+            for (String settingKey : settingKeys) {
                 String value;
                 if (kind.equals(VARIATION_TEST_KIND)) {
                     EvaluationDetails<String> valueDetails = client.getValueDetails(String.class, settingKey, user, null);
@@ -79,7 +78,7 @@ class RolloutIntegrationTests {
                 } else {
                     value = client.getValue(String.class, settingKey, user, null);
                 }
-                if(!value.equalsIgnoreCase(testObject[i + 4])) {
+                if (!value.equalsIgnoreCase(testObject[i + 4])) {
                     errors.add(String.format("Identifier: %s, Key: %s. Expected: %s, Result: %s \n", testObject[0], settingKey, testObject[i + 4], value));
                 }
                 i++;

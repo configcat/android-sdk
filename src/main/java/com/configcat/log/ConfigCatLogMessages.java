@@ -76,21 +76,20 @@ public final class ConfigCatLogMessages {
      * @return The formatted error message.
      */
     public static String getSettingEvaluationFailedDueToMissingKey(final String key, final String defaultParamName, final Object defaultParamValue, final Set<String> availableKeysSet) {
-        return "Failed to evaluate setting '" + key + "' (the key was not found in config JSON). Returning the `" + defaultParamName + "` parameter that you specified in your application: '" + defaultParamValue + "'. Available keys: [" + convertKeysSetToFormatedString(availableKeysSet) +"].";
+        return "Failed to evaluate setting '" + key + "' (the key was not found in config JSON). Returning the `" + defaultParamName + "` parameter that you specified in your application: '" + defaultParamValue + "'. Available keys: [" + convertKeysSetToFormatedString(availableKeysSet) + "].";
     }
 
-    private static String convertKeysSetToFormatedString(final Set<String> availableKeys){
+    private static String convertKeysSetToFormatedString(final Set<String> availableKeys) {
         StringBuilder sb = new StringBuilder();
         Iterator<String> it = availableKeys.iterator();
-        if(it.hasNext()) {
+        if (it.hasNext()) {
             sb.append("'").append(it.next()).append("'");
         }
-        while(it.hasNext()) {
+        while (it.hasNext()) {
             sb.append(", ").append("'").append(it.next()).append("'");
         }
         return sb.toString();
     }
-
 
 
     /**
@@ -170,26 +169,6 @@ public final class ConfigCatLogMessages {
      */
     public static String getFetchFailedDueToRequestTimeout(final Integer connectTimeoutMillis, final Integer readTimeoutMillis, final Integer writeTimeoutMillis) {
         return "Request timed out while trying to fetch config JSON. Timeout values: [connect: " + connectTimeoutMillis + "ms, read: " + readTimeoutMillis + "ms, write: " + writeTimeoutMillis + "ms]";
-    }
-
-    /**
-     * Log message for Local File Data Source Does Not Exist error. The log eventId is 1300.
-     *
-     * @param filePath The file path.
-     * @return The formatted error message.
-     */
-    public static String getLocalFileDataSourceDoesNotExist(final String filePath) {
-        return "Cannot find the local config file '" + filePath + "'. This is a path that your application provided to the ConfigCat SDK by passing it to the `OverrideDataSourceBuilder.localFile()` method. Read more: https://configcat.com/docs/sdk-reference/java/#json-file";
-    }
-
-    /**
-     * Log message for Local File Data Source Failed To Read File error. The log eventId is 1302.
-     *
-     * @param filePath The file path.
-     * @return The formatted error message.
-     */
-    public static String getLocalFileDataSourceFailedToReadFile(final String filePath) {
-        return "Failed to read the local config file '" + filePath + "'.";
     }
 
     /**

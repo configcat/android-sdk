@@ -21,7 +21,7 @@ public class RolloutRule {
 
     /**
      * The operator used in the comparison.
-     *
+     * <p>
      * 0:  'IS ONE OF',
      * 1:  'IS NOT ONE OF',
      * 2:  'CONTAINS',

@@ -13,6 +13,6 @@ public final class Utils {
             arr.set(i, arr.get(i).trim());
     }
 
-   public static final Gson gson = new GsonBuilder().create();
+    public static final Gson gson = new GsonBuilder().create();
 }
 

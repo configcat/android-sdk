@@ -20,11 +20,11 @@ public class Entry {
     }
 
     public long getFetchTime() {
-        if(fetchTimeRaw == null || fetchTimeRaw.isEmpty()){
+        if (fetchTimeRaw == null || fetchTimeRaw.isEmpty()) {
             return 0;
         }
         try {
-            return  DateTimeUtils.parseToMillis(fetchTimeRaw);
+            return DateTimeUtils.parseToMillis(fetchTimeRaw);
         } catch (ParseException e) {
             return 0;
         }

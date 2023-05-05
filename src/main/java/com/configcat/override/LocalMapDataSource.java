@@ -39,7 +39,7 @@ class LocalMapDataSource extends OverrideDataSource {
         } else if (value instanceof Double) {
             return SettingType.DOUBLE;
         } else {
-            throw new IllegalArgumentException("Could not determine the setting type of '"+value+"'");
+            throw new IllegalArgumentException("Could not determine the setting type of '" + value + "'");
         }
     }
 }

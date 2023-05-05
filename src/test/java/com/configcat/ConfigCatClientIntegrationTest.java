@@ -33,9 +33,9 @@ class ConfigCatClientIntegrationTest {
         this.server.start();
 
         this.client = ConfigCatClient.get(APIKEY, options -> {
-                    options.pollingMode(PollingModes.lazyLoad(2));
-                    options.baseUrl(this.server.url("/").toString());
-            });
+            options.pollingMode(PollingModes.lazyLoad(2));
+            options.baseUrl(this.server.url("/").toString());
+        });
     }
 
     @AfterEach
@@ -209,9 +209,9 @@ class ConfigCatClientIntegrationTest {
     @Test
     void getAllKeys() {
         ConfigCatClient cl = ConfigCatClient.get("PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A", options -> {
-                    options.logLevel(LogLevel.INFO);
-                    options.dataGovernance(DataGovernance.EU_ONLY);
-                });
+            options.logLevel(LogLevel.INFO);
+            options.dataGovernance(DataGovernance.EU_ONLY);
+        });
 
         Collection<String> keys = cl.getAllKeys();
 
@@ -223,9 +223,7 @@ class ConfigCatClientIntegrationTest {
     void testEvalDetails() {
         ConfigCatClient cl = ConfigCatClient.get("PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A");
 
-        User user = new User.Builder()
-                .email("test@configcat.com")
-                .build("test@configcat.com");
+        User user = new User.Builder().email("test@configcat.com").build("test@configcat.com");
 
         EvaluationDetails<String> details = cl.getValueDetails(String.class, "stringContainsDogDefaultCat", user, "");
         assertEquals("stringContainsDogDefaultCat", details.getKey());
@@ -242,9 +240,7 @@ class ConfigCatClientIntegrationTest {
 
     @Test
     void testEvalDetailsHook() {
-        User user = new User.Builder()
-                .email("test@configcat.com")
-                .build("test@configcat.com");
+        User user = new User.Builder().email("test@configcat.com").build("test@configcat.com");
 
         AtomicBoolean called = new AtomicBoolean(false);
         ConfigCatClient cl = ConfigCatClient.get("PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A", options -> {

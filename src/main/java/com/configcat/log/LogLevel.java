@@ -4,14 +4,24 @@ package com.configcat.log;
  * Describes the log level.
  */
 public enum LogLevel {
-    /** Debug level. */
+    /**
+     * Debug level.
+     */
     DEBUG,
-    /** Info level. */
+    /**
+     * Info level.
+     */
     INFO,
-    /** Warning level. */
+    /**
+     * Warning level.
+     */
     WARNING,
-    /** Error level. */
+    /**
+     * Error level.
+     */
     ERROR,
-    /** Turns logging off. */
+    /**
+     * Turns logging off.
+     */
     NO_LOG,
 }
