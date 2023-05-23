@@ -1,8 +1,8 @@
-package com.configcat.fetch;
+package com.configcat;
 
 import com.configcat.models.Entry;
 
-public class FetchResponse {
+class FetchResponse {
     enum Status {
         FETCHED,
         NOT_MODIFIED,

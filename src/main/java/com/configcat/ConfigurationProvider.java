@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 
 import com.configcat.evaluation.EvaluationDetails;
-import com.configcat.hooks.ConfigCatHooks;
 import java9.util.concurrent.CompletableFuture;
 
 /**

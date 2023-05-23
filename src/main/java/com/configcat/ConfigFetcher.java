@@ -1,11 +1,5 @@
-package com.configcat.fetch;
+package com.configcat;
 
-import com.configcat.Constants;
-import com.configcat.DateTimeUtils;
-import com.configcat.Result;
-import com.configcat.Utils;
-import com.configcat.log.ConfigCatLogMessages;
-import com.configcat.log.ConfigCatLogger;
 import com.configcat.models.Config;
 import com.configcat.models.Entry;
 import java9.util.concurrent.CompletableFuture;
@@ -17,7 +11,7 @@ import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class ConfigFetcher implements Closeable {
+class ConfigFetcher implements Closeable {
     private final AtomicBoolean closed = new AtomicBoolean(false);
     private final ConfigCatLogger logger;
     private final OkHttpClient httpClient;

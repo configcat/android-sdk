@@ -1,9 +1,5 @@
-package com.configcat.evaluation;
+package com.configcat;
 
-import com.configcat.User;
-import com.configcat.Utils;
-import com.configcat.log.ConfigCatLogMessages;
-import com.configcat.log.ConfigCatLogger;
 import com.configcat.models.PercentageRule;
 import com.configcat.models.RolloutRule;
 import com.configcat.models.Setting;
@@ -14,7 +10,7 @@ import org.apache.commons.codec.binary.Hex;
 
 import java.util.*;
 
-public class RolloutEvaluator {
+class RolloutEvaluator {
     protected static final String[] COMPARATOR_TEXTS = new String[]{
             "IS ONE OF",
             "IS NOT ONE OF",

@@ -1,10 +1,10 @@
-package com.configcat.evaluation;
+package com.configcat;
 
 import com.configcat.models.PercentageRule;
 import com.configcat.models.RolloutRule;
 import com.google.gson.JsonElement;
 
-public class EvaluationResult {
+class EvaluationResult {
     public final JsonElement value;
     public final String variationId;
     public final RolloutRule targetingRule;
