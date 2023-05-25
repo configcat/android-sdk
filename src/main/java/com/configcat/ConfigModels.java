@@ -10,7 +10,8 @@ class Entry {
     private Config config;
     private String eTag;
     private String configJson;
-    private String fetchTimeRaw;
+    private long fetchTime;
+    ;
 
     public Config getConfig() {
         return config;
@@ -21,43 +22,33 @@ class Entry {
     }
 
     public long getFetchTime() {
-        if(fetchTimeRaw == null || fetchTimeRaw.isEmpty()){
-            return 0;
-        }
-        try {
-            return  DateTimeUtils.parseToMillis(fetchTimeRaw);
-        } catch (ParseException e) {
-            return 0;
-        }
+        return fetchTime;
     }
 
     public String getConfigJson() {
         return configJson;
     }
 
-    public String getFetchTimeRaw() {
-        return fetchTimeRaw;
+    public Entry withFetchTime(long fetchTime) {
+        return new Entry(getConfig(), getETag(), getConfigJson(), fetchTime);
     }
 
-    public Entry withFetchTime(String fetchTimeRaw) {
-        return new Entry(getConfig(), getETag(), getConfigJson(), fetchTimeRaw);
-    }
-
-    public Entry(Config config, String eTag, String configJson, String fetchTimeRaw) {
+    public Entry(Config config, String eTag, String configJson, long fetchTime) {
         this.config = config;
         this.eTag = eTag;
         this.configJson = configJson;
-        this.fetchTimeRaw = fetchTimeRaw;
+        this.fetchTime = fetchTime;
     }
 
     boolean isEmpty() {
         return EMPTY.equals(this);
     }
 
-    public static final Entry EMPTY = new Entry(Config.EMPTY, "", "", null);
+    public static final Entry EMPTY = new Entry(Config.EMPTY, "", "", Constants.DISTANT_PAST);
 
     public String serialize() {
-        return getFetchTimeRaw() + "\n" + getETag() + "\n" + getConfigJson();
+        long fetchTimeSeconds = fetchTime / 1000;
+        return fetchTimeSeconds + "\n" + getETag() + "\n" + getConfigJson();
     }
 
     public static Entry fromString(String cacheValue) throws IllegalArgumentException {
@@ -74,7 +65,7 @@ class Entry {
         if (!DateTimeUtils.isValidDate(fetchTimeRaw)) {
             throw new IllegalArgumentException("Invalid fetch time: " + fetchTimeRaw);
         }
-
+        long fetchTimeUnixMillis = Long.parseLong(fetchTimeRaw) * 1000;
         String eTag = cacheValue.substring(fetchTimeIndex + 1, eTagIndex);
         if (eTag.isEmpty()) {
             throw new IllegalArgumentException("Empty eTag value.");
@@ -85,7 +76,7 @@ class Entry {
         }
         try {
             Config config = Utils.gson.fromJson(configJson, Config.class);
-            return new Entry(config, eTag, configJson, fetchTimeRaw);
+            return new Entry(config, eTag, configJson, fetchTimeUnixMillis);
         } catch (Exception e) {
             throw new IllegalArgumentException("Invalid config JSON content: " + configJson);
         }
