@@ -2,7 +2,6 @@ package com.configcat;
 
 import com.google.gson.annotations.SerializedName;
 
-import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -11,7 +10,6 @@ class Entry {
     private String eTag;
     private String configJson;
     private long fetchTime;
-    ;
 
     public Config getConfig() {
         return config;
