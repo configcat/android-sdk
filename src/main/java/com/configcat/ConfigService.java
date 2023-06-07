@@ -205,7 +205,7 @@ class ConfigService implements Closeable {
                 hooks.invokeOnConfigChanged(entry.getConfig().getEntries());
             } else {
                 if (response.isFetchTimeUpdatable()) {
-                    cachedEntry = cachedEntry.withFetchTime(response.getFetchTime());
+                    cachedEntry = cachedEntry.withFetchTime(System.currentTimeMillis());
                     writeCache(cachedEntry);
                 }
                 completeRunningTask(response.isFailed()
