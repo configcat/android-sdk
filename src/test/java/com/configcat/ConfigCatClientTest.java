@@ -520,12 +520,12 @@ class ConfigCatClientTest {
 
         cl.setDefaultUser(user1);
 
-        assertEquals("id1", cl.getVariationId("key", ""));
-        assertEquals("id2", cl.getVariationId("key", user2, ""));
+        assertEquals("id1", cl.getValueDetails(String.class, "key", "").getVariationId());
+        assertEquals("id2", cl.getValueDetails(String.class,"key", user2, "").getVariationId());
 
         cl.clearDefaultUser();
 
-        assertEquals("defVar", cl.getVariationId("key", ""));
+        assertEquals("defVar", cl.getValueDetails(String.class,"key", "").getVariationId());
 
         server.shutdown();
         cl.close();
@@ -556,7 +556,7 @@ class ConfigCatClientTest {
 
         assertTrue(changed.get());
         assertTrue(ready.get());
-        assertEquals("Unexpected HTTP response received: 500 Server Error", error.get());
+        assertEquals("Unexpected HTTP response was received while trying to fetch config JSON: 500 Server Error", error.get());
 
         server.shutdown();
         cl.close();
@@ -585,7 +585,7 @@ class ConfigCatClientTest {
         cl.forceRefresh();
 
         assertTrue(changed.get());
-        assertEquals("Unexpected HTTP response received: 500 Server Error", error.get());
+        assertEquals("Unexpected HTTP response was received while trying to fetch config JSON: 500 Server Error", error.get());
 
         server.shutdown();
         cl.close();
@@ -617,7 +617,7 @@ class ConfigCatClientTest {
 
         assertTrue(changed.get());
         assertTrue(ready.get());
-        assertEquals("Unexpected HTTP response received: 500 Server Error", error.get());
+        assertEquals("Unexpected HTTP response was received while trying to fetch config JSON: 500 Server Error", error.get());
 
         server.shutdown();
         cl.close();
@@ -637,7 +637,7 @@ class ConfigCatClientTest {
             options.baseUrl(server.url("/").toString());
             options.hooks().addOnFlagEvaluated(details -> {
                 assertEquals("", details.getValue());
-                assertEquals("Config JSON is not present. Returning defaultValue: [].", details.getError());
+                assertEquals("Config JSON is not present when evaluating setting 'key'. Returning the `defaultValue` parameter that you specified in your application: ''.", details.getError());
                 assertTrue(details.isDefaultValue());
                 called.set(true);
             });

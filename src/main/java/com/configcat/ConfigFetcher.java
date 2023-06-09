@@ -20,6 +20,7 @@ class FetchResponse {
     private final Entry entry;
     private final String error;
     private final boolean fetchTimeUpdatable;
+    private final String fetchTime;
 
     public boolean isFetched() {
         return this.status == Status.FETCHED;
@@ -33,31 +34,40 @@ class FetchResponse {
         return this.status == Status.FAILED;
     }
 
-    public boolean isFetchTimeUpdatable() { return fetchTimeUpdatable; }
+    public boolean isFetchTimeUpdatable() {
+        return fetchTimeUpdatable;
+    }
+
+    public String getFetchTime() {
+        return this.fetchTime;
+    }
 
     public Entry entry() {
         return this.entry;
     }
 
-    public String error() { return this.error; }
+    public String error() {
+        return this.error;
+    }
 
-    FetchResponse(Status status, Entry entry, String error, boolean fetchTimeUpdatable) {
+    FetchResponse(Status status, Entry entry, String error, boolean fetchTimeUpdatable, String fetchTime) {
         this.status = status;
         this.entry = entry;
         this.error = error;
         this.fetchTimeUpdatable = fetchTimeUpdatable;
+        this.fetchTime = fetchTime;
     }
 
-    public static FetchResponse fetched(Entry entry) {
-        return new FetchResponse(Status.FETCHED, entry == null ? Entry.EMPTY : entry, null, false);
+    public static FetchResponse fetched(Entry entry, String fetchTime) {
+        return new FetchResponse(Status.FETCHED, entry == null ? Entry.EMPTY : entry, null, false, fetchTime);
     }
 
-    public static FetchResponse notModified() {
-        return new FetchResponse(Status.NOT_MODIFIED, Entry.EMPTY, null, true);
+    public static FetchResponse notModified(String fetchTime) {
+        return new FetchResponse(Status.NOT_MODIFIED, Entry.EMPTY, null, true, fetchTime);
     }
 
-    public static FetchResponse failed(String error, boolean fetchTimeUpdatable) {
-        return new FetchResponse(Status.FAILED, Entry.EMPTY, error, fetchTimeUpdatable);
+    public static FetchResponse failed(String error, boolean fetchTimeUpdatable, String fetchTime) {
+        return new FetchResponse(Status.FAILED, Entry.EMPTY, error, fetchTimeUpdatable, fetchTime);
     }
 }
 
@@ -125,10 +135,7 @@ class ConfigFetcher implements Closeable {
                     return CompletableFuture.completedFuture(fetchResponse);
                 } else { // redirect
                     if (redirect == RedirectMode.SHOULD_REDIRECT.ordinal()) {
-                        this.logger.warn("Your builder.dataGovernance() parameter at ConfigCatClient " +
-                                "initialization is not in sync with your preferences on the ConfigCat " +
-                                "Dashboard: https://app.configcat.com/organization/data-governance. " +
-                                "Only Organization Admins can access this preference.");
+                        this.logger.warn(3002, ConfigCatLogMessages.DATA_GOVERNANCE_IS_OUT_OF_SYNC_WARN);
                     }
 
                     if (executionCount > 0) {
@@ -137,11 +144,11 @@ class ConfigFetcher implements Closeable {
                 }
 
             } catch (Exception exception) {
-                this.logger.error("Exception while trying to fetch the config.json.", exception);
+                this.logger.error(1103, ConfigCatLogMessages.FETCH_FAILED_DUE_TO_UNEXPECTED_ERROR, exception);
                 return CompletableFuture.completedFuture(fetchResponse);
             }
 
-            this.logger.error("Redirect loop during config.json fetch. Please contact support@configcat.com.");
+            this.logger.error(1104, ConfigCatLogMessages.FETCH_FAILED_DUE_TO_REDIRECT_LOOP_ERROR);
             return CompletableFuture.completedFuture(fetchResponse);
         });
     }
@@ -152,52 +159,56 @@ class ConfigFetcher implements Closeable {
         this.httpClient.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                String generalMessage = "Exception while trying to fetch the config.json.";
+                String generalMessage = ConfigCatLogMessages.FETCH_FAILED_DUE_TO_UNEXPECTED_ERROR;
                 if (!closed.get()) {
                     if (e instanceof SocketTimeoutException) {
-                        String message = "Request timed out. Timeout values: [connect: " + httpClient.connectTimeoutMillis() + "ms, read: " + httpClient.readTimeoutMillis() + "ms, write: " + httpClient.writeTimeoutMillis() + "ms]";
-                        logger.error(message, e);
-                        future.complete(FetchResponse.failed(message, false));
+                        String message = ConfigCatLogMessages.getFetchFailedDueToRequestTimeout(httpClient.connectTimeoutMillis(), httpClient.readTimeoutMillis(), httpClient.writeTimeoutMillis());
+                        logger.error(1102, message, e);
+                        future.complete(FetchResponse.failed(message, false, null));
                         return;
                     }
-                    logger.error(generalMessage, e);
+                    logger.error(1103, generalMessage, e);
                 }
-                future.complete(FetchResponse.failed(generalMessage, false));
+                future.complete(FetchResponse.failed(generalMessage, false, null));
             }
 
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) {
                 try (ResponseBody body = response.body()) {
+                    String fetchTime = response.headers().get("date");
+                    if (fetchTime == null || fetchTime.isEmpty() || DateTimeUtils.isValidDate(fetchTime)) {
+                        fetchTime = DateTimeUtils.format(System.currentTimeMillis());
+                    }
                     if (response.isSuccessful() && body != null) {
                         String content = body.string();
                         String eTag = response.header("ETag");
                         Result<Config> result = deserializeConfig(content);
                         if (result.error() != null) {
-                            future.complete(FetchResponse.failed(result.error(), false));
+                            future.complete(FetchResponse.failed(result.error(), false, null));
                             return;
                         }
                         logger.debug("Fetch was successful: new config fetched.");
-                        future.complete(FetchResponse.fetched(new Entry(result.value(), eTag, System.currentTimeMillis())));
+                        future.complete(FetchResponse.fetched(new Entry(result.value(), eTag, content, fetchTime), fetchTime));
                     } else if (response.code() == 304) {
                         logger.debug("Fetch was successful: config not modified.");
-                        future.complete(FetchResponse.notModified());
+                        future.complete(FetchResponse.notModified(fetchTime));
                     } else if (response.code() == 403 || response.code() == 404) {
-                        String message = "Double-check your API KEY at https://app.configcat.com/apikey.";
-                        logger.error(message);
-                        future.complete(FetchResponse.failed(message, true));
+                        String message = ConfigCatLogMessages.FETCH_FAILED_DUE_TO_INVALID_SDK_KEY_ERROR;
+                        logger.error(1100, message);
+                        future.complete(FetchResponse.failed(message, true, fetchTime));
                     } else {
-                        String message = "Unexpected HTTP response received: " + response.code() + " " + response.message();
-                        logger.error(message);
-                        future.complete(FetchResponse.failed(message, false));
+                        String message = ConfigCatLogMessages.getFetchFailedDueToUnexpectedHttpResponse(response.code(), response.message());
+                        logger.error(1101, message);
+                        future.complete(FetchResponse.failed(message, false, null));
                     }
                 } catch (SocketTimeoutException e) {
-                    String message = "Request timed out. Timeout values: [connect: " + httpClient.connectTimeoutMillis() + "ms, read: " + httpClient.readTimeoutMillis() + "ms, write: " + httpClient.writeTimeoutMillis() + "ms]";
-                    logger.error(message, e);
-                    future.complete(FetchResponse.failed(message, false));
+                    String message = ConfigCatLogMessages.getFetchFailedDueToRequestTimeout(httpClient.connectTimeoutMillis(), httpClient.readTimeoutMillis(), httpClient.writeTimeoutMillis());
+                    logger.error(1102, message, e);
+                    future.complete(FetchResponse.failed(message, false, null));
                 } catch (Exception e) {
-                    String message = "Exception while trying to fetch the config.json.";
-                    logger.error(message, e);
-                    future.complete(FetchResponse.failed(message + ": " + e.getMessage() , false));
+                    String message = ConfigCatLogMessages.FETCH_FAILED_DUE_TO_UNEXPECTED_ERROR;
+                    logger.error(1103, message, e);
+                    future.complete(FetchResponse.failed(message + " " + e.getMessage(), false, null));
                 }
             }
         });
@@ -234,8 +245,8 @@ class ConfigFetcher implements Closeable {
         try {
             return Result.success(Utils.gson.fromJson(json, Config.class));
         } catch (Exception e) {
-            String message = "JSON parsing failed. " + e.getMessage();
-            this.logger.error(message);
+            String message = ConfigCatLogMessages.FETCH_RECEIVED_200_WITH_INVALID_BODY_ERROR;
+            this.logger.error(1105, message, e);
             return Result.error(message, null);
         }
     }

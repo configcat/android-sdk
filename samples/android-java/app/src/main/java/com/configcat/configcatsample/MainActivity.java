@@ -1,6 +1,7 @@
 package com.configcat.configcatsample;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -21,13 +22,12 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         client = ConfigCatClient.get("PKDVCLf-Hq-h-kCzMp-L7Q/HhOWfwVtZ0mb30i9wi17GQ", options -> {
-
             // Use ConfigCat's shared preferences cache.
             options.cache(new SharedPreferencesCache(getApplicationContext()));
 
             // Info level logging helps to inspect the feature flag evaluation process.
             // Use the default Warning level to avoid too detailed logging in your application.
-            options.logLevel(LogLevel.INFO);
+            options.logLevel(LogLevel.DEBUG);
 
             options.hooks().addOnConfigChanged(map -> fetchNewConfig());
         });
@@ -39,8 +39,8 @@ public class MainActivity extends AppCompatActivity {
                 .build("key");
 
         this.client.getValueAsync(Boolean.class, "isPOCFeatureEnabled", user, false)
-                .thenAccept( value ->{
-                    this.runOnUiThread( () -> {
+                .thenAccept(value -> {
+                    this.runOnUiThread(() -> {
                         TextView viewById = this.findViewById(R.id.editText);
                         viewById.setText("isPOCFeatureEnabled: " + value);
                     });
