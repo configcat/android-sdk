@@ -6,6 +6,7 @@ import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -731,5 +732,32 @@ class ConfigCatClientTest {
         assertFalse(client1.isClosed());
         client1.close();
         assertTrue(client1.isClosed());
+    }
+
+    @Test
+    void testCacheKey() throws NoSuchFieldException, IllegalAccessException {
+        //Test Data: SDKKey "test1", HASH "147c5b4c2b2d7c77e1605b1a4309f0ea6684a0c6"
+        ConfigCatClient clTest1 = ConfigCatClient.get("test1");
+
+        String test1SdkKeyCacheKeyWithReflection = getCacheKeyWithReflection(clTest1);
+        assertEquals("147c5b4c2b2d7c77e1605b1a4309f0ea6684a0c6", test1SdkKeyCacheKeyWithReflection);
+
+        //Test Data: SDKKey "test2", HASH "c09513b1756de9e4bc48815ec7a142b2441ed4d5"
+        ConfigCatClient clTest2 = ConfigCatClient.get("test2");
+
+        String test2SdkKeyCacheKeyWithReflection = getCacheKeyWithReflection(clTest2);
+        assertEquals("c09513b1756de9e4bc48815ec7a142b2441ed4d5", test2SdkKeyCacheKeyWithReflection);
+    }
+
+    private static String getCacheKeyWithReflection(ConfigCatClient cl) throws NoSuchFieldException, IllegalAccessException {
+        Field configServiceField = ConfigCatClient.class.getDeclaredField("configService");
+        configServiceField.setAccessible(true);
+
+        ConfigService configService = (ConfigService) configServiceField.get(cl);
+
+        Field cacheKeyField = ConfigService.class.getDeclaredField("cacheKey");
+        cacheKeyField.setAccessible(true);
+
+        return (String) cacheKeyField.get(configService);
     }
 }
