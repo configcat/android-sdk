@@ -23,7 +23,7 @@ final class Constants {
     static final long DISTANT_PAST = 0;
     static final String CONFIG_JSON_NAME = "config_v5.json";
     static final String SERIALIZATION_FORMAT_VERSION = "v2";
-    static final String VERSION = "8.2.2";
+    static final String VERSION = "9.0.0";
 }
 
 final class Result<T> {

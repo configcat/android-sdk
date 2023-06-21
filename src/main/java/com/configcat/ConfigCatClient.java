@@ -459,34 +459,6 @@ public final class ConfigCatClient implements ConfigurationProvider {
         }
     }
 
-    private String getVariationIdFromSettingsMap(SettingResult settingResult, String key, User user, String defaultVariationId) {
-        User userObject = user != null ? user : this.defaultUser;
-        try {
-            Map<String, Setting> settings = settingResult.settings();
-            if (settings.isEmpty()) {
-                String error = ConfigCatLogMessages.getConfigJsonIsNotPresentedWithDefaultValue(key, "defaultVariationId", defaultVariationId);
-                this.hooks.invokeOnFlagEvaluated(EvaluationDetails.fromError(key, null, error, userObject));
-                this.logger.error(1000, error);
-                return defaultVariationId;
-            }
-
-            Setting setting = settings.get(key);
-            if (setting == null) {
-                String error = ConfigCatLogMessages.getSettingEvaluationFailedDueToMissingKey(key, "defaultVariationId", defaultVariationId, settings.keySet());
-                this.hooks.invokeOnFlagEvaluated(EvaluationDetails.fromError(key, null, error, userObject));
-                this.logger.error(1001, error);
-                return defaultVariationId;
-            }
-
-            return this.rolloutEvaluator.evaluate(setting, key, userObject).variationId;
-        } catch (Exception e) {
-            String error = ConfigCatLogMessages.getSettingEvaluationFailedForOtherReason(key, "defaultVariationId", defaultVariationId);
-            this.hooks.invokeOnFlagEvaluated(EvaluationDetails.fromError(key, null, error + " " + e.getMessage(), userObject));
-            this.logger.error(2001, error, e);
-            return defaultVariationId;
-        }
-    }
-
     private <T> Map.Entry<String, T> getKeyAndValueFromSettingsMap(Class<T> classOfT, SettingResult settingsResult, String variationId) {
         try {
             if (!checkSettingsAvailable(settingsResult, "null")) {
