@@ -10,13 +10,13 @@ final class Helpers {
 
     static String cacheValueFromConfigJson(String json) {
         Config config = Utils.gson.fromJson(json, Config.class);
-        Entry entry = new Entry(config, "fakeTag", json, DateTimeUtils.format(System.currentTimeMillis()));
+        Entry entry = new Entry(config, "fakeTag", json, System.currentTimeMillis());
         return entry.serialize();
     }
 
     static String cacheValueFromConfigJsonAndTime(String json, long time) {
         Config config = Utils.gson.fromJson(json, Config.class);
-        Entry entry = new Entry(config, "fakeTag", json, DateTimeUtils.format(time));
+        Entry entry = new Entry(config, "fakeTag", json, time);
         return entry.serialize();
     }
 
