@@ -1,17 +1,14 @@
 package com.configcat;
 
 import com.google.gson.JsonElement;
-
+import java9.util.concurrent.CompletableFuture;
 import java9.util.function.Consumer;
 import okhttp3.OkHttpClient;
-
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import java9.util.concurrent.CompletableFuture;
 
 /**
  * A client for handling configurations provided by ConfigCat.
@@ -43,18 +40,17 @@ public final class ConfigCatClient implements ConfigurationProvider {
         this.rolloutEvaluator = new RolloutEvaluator(this.logger);
 
         if (this.overrideBehaviour != OverrideBehaviour.LOCAL_ONLY) {
-            boolean hasCustomBaseUrl = options.baseUrl != null && !options.baseUrl.isEmpty();
             ConfigFetcher fetcher = new ConfigFetcher(options.httpClient == null
                     ? new OkHttpClient()
                     : options.httpClient,
                     this.logger,
                     sdkKey,
-                    !hasCustomBaseUrl
+                    !options.isBaseURLCustom()
                             ? options.dataGovernance == DataGovernance.GLOBAL
                             ? BASE_URL_GLOBAL
                             : BASE_URL_EU
                             : options.baseUrl,
-                    hasCustomBaseUrl,
+                    options.isBaseURLCustom(),
                     options.pollingMode.getPollingIdentifier());
 
             this.configService = new ConfigService(sdkKey, options.pollingMode, options.cache, logger, fetcher, options.hooks, options.offline);
@@ -167,7 +163,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
             throw new IllegalArgumentException("Only String, Integer, Double or Boolean types are supported.");
 
         return this.getSettingsAsync()
-                .thenApply(settingsResult ->{
+                .thenApply(settingsResult -> {
                     Result<Setting> checkSettingResult = checkSettingAvailable(settingsResult, key, defaultValue);
                     if (checkSettingResult.error() != null) {
                         EvaluationDetails<Object> evaluationDetails = EvaluationDetails.fromError(key, defaultValue, checkSettingResult.error(), user);
@@ -580,29 +576,46 @@ public final class ConfigCatClient implements ConfigurationProvider {
      */
     public static ConfigCatClient get(String sdkKey, Consumer<Options> optionsCallback) {
         if (sdkKey == null || sdkKey.isEmpty())
-            throw new IllegalArgumentException("'sdkKey' cannot be null or empty.");
+            throw new IllegalArgumentException("SDK Key cannot be null or empty.");
+
+        Options clientOptions = new Options();
+
+        if (optionsCallback != null) {
+            Options options = new Options();
+            optionsCallback.accept(options);
+            clientOptions = options;
+        }
+
+        if (!isValidKey(sdkKey, clientOptions.isBaseURLCustom()))
+            throw new IllegalArgumentException("SDK Key '" + sdkKey + "' is invalid.");
 
         synchronized (INSTANCES) {
-            ConfigCatClient existing = INSTANCES.get(sdkKey);
-            if (existing != null) {
+            ConfigCatClient client = INSTANCES.get(sdkKey);
+            if (client != null) {
                 if (optionsCallback != null) {
-                    existing.logger.warn(3000, ConfigCatLogMessages.getClientIsAlreadyCreated(sdkKey));
+                    client.logger.warn(3000, ConfigCatLogMessages.getClientIsAlreadyCreated(sdkKey));
                 }
-                return existing;
+                return client;
             }
 
-            ConfigCatClient client;
-            if (optionsCallback != null) {
-                Options options = new Options();
-                optionsCallback.accept(options);
-                client = new ConfigCatClient(sdkKey, options);
-            } else {
-                client = new ConfigCatClient(sdkKey, new Options());
-            }
-
+            client = new ConfigCatClient(sdkKey, clientOptions);
             INSTANCES.put(sdkKey, client);
             return client;
         }
+    }
+
+    private static boolean isValidKey(final String sdkKey, final boolean isCustomBaseURL) {
+        //configcat-proxy/ rules
+        if (isCustomBaseURL && sdkKey.length() > Constants.SDK_KEY_PROXY_PREFIX.length() && sdkKey.startsWith(Constants.SDK_KEY_PROXY_PREFIX)) {
+            return true;
+        }
+        String[] splitSDKKey = sdkKey.split("/");
+        //22/22 rules
+        if (splitSDKKey.length == 2 && splitSDKKey[0].length() == Constants.SDK_KEY_SECTION_LENGTH && splitSDKKey[1].length() == Constants.SDK_KEY_SECTION_LENGTH) {
+            return true;
+        }
+        //configcat-sdk-1/22/22 rules
+        return splitSDKKey.length == 3 && splitSDKKey[0].equals(Constants.SDK_KEY_PREFIX) && splitSDKKey[1].length() == Constants.SDK_KEY_SECTION_LENGTH && splitSDKKey[2].length() == Constants.SDK_KEY_SECTION_LENGTH;
     }
 
     /**
@@ -736,6 +749,10 @@ public final class ConfigCatClient implements ConfigurationProvider {
          */
         public ConfigCatHooks hooks() {
             return this.hooks;
+        }
+
+        private boolean isBaseURLCustom() {
+            return this.baseUrl != null && !this.baseUrl.isEmpty();
         }
     }
 

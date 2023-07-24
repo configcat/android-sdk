@@ -15,12 +15,14 @@ class LocalTest {
     private static final String TEST_JSON = "{ f: { fakeKey: { v: %s, p: [] ,r: [] } } }";
 
     @Test
-    void invalidArguments() {
-        assertThrows(IllegalArgumentException.class, () -> ConfigCatClient.get("key1", options -> options.flagOverrides(null, null)));
-        assertThrows(IllegalArgumentException.class, () -> ConfigCatClient.get("key2", options -> options.flagOverrides(null, OverrideBehaviour.LOCAL_ONLY)));
+    void invalidArguments() throws IOException {
+        assertThrows(IllegalArgumentException.class, () -> ConfigCatClient.get("configcat-sdk-1/TEST_KEY1-123456789012/1234567890123456789012", options -> options.flagOverrides(null, null)));
+        assertThrows(IllegalArgumentException.class, () -> ConfigCatClient.get("configcat-sdk-1/TEST_KEY2-123456789012/1234567890123456789012", options -> options.flagOverrides(null, OverrideBehaviour.LOCAL_ONLY)));
         Map<String, Object> map = new HashMap<>();
         map.put("enabledFeature", true);
-        assertThrows(IllegalArgumentException.class, () -> ConfigCatClient.get("key3", options -> options.flagOverrides(OverrideDataSource.map(map), null)));
+        assertThrows(IllegalArgumentException.class, () -> ConfigCatClient.get("configcat-sdk-1/TEST_KEY3-123456789012/1234567890123456789012", options -> options.flagOverrides(OverrideDataSource.map(map), null)));
+
+        ConfigCatClient.closeAll();
     }
 
     @Test
@@ -31,7 +33,7 @@ class LocalTest {
         map.put("intSetting", 5);
         map.put("doubleSetting", 3.14);
         map.put("stringSetting", "test");
-        ConfigCatClient client = ConfigCatClient.get("localhost", options -> options.flagOverrides(OverrideDataSource.map(map), OverrideBehaviour.LOCAL_ONLY));
+        ConfigCatClient client = ConfigCatClient.get(Helpers.SDK_KEY, options -> options.flagOverrides(OverrideDataSource.map(map), OverrideBehaviour.LOCAL_ONLY));
 
         assertTrue(client.getValue(Boolean.class, "enabledFeature", User.newBuilder().build("test"), false));
         assertFalse(client.getValue(Boolean.class, "disabledFeature", User.newBuilder().build("test"), true));
@@ -50,7 +52,7 @@ class LocalTest {
         map.put("intSetting", 5);
         map.put("doubleSetting", 3.14);
         map.put("stringSetting", "test");
-        ConfigCatClient client = ConfigCatClient.get("localhost", options -> options.flagOverrides(OverrideDataSource.map(map), OverrideBehaviour.LOCAL_ONLY));
+        ConfigCatClient client = ConfigCatClient.get(Helpers.SDK_KEY, options -> options.flagOverrides(OverrideDataSource.map(map), OverrideBehaviour.LOCAL_ONLY));
 
         Map<String, Object> values = client.getAllValues(User.newBuilder().build("test"));
         assertEquals(5, values.entrySet().size());
@@ -67,7 +69,7 @@ class LocalTest {
         map.put("fakeKey", true);
         map.put("nonexisting", true);
 
-        ConfigCatClient client = ConfigCatClient.get("localhost", options -> {
+        ConfigCatClient client = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
             options.pollingMode(PollingModes.manualPoll());
             options.baseUrl(server.url("/").toString());
             options.flagOverrides(OverrideDataSource.map(map), OverrideBehaviour.LOCAL_OVER_REMOTE);
@@ -91,7 +93,7 @@ class LocalTest {
         Map<String, Object> map = new HashMap<>();
         map.put("fakeKey", true);
         map.put("nonexisting", true);
-        ConfigCatClient client = ConfigCatClient.get("localhost", options -> {
+        ConfigCatClient client = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
             options.pollingMode(PollingModes.manualPoll());
             options.baseUrl(server.url("/").toString());
             options.flagOverrides(OverrideDataSource.map(map), OverrideBehaviour.REMOTE_OVER_LOCAL);
