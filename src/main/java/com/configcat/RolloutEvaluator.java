@@ -22,26 +22,6 @@ class EvaluationResult {
 }
 
 class RolloutEvaluator {
-    protected static final String[] COMPARATOR_TEXTS = new String[]{
-            "IS ONE OF",
-            "IS NOT ONE OF",
-            "CONTAINS",
-            "DOES NOT CONTAIN",
-            "IS ONE OF (SemVer)",
-            "IS NOT ONE OF (SemVer)",
-            "< (SemVer)",
-            "<= (SemVer)",
-            "> (SemVer)",
-            ">= (SemVer)",
-            "= (Number)",
-            "<> (Number)",
-            "< (Number)",
-            "<= (Number)",
-            "> (Number)",
-            ">= (Number)",
-            "IS ONE OF (Sensitive)",
-            "IS NOT ONE OF (Sensitive)"
-    };
 
     private final ConfigCatLogger logger;
 
@@ -70,7 +50,7 @@ class RolloutEvaluator {
 
                     String comparisonAttribute = rule.getComparisonAttribute();
                     String comparisonValue = rule.getComparisonValue();
-                    int comparator = rule.getComparator();
+                    Comparator comparator = Comparator.fromId(rule.getComparator());
                     JsonElement value = rule.getValue();
                     String variationId = rule.getVariationId();
                     String userValue = user.getAttribute(comparisonAttribute);
@@ -81,44 +61,32 @@ class RolloutEvaluator {
                         continue;
                     }
 
+                    //TODO comparator null? error?
                     switch (comparator) {
-                        //IS ONE OF
-                        case 0:
-                            List<String> inValues = new ArrayList<>(Arrays.asList(comparisonValue.split(",")));
-                            Utils.trimElements(inValues);
-                            inValues.removeAll(Arrays.asList(null, ""));
-                            if (inValues.contains(userValue)) {
+                        case CONTAINS:
+                            List<String> containsValues = new ArrayList<>(Arrays.asList(comparisonValue.split(",")));
+                            for(int index = 0; containsValues.size() > index; index++){
+                                containsValues.set(index, containsValues.get(index).trim());
+                            }
+                            containsValues.removeAll(Arrays.asList(null, ""));
+                            if (containsValues.contains(userValue)) {
                                 evaluateLogger.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value);
                                 return new EvaluationResult(value, variationId, rule, null);
                             }
                             break;
-                        //IS NOT ONE OF
-                        case 1:
-                            List<String> notInValues = new ArrayList<>(Arrays.asList(comparisonValue.split(",")));
-                            Utils.trimElements(notInValues);
-                            notInValues.removeAll(Arrays.asList(null, ""));
-                            if (!notInValues.contains(userValue)) {
+                        case  DOES_NOT_CONTAIN:
+                            List<String> notContainsValues = new ArrayList<>(Arrays.asList(comparisonValue.split(",")));
+                            for(int index = 0; notContainsValues.size() > index; index++){
+                                notContainsValues.set(index, notContainsValues.get(index).trim());
+                            }
+                            notContainsValues.removeAll(Arrays.asList(null, ""));
+                            if (!notContainsValues.contains(userValue)) {
                                 evaluateLogger.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value);
                                 return new EvaluationResult(value, variationId, rule, null);
                             }
                             break;
-                        //CONTAINS
-                        case 2:
-                            if (userValue.contains(comparisonValue)) {
-                                evaluateLogger.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value);
-                                return new EvaluationResult(value, variationId, rule, null);
-                            }
-                            break;
-                        //DOES NOT CONTAIN
-                        case 3:
-                            if (!userValue.contains(comparisonValue)) {
-                                evaluateLogger.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value);
-                                return new EvaluationResult(value, variationId, rule, null);
-                            }
-                            break;
-                        //IS ONE OF, IS NOT ONE OF (SemVer)
-                        case 4:
-                        case 5:
+                        case SEMVER_IS_ONE_OF:
+                        case SEMVER_IS_NOT_ONE_OF:
                             List<String> inSemVerValues = new ArrayList<>(Arrays.asList(comparisonValue.split(",")));
                             Utils.trimElements(inSemVerValues);
                             inSemVerValues.removeAll(Arrays.asList(null, ""));
@@ -129,7 +97,7 @@ class RolloutEvaluator {
                                     matched = userVersion.compareTo(Version.parseVersion(semVer, true)) == 0 || matched;
                                 }
 
-                                if ((matched && comparator == 4) || (!matched && comparator == 5)) {
+                                if ((matched && Comparator.SEMVER_IS_ONE_OF.equals(comparator)) || (!matched && Comparator.SEMVER_IS_NOT_ONE_OF.equals(comparator))) {
                                     evaluateLogger.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value);
                                     return new EvaluationResult(value, variationId, rule, null);
                                 }
@@ -138,18 +106,17 @@ class RolloutEvaluator {
                                 continue;
                             }
                             break;
-                        //LESS THAN, LESS THAN OR EQUALS TO, GREATER THAN, GREATER THAN OR EQUALS TO (SemVer)
-                        case 6:
-                        case 7:
-                        case 8:
-                        case 9:
+                        case SEMVER_LESS:
+                        case SEMVER_LESS_EQULAS:
+                        case SEMVER_GREATER:
+                        case SEMVER_GREATER_EQUALS:
                             try {
                                 Version cmpUserVersion = Version.parseVersion(userValue, true);
                                 Version matchValue = Version.parseVersion(comparisonValue.trim(), true);
-                                if ((comparator == 6 && cmpUserVersion.isLowerThan(matchValue)) ||
-                                        (comparator == 7 && cmpUserVersion.compareTo(matchValue) <= 0) ||
-                                        (comparator == 8 && cmpUserVersion.isGreaterThan(matchValue)) ||
-                                        (comparator == 9 && cmpUserVersion.compareTo(matchValue) >= 0)) {
+                                if ((Comparator.SEMVER_LESS.equals(comparator)&& cmpUserVersion.isLowerThan(matchValue)) ||
+                                        (Comparator.SEMVER_LESS_EQULAS.equals(comparator) && cmpUserVersion.compareTo(matchValue) <= 0) ||
+                                        (Comparator.SEMVER_GREATER.equals(comparator) && cmpUserVersion.isGreaterThan(matchValue)) ||
+                                        (Comparator.SEMVER_GREATER_EQUALS.equals(comparator) && cmpUserVersion.compareTo(matchValue) >= 0)) {
                                     evaluateLogger.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value);
                                     return new EvaluationResult(value, variationId, rule, null);
                                 }
@@ -159,22 +126,22 @@ class RolloutEvaluator {
                             }
                             break;
                         //LESS THAN, LESS THAN OR EQUALS TO, GREATER THAN, GREATER THAN OR EQUALS TO (SemVer)
-                        case 10:
-                        case 11:
-                        case 12:
-                        case 13:
-                        case 14:
-                        case 15:
+                        case NUMBER_EQUALS:
+                        case NUMBER_NOT_EQUALS:
+                        case NUMBER_LESS:
+                        case NUMBER_LESS_EQUALS:
+                        case NUMBER_GREATER:
+                        case NUMBER_GREATER_EQUALS:
                             try {
                                 Double userDoubleValue = Double.parseDouble(userValue.replace(",", "."));
                                 Double comparisonDoubleValue = Double.parseDouble(comparisonValue.replace(",", "."));
 
-                                if ((comparator == 10 && userDoubleValue.equals(comparisonDoubleValue)) ||
-                                        (comparator == 11 && !userDoubleValue.equals(comparisonDoubleValue)) ||
-                                        (comparator == 12 && userDoubleValue < comparisonDoubleValue) ||
-                                        (comparator == 13 && userDoubleValue <= comparisonDoubleValue) ||
-                                        (comparator == 14 && userDoubleValue > comparisonDoubleValue) ||
-                                        (comparator == 15 && userDoubleValue >= comparisonDoubleValue)) {
+                                if ((Comparator.NUMBER_EQUALS.equals(comparator) && userDoubleValue.equals(comparisonDoubleValue)) ||
+                                        (Comparator.NUMBER_NOT_EQUALS.equals(comparator) && !userDoubleValue.equals(comparisonDoubleValue)) ||
+                                        (Comparator.NUMBER_LESS.equals(comparator) && userDoubleValue < comparisonDoubleValue) ||
+                                        (Comparator.NUMBER_LESS_EQUALS.equals(comparator) && userDoubleValue <= comparisonDoubleValue) ||
+                                        (Comparator.NUMBER_GREATER.equals(comparator) && userDoubleValue > comparisonDoubleValue) ||
+                                        (Comparator.NUMBER_GREATER_EQUALS.equals(comparator) && userDoubleValue >= comparisonDoubleValue)) {
                                     evaluateLogger.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value);
                                     return new EvaluationResult(value, variationId, rule, null);
                                 }
@@ -183,8 +150,8 @@ class RolloutEvaluator {
                                 continue;
                             }
                             break;
-                        //IS ONE OF (Sensitive)
-                        case 16:
+                        case SENSITIVE_IS_ONE_OF:
+                            //TODO add salt and salt error handle
                             List<String> inValuesSensitive = new ArrayList<>(Arrays.asList(comparisonValue.split(",")));
                             Utils.trimElements(inValuesSensitive);
                             inValuesSensitive.removeAll(Arrays.asList(null, ""));
@@ -194,13 +161,111 @@ class RolloutEvaluator {
                                 return new EvaluationResult(value, variationId, rule, null);
                             }
                             break;
-                        //IS NOT ONE OF (Sensitive)
-                        case 17:
+                        case SENSITIVE_IS_NOT_ONE_OF:
+                            //TODO add salt and salt error handle
                             List<String> notInValuesSensitive = new ArrayList<>(Arrays.asList(comparisonValue.split(",")));
                             Utils.trimElements(notInValuesSensitive);
                             notInValuesSensitive.removeAll(Arrays.asList(null, ""));
                             String hashValueNotOne = new String(Hex.encodeHex(DigestUtils.sha1(userValue)));
                             if (!notInValuesSensitive.contains(hashValueNotOne)) {
+                                evaluateLogger.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value);
+                                return new EvaluationResult(value, variationId, rule, null);
+                            }
+                            break;
+                        case DATE_BEFORE:
+                        case DATE_AFTER:
+                            try {
+                                Double userDoubleValue = Double.parseDouble(userValue.replaceAll(",", "."));
+                                Double comparisonDoubleValue = Double.parseDouble(comparisonValue.replaceAll(",", "."));
+                                if ((Comparator.DATE_BEFORE.equals(comparator)&& userDoubleValue < comparisonDoubleValue) ||
+                                        (Comparator.DATE_AFTER.equals(comparator) && userDoubleValue > comparisonDoubleValue)){
+                                    evaluateLogger.logMatchDate(comparisonAttribute, userDoubleValue, comparator, comparisonDoubleValue, value);
+                                    return new EvaluationResult(value, variationId, rule, null);
+                                }
+                            } catch (NumberFormatException e) {
+                                String message = evaluateLogger.logFormatError(comparisonAttribute, userValue, comparator, comparisonValue, e);
+                                this.logger.warn(0, message);
+                                continue;
+                            }
+                            break;
+                        case HASHED_EQUALS:
+                            //TODO add salt and salt error handle
+                            String hashEquals = new String(Hex.encodeHex(DigestUtils.sha1(userValue)));
+                            if (hashEquals.equals(comparisonValue)) {
+                                evaluateLogger.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value);
+                                return new EvaluationResult(value, variationId, rule, null);
+                            }
+                            break;
+                        case HASHED_NOT_EQUALS:
+                            //TODO add salt and salt error handle
+                            String hashNotEquals = new String(Hex.encodeHex(DigestUtils.sha1(userValue)));
+                            if (!hashNotEquals.equals(comparisonValue)) {
+                                evaluateLogger.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value);
+                                return new EvaluationResult(value, variationId, rule, null);
+                            }
+                            break;
+                        case HASHED_STARTS_WITH:
+                        case HASHED_ENDS_WITH:
+                            //TODO add salt and salt error handle
+                            int indexOf = comparisonValue.indexOf("_");
+                            if(indexOf <= 0){
+                                continue;
+                            }
+                            String comparedTextLength = comparisonValue.substring(0, indexOf);
+                            try {
+                                int comparedTextLengthInt = Integer.parseInt(comparedTextLength);
+                                if(userValue.length() < comparedTextLengthInt){
+                                    continue;
+                                }
+                                String comparisonHashValue = comparisonValue.substring(indexOf + 1);
+                                if(comparisonHashValue.isEmpty()){
+                                    continue;
+                                }
+                                String userValueSubString;
+                                if(Comparator.HASHED_STARTS_WITH.equals(comparator)){
+                                    userValueSubString = userValue.substring(0, comparedTextLengthInt);
+                                } else { //HASHED_ENDS_WITH
+                                    userValueSubString = userValue.substring(userValue.length() - comparedTextLengthInt);
+                                }
+                                String hashUserValueSub = new String(Hex.encodeHex(DigestUtils.sha1(userValueSubString)));
+                                if (hashUserValueSub.equals(comparisonHashValue)) {
+                                    evaluateLogger.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value);
+                                    return new EvaluationResult(value, variationId, rule, null);
+                                }
+                            } catch (NumberFormatException e) {
+                                String message = evaluateLogger.logFormatError(comparisonAttribute, userValue, comparator, comparisonValue, e);
+                                this.logger.warn(0, message);
+                                continue;
+                            }
+                            break;
+                        case HASHED_ARRAY_CONTAINS:
+                            //TODO add salt and salt error handle
+                            String[] userCSVContainsHashSplit = userValue.split(",");
+                            if(userCSVContainsHashSplit.length == 0){
+                                continue;
+                            }
+                            for (String userValueSlice: userCSVContainsHashSplit) {
+                                String userValueSliceHash = new String(Hex.encodeHex(DigestUtils.sha1(userValueSlice)));
+                                if (userValueSliceHash.equals(comparisonValue)) {
+                                    evaluateLogger.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value);
+                                    return new EvaluationResult(value, variationId, rule, null);
+                                }
+                            }
+                            break;
+                        case HASHED_ARRAY_NOT_CONTAINS:
+                            //TODO add salt and salt error handle
+                            String[] userCSVNotContainsHashSplit = userValue.split(",");
+                            if(userCSVNotContainsHashSplit.length == 0){
+                                continue;
+                            }
+                            boolean containsFlag = false;
+                            for (String userValueSlice: userCSVNotContainsHashSplit) {
+                                String userValueSliceHash = new String(Hex.encodeHex(DigestUtils.sha1(userValueSlice)));
+                                if (userValueSliceHash.equals(comparisonValue)) {
+                                    containsFlag = true;
+                                }
+                            }
+                            if(!containsFlag){
                                 evaluateLogger.logMatch(comparisonAttribute, userValue, comparator, comparisonValue, value);
                                 return new EvaluationResult(value, variationId, rule, null);
                             }
