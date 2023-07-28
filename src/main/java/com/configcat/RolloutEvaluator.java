@@ -63,7 +63,7 @@ class RolloutEvaluator {
 
                     //TODO comparator null? error?
                     switch (comparator) {
-                        case CONTAINS:
+                        case CONTAINS_ANY_OF:
                             List<String> containsValues = new ArrayList<>(Arrays.asList(comparisonValue.split(",")));
                             for(int index = 0; containsValues.size() > index; index++){
                                 containsValues.set(index, containsValues.get(index).trim());
@@ -74,7 +74,7 @@ class RolloutEvaluator {
                                 return new EvaluationResult(value, variationId, rule, null);
                             }
                             break;
-                        case  DOES_NOT_CONTAIN:
+                        case  NOT_CONTAINS_ANY_OF:
                             List<String> notContainsValues = new ArrayList<>(Arrays.asList(comparisonValue.split(",")));
                             for(int index = 0; notContainsValues.size() > index; index++){
                                 notContainsValues.set(index, notContainsValues.get(index).trim());
