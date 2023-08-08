@@ -778,17 +778,17 @@ class ConfigCatClientTest {
     @Test
     void testCacheKey() throws NoSuchFieldException, IllegalAccessException, IOException {
 
-        //Test Data: SDKKey "configcat-sdk-1/TEST_KEY-0123456789012/1234567890123456789012", HASH "dbd2c54f946f95ed3d76e788950f8a3a6c01e0a6"
+        //Test Data: SDKKey "configcat-sdk-1/TEST_KEY-0123456789012/1234567890123456789012", HASH "f83ba5d45bceb4bb704410f51b704fb6dfa19942"
         ConfigCatClient clTest1 = ConfigCatClient.get("configcat-sdk-1/TEST_KEY-0123456789012/1234567890123456789012");
 
         String test1SdkKeyCacheKeyWithReflection = getCacheKeyWithReflection(clTest1);
-        assertEquals("dbd2c54f946f95ed3d76e788950f8a3a6c01e0a6", test1SdkKeyCacheKeyWithReflection);
+        assertEquals("f83ba5d45bceb4bb704410f51b704fb6dfa19942", test1SdkKeyCacheKeyWithReflection);
 
-        //Test Data: SDKKey "configcat-sdk-1/TEST_KEY2-123456789012/1234567890123456789012", HASH "71a778682cbfa4bb87862ab4733c37de35ebcbee"
+        //Test Data: SDKKey "configcat-sdk-1/TEST_KEY2-123456789012/1234567890123456789012", HASH "da7bfd8662209c8ed3f9db96daed4f8d91ba5876"
         ConfigCatClient clTest2 = ConfigCatClient.get("configcat-sdk-1/TEST_KEY2-123456789012/1234567890123456789012");
 
         String test2SdkKeyCacheKeyWithReflection = getCacheKeyWithReflection(clTest2);
-        assertEquals("71a778682cbfa4bb87862ab4733c37de35ebcbee", test2SdkKeyCacheKeyWithReflection);
+        assertEquals("da7bfd8662209c8ed3f9db96daed4f8d91ba5876", test2SdkKeyCacheKeyWithReflection);
 
         ConfigCatClient.closeAll();
     }
