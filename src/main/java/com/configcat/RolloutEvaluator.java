@@ -91,7 +91,7 @@ class RolloutEvaluator {
                             Utils.trimElements(inSemVerValues);
                             inSemVerValues.removeAll(Arrays.asList(null, ""));
                             try {
-                                Version userVersion = Version.parseVersion(userValue, true);
+                                Version userVersion = Version.parseVersion(userValue.trim(), true);
                                 boolean matched = false;
                                 for (String semVer : inSemVerValues) {
                                     matched = userVersion.compareTo(Version.parseVersion(semVer, true)) == 0 || matched;
@@ -111,7 +111,7 @@ class RolloutEvaluator {
                         case SEMVER_GREATER:
                         case SEMVER_GREATER_EQUALS:
                             try {
-                                Version cmpUserVersion = Version.parseVersion(userValue, true);
+                                Version cmpUserVersion = Version.parseVersion(userValue.trim(), true);
                                 Version matchValue = Version.parseVersion(comparisonValue.trim(), true);
                                 if ((Comparator.SEMVER_LESS.equals(comparator)&& cmpUserVersion.isLowerThan(matchValue)) ||
                                         (Comparator.SEMVER_LESS_EQULAS.equals(comparator) && cmpUserVersion.compareTo(matchValue) <= 0) ||
@@ -133,7 +133,7 @@ class RolloutEvaluator {
                         case NUMBER_GREATER:
                         case NUMBER_GREATER_EQUALS:
                             try {
-                                Double userDoubleValue = Double.parseDouble(userValue.replace(",", "."));
+                                Double userDoubleValue = Double.parseDouble(userValue.trim().replace(",", "."));
                                 Double comparisonDoubleValue = Double.parseDouble(comparisonValue.replace(",", "."));
 
                                 if ((Comparator.NUMBER_EQUALS.equals(comparator) && userDoubleValue.equals(comparisonDoubleValue)) ||
@@ -175,7 +175,7 @@ class RolloutEvaluator {
                         case DATE_BEFORE:
                         case DATE_AFTER:
                             try {
-                                Double userDoubleValue = Double.parseDouble(userValue.replaceAll(",", "."));
+                                Double userDoubleValue = Double.parseDouble(userValue.trim().replaceAll(",", "."));
                                 Double comparisonDoubleValue = Double.parseDouble(comparisonValue.replaceAll(",", "."));
                                 if ((Comparator.DATE_BEFORE.equals(comparator)&& userDoubleValue < comparisonDoubleValue) ||
                                         (Comparator.DATE_AFTER.equals(comparator) && userDoubleValue > comparisonDoubleValue)){
@@ -183,6 +183,7 @@ class RolloutEvaluator {
                                     return new EvaluationResult(value, variationId, rule, null);
                                 }
                             } catch (NumberFormatException e) {
+                                //TODO add new error handling to Date '{userAttributeValue}' is not a valid Unix timestamp (number of seconds elapsed since Unix epoch)
                                 String message = evaluateLogger.logFormatError(comparisonAttribute, userValue, comparator, comparisonValue, e);
                                 this.logger.warn(0, message);
                                 continue;
@@ -206,6 +207,8 @@ class RolloutEvaluator {
                             break;
                         case HASHED_STARTS_WITH:
                         case HASHED_ENDS_WITH:
+                            //TODO add ANY changes
+                            //TODO add NOT comparators as well
                             //TODO add salt and salt error handle
                             int indexOf = comparisonValue.indexOf("_");
                             if(indexOf <= 0){

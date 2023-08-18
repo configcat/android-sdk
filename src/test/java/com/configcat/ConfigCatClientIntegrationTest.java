@@ -228,10 +228,10 @@ class ConfigCatClientIntegrationTest {
         assertFalse(details.isDefaultValue());
         assertNull(details.getError());
         assertEquals("d0cd8f06", details.getVariationId());
-        assertEquals("Email", details.getMatchedEvaluationRule().getComparisonAttribute());
-        assertEquals("@configcat.com", details.getMatchedEvaluationRule().getComparisonValue());
-        assertNull(details.getMatchedEvaluationPercentageRule());
-        assertEquals(2, details.getMatchedEvaluationRule().getComparator());
+        assertEquals("Email", details.getMatchedTargetingRule().getComparisonAttribute());
+        assertEquals("@configcat.com", details.getMatchedTargetingRule().getComparisonValue());
+        assertNull(details.getMatchedPercentageOption());
+        assertEquals(2, details.getMatchedTargetingRule().getComparator());
         assertEquals(user.getIdentifier(), details.getUser().getIdentifier());
     }
 
@@ -249,10 +249,10 @@ class ConfigCatClientIntegrationTest {
                 assertFalse(details.isDefaultValue());
                 assertNull(details.getError());
                 assertEquals("d0cd8f06", details.getVariationId());
-                assertEquals("Email", details.getMatchedEvaluationRule().getComparisonAttribute());
-                assertEquals("@configcat.com", details.getMatchedEvaluationRule().getComparisonValue());
-                assertNull(details.getMatchedEvaluationPercentageRule());
-                assertEquals(2, details.getMatchedEvaluationRule().getComparator());
+                assertEquals("Email", details.getMatchedTargetingRule().getComparisonAttribute());
+                assertEquals("@configcat.com", details.getMatchedTargetingRule().getComparisonValue());
+                assertNull(details.getMatchedPercentageOption());
+                assertEquals(2, details.getMatchedTargetingRule().getComparator());
                 assertEquals(user.getIdentifier(), details.getUser().getIdentifier());
                 called.set(true);
             });
