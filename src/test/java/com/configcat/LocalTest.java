@@ -12,8 +12,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class LocalTest {
-    private static final String TEST_JSON = "{ f: { fakeKey: { v: %s, p: [] ,r: [] } } }";
-
+    private static final String TEST_JSON = "{ p: { s: 'test-slat'}, f: { fakeKey: { t: 1, v: { s: %s }, p: [], r: [] } } }";
     @Test
     void invalidArguments() throws IOException {
         assertThrows(IllegalArgumentException.class, () -> ConfigCatClient.get("configcat-sdk-1/TEST_KEY1-123456789012/1234567890123456789012", options -> options.flagOverrides(null, null)));

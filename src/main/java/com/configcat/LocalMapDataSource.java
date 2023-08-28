@@ -15,9 +15,7 @@ class LocalMapDataSource extends OverrideDataSource {
 
         Gson gson = new GsonBuilder().create();
         for (Map.Entry<String, Object> entry : source.entrySet()) {
-            Setting setting = new Setting();
-            setting.setValue(gson.toJsonTree(entry.getValue()));
-            setting.setType(determineSettingType(entry.getValue()));
+            Setting setting = convertToSetting(entry.getValue());
             this.loadedSettings.put(entry.getKey(), setting);
         }
     }
@@ -27,17 +25,24 @@ class LocalMapDataSource extends OverrideDataSource {
         return this.loadedSettings;
     }
 
-    private SettingType determineSettingType(Object value) {
-        if (value instanceof String) {
-            return SettingType.STRING;
-        } else if (value instanceof Boolean) {
-            return SettingType.BOOLEAN;
-        } else if (value instanceof Integer) {
-            return SettingType.INT;
-        } else if (value instanceof Double) {
-            return SettingType.DOUBLE;
-        } else {
-            throw new IllegalArgumentException("Could not determine the setting type of '"+value+"'");
+    private Setting convertToSetting(Object object){
+        Setting setting = new Setting();
+        SettingsValue settingsValue = new SettingsValue();
+        if(object instanceof String){
+            setting.setType(SettingType.STRING);
+            settingsValue.setStringValue((String) object);
+        } else if (object instanceof Boolean){
+            setting.setType(SettingType.BOOLEAN);
+            settingsValue.setBooleanValue((Boolean) object);
+        } else if (object instanceof Integer){
+            setting.setType(SettingType.INT);
+            settingsValue.setIntegerValue((Integer) object);
+        } else if (object instanceof Double){
+            setting.setType(SettingType.DOUBLE);
+            settingsValue.setDoubleValue((Double) object);
         }
+        //TODO in case of none of above worked? throw error or try to cast to string
+        setting.setSettingsValue(settingsValue);
+        return setting;
     }
 }

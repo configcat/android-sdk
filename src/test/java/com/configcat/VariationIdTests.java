@@ -16,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class VariationIdTests {
 
-    private static final String TEST_JSON = "{ f: { key1: { v: true, t: 0, i: 'fakeId1', p: [] ,r: [] }, key2: { v: false, t: 0, i: 'fakeId2', p: [] ,r: [] } } }";
+    private static final String TEST_JSON = "{ p: { s: 'test-slat' },  f: { key1: { v: { b: true }, i: 'fakeId1', p: [] ,r: [] }, key2: { v: { b: false }, i: 'fakeId2', p: [] ,r: [] } } }";
     private ConfigCatClient client;
     private MockWebServer server;
 
@@ -41,21 +41,21 @@ class VariationIdTests {
     @Test
     void getVariationIdWorks() {
         server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
-        EvaluationDetails<String> valueDetails = client.getValueDetails(String.class, "key1", null);
+        EvaluationDetails<Boolean> valueDetails = client.getValueDetails(Boolean.class, "key1", null);
         assertEquals("fakeId1", valueDetails.getVariationId());
     }
 
     @Test
     void getVariationIdAsyncWorks() throws ExecutionException, InterruptedException {
         server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
-        EvaluationDetails<String> valueDetails = client.getValueDetailsAsync(String.class, "key2", null).get();
+        EvaluationDetails<Boolean> valueDetails = client.getValueDetailsAsync(Boolean.class, "key2", null).get();
         assertEquals("fakeId2", valueDetails.getVariationId());
     }
 
     @Test
     void getVariationIdNotFound() {
         server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
-        EvaluationDetails<String> valueDetails = client.getValueDetails(String.class, "nonexisting", "defaultId");
+        EvaluationDetails<Boolean> valueDetails = client.getValueDetails(Boolean.class, "nonexisting", false);
         assertEquals("", valueDetails.getVariationId());
     }
 

@@ -20,8 +20,8 @@ class LazyLoadingPolicyTest {
     private ConfigService policy;
     private MockWebServer server;
     private final ConfigCatLogger logger = new ConfigCatLogger(LoggerFactory.getLogger(LazyLoadingPolicyTest.class));
-    private static final String TEST_JSON = "{ f: { fakeKey: { v: %s, p: [] ,r: [] } } }";
 
+    private static final String TEST_JSON = "{ p: { s: 'test-salt'}, f: { fakeKey: { v: { s: %s }, p: [], r: [] } } }";
     @BeforeEach
     public void setUp() throws IOException {
         this.server = new MockWebServer();
@@ -45,13 +45,13 @@ class LazyLoadingPolicyTest {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test2")).setBodyDelay(3, TimeUnit.SECONDS));
 
         //first call
-        assertEquals("test", this.policy.getSettings().get().settings().get("fakeKey").getValue().getAsString());
+        assertEquals("test", this.policy.getSettings().get().settings().get("fakeKey").getSettingsValue().getStringValue());
 
         //wait for cache invalidation
         Thread.sleep(6000);
 
         //next call will block until the new value is fetched
-        assertEquals("test2", this.policy.getSettings().get().settings().get("fakeKey").getValue().getAsString());
+        assertEquals("test2", this.policy.getSettings().get().settings().get("fakeKey").getSettingsValue().getStringValue());
     }
 
     @Test
@@ -65,13 +65,13 @@ class LazyLoadingPolicyTest {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test2")).setBodyDelay(3, TimeUnit.SECONDS));
 
         //first call
-        assertEquals("test", lPolicy.getSettings().get().settings().get("fakeKey").getValue().getAsString());
+        assertEquals("test", lPolicy.getSettings().get().settings().get("fakeKey").getSettingsValue().getStringValue());
 
         //wait for cache invalidation
         Thread.sleep(6000);
 
         //next call will block until the new value is fetched
-        assertEquals("test2", lPolicy.getSettings().get().settings().get("fakeKey").getValue().getAsString());
+        assertEquals("test2", lPolicy.getSettings().get().settings().get("fakeKey").getSettingsValue().getStringValue());
     }
 
     @Test
@@ -80,13 +80,13 @@ class LazyLoadingPolicyTest {
         this.server.enqueue(new MockResponse().setResponseCode(500));
 
         //first call
-        assertEquals("test", this.policy.getSettings().get().settings().get("fakeKey").getValue().getAsString());
+        assertEquals("test", this.policy.getSettings().get().settings().get("fakeKey").getSettingsValue().getStringValue());
 
         //wait for cache invalidation
         Thread.sleep(6000);
 
         //previous value returned because of the refresh failure
-        assertEquals("test", this.policy.getSettings().get().settings().get("fakeKey").getValue().getAsString());
+        assertEquals("test", this.policy.getSettings().get().settings().get("fakeKey").getSettingsValue().getStringValue());
     }
 
     @Test

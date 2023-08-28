@@ -19,8 +19,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class ConfigCatClientTest {
 
-    private static final String TEST_JSON = "{ f: { fakeKey: { v: fakeValue, t: 0, p: [] ,r: [] } } }";
-    private static final String TEST_JSON_MULTIPLE = "{ f: { key1: { v: true, t: 0, i: 'fakeId1', p: [] ,r: [] }, key2: { v: false, t: 0, i: 'fakeId2', p: [] ,r: [] } } }";
+    private static final String TEST_JSON = "{ p: { s: 'test-salt' }, f: { fakeKey: {  t: 1, v: {s: 'fakeValue'}, s: 0, p: [] ,r: [] } } }";
+    private static final String TEST_JSON_MULTIPLE = "{ p: { s: 'test-salt' }, f: { key1: { t: 0, v: {b: true}, i: 'fakeId1', p: [] ,r: [] }, key2: { t: 0, v: {b: false}, i: 'fakeId2', p: [] ,r: [] } } }";
 
     @Test
     void ensuresApiKeyIsNotNull() {

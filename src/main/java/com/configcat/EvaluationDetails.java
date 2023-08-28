@@ -11,8 +11,8 @@ public class EvaluationDetails<T> {
     private final boolean isDefaultValue;
     private final String error;
     private final long fetchTimeUnixMilliseconds;
-    private final RolloutRule matchedTargetingRule;
-    private final PercentageRule matchedPercentageOption;
+    private final TargetingRule matchedTargetingRule;
+    private final PercentageOption matchedPercentageOption;
 
     public EvaluationDetails(T value,
                              String key,
@@ -21,8 +21,8 @@ public class EvaluationDetails<T> {
                              boolean isDefaultValue,
                              String error,
                              long fetchTimeUnixMilliseconds,
-                             RolloutRule matchedTargetingRule,
-                             PercentageRule matchedPercentageOption) {
+                             TargetingRule matchedTargetingRule,
+                             PercentageOption matchedPercentageOption) {
         this.value = value;
         this.key = key;
         this.variationId = variationId;
@@ -94,14 +94,14 @@ public class EvaluationDetails<T> {
     /**
      * If the evaluation was based on a targeting rule, this field contains that specific rule.
      */
-    public RolloutRule getMatchedTargetingRule() {
+    public TargetingRule getMatchedTargetingRule() {
         return matchedTargetingRule;
     }
 
     /**
      * If the evaluation was based on a percentage rule, this field contains that specific rule.
      */
-    public PercentageRule getMatchedPercentageOption() {
+    public PercentageOption getMatchedPercentageOption() {
         return matchedPercentageOption;
     }
 }

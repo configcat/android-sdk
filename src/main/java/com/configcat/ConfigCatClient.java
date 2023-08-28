@@ -465,18 +465,18 @@ public final class ConfigCatClient implements ConfigurationProvider {
                 String settingKey = node.getKey();
                 Setting setting = node.getValue();
                 if (variationId.equals(setting.getVariationId())) {
-                    return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, setting.getValue()));
+                    return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, setting.getSettingsValue(), setting.getType()));
                 }
 
-                for (RolloutRule rolloutRule : setting.getRolloutRules()) {
-                    if (variationId.equals(rolloutRule.getVariationId())) {
-                        return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, rolloutRule.getValue()));
+                for (TargetingRule targetingRule : setting.getTargetingRules()) {
+                    if (variationId.equals(targetingRule.getServedValue().getVariationId())) {
+                        return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, targetingRule.getServedValue().getValue(), setting.getType()));
                     }
                 }
 
-                for (PercentageRule percentageRule : setting.getPercentageItems()) {
-                    if (variationId.equals(percentageRule.getVariationId())) {
-                        return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, percentageRule.getValue()));
+                for (PercentageOption percentageOption : setting.getPercentageOptions()) {
+                    if (variationId.equals(percentageOption.getVariationId())) {
+                        return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, percentageOption.getValue(), setting.getType()));
                     }
                 }
             }
@@ -491,7 +491,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
     private <T> EvaluationDetails<T> evaluate(Class<T> classOfT, Setting setting, String key, User user, Long fetchTime) {
         EvaluationResult evaluationResult = this.rolloutEvaluator.evaluate(setting, key, user);
         EvaluationDetails<Object> details = new EvaluationDetails<>(
-                this.parseObject(classOfT, evaluationResult.value),
+                this.parseObject(classOfT, evaluationResult.value, setting.getType()),
                 key,
                 evaluationResult.variationId,
                 user,
@@ -499,22 +499,34 @@ public final class ConfigCatClient implements ConfigurationProvider {
                 null,
                 fetchTime,
                 evaluationResult.targetingRule,
-                evaluationResult.percentageRule);
+                evaluationResult.percentageOption);
         this.hooks.invokeOnFlagEvaluated(details);
         return details.asTypeSpecific();
     }
 
-    private Object parseObject(Class<?> classOfT, JsonElement element) {
-        if (classOfT == String.class)
-            return element.getAsString();
-        else if (classOfT == Integer.class || classOfT == int.class)
-            return element.getAsInt();
-        else if (classOfT == Double.class || classOfT == double.class)
-            return element.getAsDouble();
-        else if (classOfT == Boolean.class || classOfT == boolean.class)
-            return element.getAsBoolean();
-        else
+    private Object parseObject(Class<?> classOfT, SettingsValue settingsValue, SettingType settingType) {
+        if(!validateParseType(classOfT))
             throw new IllegalArgumentException("Only String, Integer, Double or Boolean types are supported");
+
+        if (classOfT == String.class && settingsValue.getStringValue() != null && SettingType.STRING.equals(settingType))
+            return settingsValue.getStringValue();
+        else if ((classOfT == Integer.class || classOfT == int.class) && settingsValue.getIntegerValue() != null && SettingType.INT.equals(settingType))
+            return settingsValue.getIntegerValue();
+        else if ((classOfT == Double.class || classOfT == double.class) && settingsValue.getDoubleValue() != null && SettingType.DOUBLE.equals(settingType))
+            return settingsValue.getDoubleValue();
+        else if ((classOfT == Boolean.class || classOfT == boolean.class) && settingsValue.getBooleanValue() !=  null && SettingType.BOOLEAN.equals(settingType))
+            return settingsValue.getBooleanValue();
+        else
+            throw new IllegalArgumentException("The type of a setting must match the type of the setting's default value. "
+                    + "Setting's type was {" + settingType + "} but the default value's type was {" + classOfT + "}. "
+                    + "Please use a default value which corresponds to the setting type {" + settingType + "}.");
+    }
+
+    private boolean validateParseType(Class<?> classOfT){
+        if (classOfT == String.class || classOfT == Integer.class || classOfT == int.class || classOfT == Double.class || classOfT == double.class || classOfT == Boolean.class || classOfT == boolean.class){
+            return true;
+        }
+        return false;
     }
 
     private Class<?> classBySettingType(SettingType settingType) {

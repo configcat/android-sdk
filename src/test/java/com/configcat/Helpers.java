@@ -5,10 +5,8 @@ import java.util.function.Supplier;
 final class Helpers {
 
     public static final String SDK_KEY = "configcat-sdk-1/TEST_KEY-0123456789012/1234567890123456789012";
-    static final String RULES_JSON = "{ f: { key: { v: 'def', t: 1, i: 'defVar', p: [] ,r: [" +
-            "{ v: 'fake1', i: 'id1', a: 'Identifier', t: 2, c: '@test1.com' }," +
-            "{ v: 'fake2', i: 'id2', a: 'Identifier', t: 2, c: '@test2.com' }," +
-            "] } } }";
+    public static final String RULES_JSON = "{ p: { s: 'test-salt' }, f: { key: {  t: 1, v: {s: 'def'}, t: 1, i: 'defVar', p: [] , r: [ {c: [ {t: { a: 'Identifier', c: 2, l: ['@test1.com']}}],s: { v: {s: 'fake1'},i: 'id1'}},{c: [{t: {a: 'Identifier', c: 2,l: ['@test2.com']}}],s: { v: {s: 'fake2'},i: 'id2'}}] } } }";
+
 
     static String cacheValueFromConfigJson(String json) {
         Config config = Utils.gson.fromJson(json, Config.class);
