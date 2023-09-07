@@ -1,6 +1,5 @@
 package com.configcat;
 
-import com.google.gson.JsonElement;
 import java9.util.concurrent.CompletableFuture;
 import java9.util.function.Consumer;
 import okhttp3.OkHttpClient;
@@ -171,7 +170,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                         return evaluationDetails.asTypeSpecific();
                     }
                     return this.evaluate(classOfT, checkSettingResult.value(),
-                            key, user != null ? user : this.defaultUser, settingsResult.fetchTime());
+                            key, user != null ? user : this.defaultUser, settingsResult.fetchTime(), settingsResult.settings());
                 });
     }
 
@@ -205,7 +204,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                         for (String key : keys) {
                             Setting setting = settingMap.get(key);
                             if (setting == null) continue;
-                            Object value = this.evaluate(classBySettingType(setting.getType()), setting, key, userObject, settingsResult.fetchTime()).getValue();
+                            Object value = this.evaluate(classBySettingType(setting.getType()), setting, key, userObject, settingsResult.fetchTime(), settingMap).getValue();
                             result.put(key, value);
                         }
 
@@ -246,7 +245,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                             Setting setting = settings.get(key);
 
                             EvaluationDetails<?> evaluationDetails = this.evaluate(this.classBySettingType(setting.getType()), setting,
-                                    key, user != null ? user : this.defaultUser, settingResult.fetchTime());
+                                    key, user != null ? user : this.defaultUser, settingResult.fetchTime(), settings);
                             result.add(evaluationDetails);
                         }
 
@@ -446,7 +445,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                 return defaultValue;
             }
 
-            return this.evaluate(classOfT, checkSettingResult.value(), key, userObject, settingResult.fetchTime()).getValue();
+            return this.evaluate(classOfT, checkSettingResult.value(), key, userObject, settingResult.fetchTime(),  settingResult.settings()).getValue();
         } catch (Exception e) {
             String error = ConfigCatLogMessages.getSettingEvaluationFailedForOtherReason(key, "defaultValue", defaultValue);
             this.hooks.invokeOnFlagEvaluated(EvaluationDetails.fromError(key, defaultValue, error + " " + e.getMessage(), userObject));
@@ -488,8 +487,8 @@ public final class ConfigCatClient implements ConfigurationProvider {
         }
     }
 
-    private <T> EvaluationDetails<T> evaluate(Class<T> classOfT, Setting setting, String key, User user, Long fetchTime) {
-        EvaluationResult evaluationResult = this.rolloutEvaluator.evaluate(setting, key, user);
+    private <T> EvaluationDetails<T> evaluate(Class<T> classOfT, Setting setting, String key, User user, Long fetchTime, Map<String, Setting> settings) {
+        EvaluationResult evaluationResult = this.rolloutEvaluator.evaluate(setting, key, user, null, settings);
         EvaluationDetails<Object> details = new EvaluationDetails<>(
                 this.parseObject(classOfT, evaluationResult.value, setting.getType()),
                 key,
@@ -516,8 +515,8 @@ public final class ConfigCatClient implements ConfigurationProvider {
             return settingsValue.getDoubleValue();
         else if ((classOfT == Boolean.class || classOfT == boolean.class) && settingsValue.getBooleanValue() !=  null && SettingType.BOOLEAN.equals(settingType))
             return settingsValue.getBooleanValue();
-        else
-            throw new IllegalArgumentException("The type of a setting must match the type of the setting's default value. "
+
+        throw new IllegalArgumentException("The type of a setting must match the type of the setting's default value. "
                     + "Setting's type was {" + settingType + "} but the default value's type was {" + classOfT + "}. "
                     + "Please use a default value which corresponds to the setting type {" + settingType + "}.");
     }
