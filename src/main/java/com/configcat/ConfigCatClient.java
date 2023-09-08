@@ -488,7 +488,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
     }
 
     private <T> EvaluationDetails<T> evaluate(Class<T> classOfT, Setting setting, String key, User user, Long fetchTime, Map<String, Setting> settings) {
-        EvaluationResult evaluationResult = this.rolloutEvaluator.evaluate(setting, key, user, null, settings);
+        EvaluationResult evaluationResult = this.rolloutEvaluator.evaluate(setting, key, user, null, settings, new EvaluateLogger(key));
         EvaluationDetails<Object> details = new EvaluationDetails<>(
                 this.parseObject(classOfT, evaluationResult.value, setting.getType()),
                 key,
