@@ -102,7 +102,7 @@ class RolloutEvaluator {
 
             //TODO Condition, what if condition invalid? more then one condition added or none. rework basic if
             if (condition.getComparisonCondition() != null) {
-                conditionsEvaluationResult = evaluateComparisonCondition(condition.getComparisonCondition(), context, configSalt, context.getKey(), evaluateLogger);
+                conditionsEvaluationResult = evaluateUserCondition(condition.getComparisonCondition(), context, configSalt, context.getKey(), evaluateLogger);
             } else if (condition.getSegmentCondition() != null) {
                 //TODO evalSC
                 conditionsEvaluationResult = evaluateSegmentCondition(condition.getSegmentCondition(), context, configSalt, segments, evaluateLogger);
@@ -120,7 +120,7 @@ class RolloutEvaluator {
         return conditionsEvaluationResult;
     }
 
-    private boolean evaluateComparisonCondition(ComparisonCondition comparisonCondition, EvaluationContext context, String configSalt, String contextSalt, EvaluateLogger evaluateLogger) {
+    private boolean evaluateUserCondition(UserCondition userCondition, EvaluationContext context, String configSalt, String contextSalt, EvaluateLogger evaluateLogger) {
         //TODO evalLogger CC eval is happening
         if (context.getUser() == null) {
             // evaluateLogger "Skipping % options because the User Object is missing."
@@ -128,8 +128,8 @@ class RolloutEvaluator {
             return false;
         }
 
-        String comparisonAttribute = comparisonCondition.getComparisonAttribute();
-        Comparator comparator = Comparator.fromId(comparisonCondition.getComparator());
+        String comparisonAttribute = userCondition.getComparisonAttribute();
+        Comparator comparator = Comparator.fromId(userCondition.getComparator());
         String userValue = context.getUser().getAttribute(comparisonAttribute);
 
         //TODO Check if all value available. User missing is separated handle in every Condition checks? cc/sc/pfc
@@ -148,7 +148,7 @@ class RolloutEvaluator {
             //TODO log match should be handled on return and just for the TR?
             // evaluateLogger.logMatch(comparisonAttribute, userValue, comparator, containsValues, value);
             case CONTAINS_ANY_OF:
-                List<String> containsValues = new ArrayList<>(Arrays.asList(comparisonCondition.getStringArrayValue()));
+                List<String> containsValues = new ArrayList<>(Arrays.asList(userCondition.getStringArrayValue()));
                 for (int index = 0; containsValues.size() > index; index++) {
                     containsValues.set(index, containsValues.get(index).trim());
                 }
@@ -159,7 +159,7 @@ class RolloutEvaluator {
                 }
                 return false;
             case NOT_CONTAINS_ANY_OF:
-                List<String> notContainsValues = new ArrayList<>(Arrays.asList(comparisonCondition.getStringArrayValue()));
+                List<String> notContainsValues = new ArrayList<>(Arrays.asList(userCondition.getStringArrayValue()));
                 for (int index = 0; notContainsValues.size() > index; index++) {
                     notContainsValues.set(index, notContainsValues.get(index).trim());
                 }
@@ -171,7 +171,7 @@ class RolloutEvaluator {
                 return true;
             case SEMVER_IS_ONE_OF:
             case SEMVER_IS_NOT_ONE_OF:
-                List<String> inSemVerValues = new ArrayList<>(Arrays.asList(comparisonCondition.getStringArrayValue()));
+                List<String> inSemVerValues = new ArrayList<>(Arrays.asList(userCondition.getStringArrayValue()));
                 for (int index = 0; inSemVerValues.size() > index; index++) {
                     inSemVerValues.set(index, inSemVerValues.get(index).trim());
                 }
@@ -195,14 +195,14 @@ class RolloutEvaluator {
             case SEMVER_GREATER_EQUALS:
                 try {
                     Version cmpUserVersion = Version.parseVersion(userValue.trim(), true);
-                    String comparisonValue = comparisonCondition.getStringValue();
+                    String comparisonValue = userCondition.getStringValue();
                     Version matchValue = Version.parseVersion(comparisonValue.trim(), true);
                     return (Comparator.SEMVER_LESS.equals(comparator) && cmpUserVersion.isLowerThan(matchValue)) ||
                             (Comparator.SEMVER_LESS_EQULAS.equals(comparator) && cmpUserVersion.compareTo(matchValue) <= 0) ||
                             (Comparator.SEMVER_GREATER.equals(comparator) && cmpUserVersion.isGreaterThan(matchValue)) ||
                             (Comparator.SEMVER_GREATER_EQUALS.equals(comparator) && cmpUserVersion.compareTo(matchValue) >= 0);
                 } catch (Exception e) {
-                    String message = evaluateLogger.logFormatError(comparisonAttribute, userValue, comparator, comparisonCondition.getStringValue(), e);
+                    String message = evaluateLogger.logFormatError(comparisonAttribute, userValue, comparator, userCondition.getStringValue(), e);
                     this.logger.warn(0, message);
                     return false;
                 }
@@ -214,7 +214,7 @@ class RolloutEvaluator {
             case NUMBER_GREATER_EQUALS:
                 try {
                     Double userDoubleValue = Double.parseDouble(userValue.trim().replaceAll(",", "."));
-                    Double comparisonDoubleValue = comparisonCondition.getDoubleValue();
+                    Double comparisonDoubleValue = userCondition.getDoubleValue();
 
                     return (Comparator.NUMBER_EQUALS.equals(comparator) && userDoubleValue.equals(comparisonDoubleValue)) ||
                             (Comparator.NUMBER_NOT_EQUALS.equals(comparator) && !userDoubleValue.equals(comparisonDoubleValue)) ||
@@ -223,13 +223,13 @@ class RolloutEvaluator {
                             (Comparator.NUMBER_GREATER.equals(comparator) && userDoubleValue > comparisonDoubleValue) ||
                             (Comparator.NUMBER_GREATER_EQUALS.equals(comparator) && userDoubleValue >= comparisonDoubleValue);
                 } catch (NumberFormatException e) {
-                    String message = evaluateLogger.logFormatError(comparisonAttribute, userValue, comparator, comparisonCondition.getDoubleValue(), e);
+                    String message = evaluateLogger.logFormatError(comparisonAttribute, userValue, comparator, userCondition.getDoubleValue(), e);
                     this.logger.warn(0, message);
                     return false;
                 }
             case SENSITIVE_IS_ONE_OF:
                 //TODO salt error handle
-                List<String> inValuesSensitive = new ArrayList<>(Arrays.asList(comparisonCondition.getStringArrayValue()));
+                List<String> inValuesSensitive = new ArrayList<>(Arrays.asList(userCondition.getStringArrayValue()));
                 for (int index = 0; inValuesSensitive.size() > index; index++) {
                     inValuesSensitive.set(index, inValuesSensitive.get(index).trim());
                 }
@@ -238,7 +238,7 @@ class RolloutEvaluator {
                 return inValuesSensitive.contains(hashValueOne);
             case SENSITIVE_IS_NOT_ONE_OF:
                 //TODO add salt and salt error handle
-                List<String> notInValuesSensitive = new ArrayList<>(Arrays.asList(comparisonCondition.getStringArrayValue()));
+                List<String> notInValuesSensitive = new ArrayList<>(Arrays.asList(userCondition.getStringArrayValue()));
                 for (int index = 0; notInValuesSensitive.size() > index; index++) {
                     notInValuesSensitive.set(index, notInValuesSensitive.get(index).trim());
                 }
@@ -249,29 +249,29 @@ class RolloutEvaluator {
             case DATE_AFTER:
                 try {
                     double userDoubleValue = Double.parseDouble(userValue.trim().replaceAll(",", "."));
-                    Double comparisonDoubleValue = comparisonCondition.getDoubleValue();
+                    Double comparisonDoubleValue = userCondition.getDoubleValue();
                     return (Comparator.DATE_BEFORE.equals(comparator) && userDoubleValue < comparisonDoubleValue) ||
                             (Comparator.DATE_AFTER.equals(comparator) && userDoubleValue > comparisonDoubleValue);
                 } catch (NumberFormatException e) {
                     //TODO add new error handling to Date '{userAttributeValue}' is not a valid Unix timestamp (number of seconds elapsed since Unix epoch)
-                    String message = evaluateLogger.logFormatError(comparisonAttribute, userValue, comparator, comparisonCondition.getDoubleValue(), e);
+                    String message = evaluateLogger.logFormatError(comparisonAttribute, userValue, comparator, userCondition.getDoubleValue(), e);
                     this.logger.warn(0, message);
                     return false;
                 }
             case HASHED_EQUALS:
                 //TODO add salt and salt error handle
                 String hashEquals = getSaltedUserValue(userValue, configSalt, contextSalt);
-                return hashEquals.equals(comparisonCondition.getStringValue());
+                return hashEquals.equals(userCondition.getStringValue());
             case HASHED_NOT_EQUALS:
                 //TODO add salt and salt error handle
                 String hashNotEquals = getSaltedUserValue(userValue, configSalt, contextSalt);
-                return !hashNotEquals.equals(comparisonCondition.getStringValue());
+                return !hashNotEquals.equals(userCondition.getStringValue());
             case HASHED_STARTS_WITH:
             case HASHED_ENDS_WITH:
             case HASHED_NOT_STARTS_WITH:
             case HASHED_NOT_ENDS_WITH:
                 //TODO add salt and salt error handle
-                List<String> withValues = new ArrayList<>(Arrays.asList(comparisonCondition.getStringArrayValue()));
+                List<String> withValues = new ArrayList<>(Arrays.asList(userCondition.getStringArrayValue()));
                 for (int index = 0; withValues.size() > index; index++) {
                     withValues.set(index, withValues.get(index).trim());
                 }
@@ -315,7 +315,7 @@ class RolloutEvaluator {
                 return foundEqual;
             case HASHED_ARRAY_CONTAINS:
                 //TODO add salt and salt error handle
-                List<String> containsHashedValues = new ArrayList<>(Arrays.asList(comparisonCondition.getStringArrayValue()));
+                List<String> containsHashedValues = new ArrayList<>(Arrays.asList(userCondition.getStringArrayValue()));
                 String[] userCSVContainsHashSplit = userValue.split(",");
                 for (String userValueSlice : userCSVContainsHashSplit) {
                     String userValueSliceHash = getSaltedUserValue(userValueSlice.trim(), configSalt, contextSalt);
@@ -326,7 +326,7 @@ class RolloutEvaluator {
                 return false;
             case HASHED_ARRAY_NOT_CONTAINS:
                 //TODO add salt and salt error handle
-                List<String> notContainsHashedValues = new ArrayList<>(Arrays.asList(comparisonCondition.getStringArrayValue()));
+                List<String> notContainsHashedValues = new ArrayList<>(Arrays.asList(userCondition.getStringArrayValue()));
                 String[] userCSVNotContainsHashSplit = userValue.split(",");
                 if (userCSVNotContainsHashSplit.length == 0) {
                     return false;
@@ -367,8 +367,8 @@ class RolloutEvaluator {
         }
         //TODO add logging
         boolean segmentRulesResult = false;
-        for (ComparisonCondition comparisonCondition : segment.getSegmentRules()) {
-            segmentRulesResult = evaluateComparisonCondition(comparisonCondition, context, configSalt, segmentName, evaluateLogger);
+        for (UserCondition userCondition : segment.getSegmentRules()) {
+            segmentRulesResult = evaluateUserCondition(userCondition, context, configSalt, segmentName, evaluateLogger);
             //this is an AND if one false we can start the evaluation on the segmentComperator
             if (!segmentRulesResult) {
                 break;
