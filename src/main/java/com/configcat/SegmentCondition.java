@@ -5,12 +5,12 @@ import com.google.gson.annotations.SerializedName;
 public class SegmentCondition {
 
     @SerializedName(value = "s")
-    private Double segmentIndex;
+    private int segmentIndex;
 
     @SerializedName(value = "c")
     private int segmentComparator;
 
-    public Double getSegmentIndex() {
+    public int getSegmentIndex() {
         return segmentIndex;
     }
 

@@ -8,19 +8,15 @@ import java.util.List;
 final class Utils {
     private Utils() { /* prevent from instantiation*/ }
 
-    static void trimElements(List<String> arr) {
-        for (int i = 0; i < arr.size(); i++)
-            arr.set(i, arr.get(i).trim());
-    }
-
     static final Gson gson = new GsonBuilder().create();
 
     public static Config deserializeConfig(String json){
-        //TODO add salt to Segments?
         Config config = Utils.gson.fromJson(json, Config.class);
         for (Setting setting: config.getEntries().values()) {
             //TODO clarify the salt is required and always presented or should I handle when it missing?
             setting.setConfigSalt(config.getPreferences().getSalt());
+            setting.setSegments(config.getSegments());
+            //TODO check override case
         }
         return config;
     }

@@ -1,11 +1,13 @@
 package com.configcat;
 
-import com.google.gson.JsonElement;
 import de.skuzzle.semantic.Version;
-import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.codec.digest.DigestUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 class EvaluationResult {
     public final SettingsValue value;
@@ -37,7 +39,7 @@ class RolloutEvaluator {
                 evaluateLogger.logUserObject(user);
             }
 
-            if(visitedKeys == null) {
+            if (visitedKeys == null) {
                 visitedKeys = new ArrayList<>();
             }
             visitedKeys.add(key);
@@ -66,7 +68,7 @@ class RolloutEvaluator {
 
         for (TargetingRule rule : setting.getTargetingRules()) {
 
-            if (!evaluateConditions(rule.getConditions(), context, setting.getConfigSalt(), evaluateLogger)) {
+            if (!evaluateConditions(rule.getConditions(), context, setting.getConfigSalt(), setting.getSegments(), evaluateLogger)) {
                 continue;
             }
             // Conditions match, if rule.getServedValue() not null. we should return as logMatch value from SV
@@ -80,7 +82,7 @@ class RolloutEvaluator {
                 continue;
             }
             EvaluationResult evaluatePercentageOptionsResult = evaluatePercentageOptions(rule.getPercentageOptions(), setting.getPercentageAttribute(), context, rule, evaluateLogger);
-            if(evaluatePercentageOptionsResult == null){
+            if (evaluatePercentageOptionsResult == null) {
                 continue;
             }
             return evaluatePercentageOptionsResult;
@@ -91,7 +93,7 @@ class RolloutEvaluator {
         return null;
     }
 
-    private boolean evaluateConditions(Condition[] conditions, EvaluationContext context, String configSalt, EvaluateLogger evaluateLogger) {
+    private boolean evaluateConditions(Condition[] conditions, EvaluationContext context, String configSalt, Segment[] segments, EvaluateLogger evaluateLogger) {
         //Conditions are ANDs so if One is not matching return false, if all matching return true
         //TODO rework logging based on changes possibly
         boolean conditionsEvaluationResult = false;
@@ -100,10 +102,10 @@ class RolloutEvaluator {
 
             //TODO Condition, what if condition invalid? more then one condition added or none. rework basic if
             if (condition.getComparisonCondition() != null) {
-                conditionsEvaluationResult = evaluateComparisonCondition(condition.getComparisonCondition(), context, configSalt, evaluateLogger);
+                conditionsEvaluationResult = evaluateComparisonCondition(condition.getComparisonCondition(), context, configSalt, context.getKey(), evaluateLogger);
             } else if (condition.getSegmentCondition() != null) {
                 //TODO evalSC
-                conditionsEvaluationResult = evaluateSegmentCondition(condition.getSegmentCondition(), context, evaluateLogger);
+                conditionsEvaluationResult = evaluateSegmentCondition(condition.getSegmentCondition(), context, configSalt, segments, evaluateLogger);
             } else if (condition.getPrerequisiteFlagCondition() != null) {
                 conditionsEvaluationResult = evaluatePrerequisiteFlagCondition(condition.getPrerequisiteFlagCondition(), context, evaluateLogger);
                 //TODO evalPFC
@@ -118,9 +120,9 @@ class RolloutEvaluator {
         return conditionsEvaluationResult;
     }
 
-    private boolean evaluateComparisonCondition(ComparisonCondition comparisonCondition, EvaluationContext context, String configSalt, EvaluateLogger evaluateLogger) {
+    private boolean evaluateComparisonCondition(ComparisonCondition comparisonCondition, EvaluationContext context, String configSalt, String contextSalt, EvaluateLogger evaluateLogger) {
         //TODO evalLogger CC eval is happening
-        if(context.getUser() == null){
+        if (context.getUser() == null) {
             // evaluateLogger "Skipping % options because the User Object is missing."
             //TODO isUserMissing in context? check pyhton
             return false;
@@ -138,7 +140,7 @@ class RolloutEvaluator {
             return false;
         }
 
-        if(comparator == null){
+        if (comparator == null) {
             return false;
             //TODO do we log the comparator is invalid somewhere?
         }
@@ -147,7 +149,7 @@ class RolloutEvaluator {
             // evaluateLogger.logMatch(comparisonAttribute, userValue, comparator, containsValues, value);
             case CONTAINS_ANY_OF:
                 List<String> containsValues = new ArrayList<>(Arrays.asList(comparisonCondition.getStringArrayValue()));
-                for(int index = 0; containsValues.size() > index; index++){
+                for (int index = 0; containsValues.size() > index; index++) {
                     containsValues.set(index, containsValues.get(index).trim());
                 }
                 containsValues.removeAll(Arrays.asList(null, ""));
@@ -158,7 +160,7 @@ class RolloutEvaluator {
                 return false;
             case NOT_CONTAINS_ANY_OF:
                 List<String> notContainsValues = new ArrayList<>(Arrays.asList(comparisonCondition.getStringArrayValue()));
-                for(int index = 0; notContainsValues.size() > index; index++){
+                for (int index = 0; notContainsValues.size() > index; index++) {
                     notContainsValues.set(index, notContainsValues.get(index).trim());
                 }
                 notContainsValues.removeAll(Arrays.asList(null, ""));
@@ -170,7 +172,7 @@ class RolloutEvaluator {
             case SEMVER_IS_ONE_OF:
             case SEMVER_IS_NOT_ONE_OF:
                 List<String> inSemVerValues = new ArrayList<>(Arrays.asList(comparisonCondition.getStringArrayValue()));
-                for(int index = 0; inSemVerValues.size() > index; index++){
+                for (int index = 0; inSemVerValues.size() > index; index++) {
                     inSemVerValues.set(index, inSemVerValues.get(index).trim());
                 }
                 inSemVerValues.removeAll(Arrays.asList(null, ""));
@@ -228,25 +230,25 @@ class RolloutEvaluator {
             case SENSITIVE_IS_ONE_OF:
                 //TODO salt error handle
                 List<String> inValuesSensitive = new ArrayList<>(Arrays.asList(comparisonCondition.getStringArrayValue()));
-                for(int index = 0; inValuesSensitive.size() > index; index++){
+                for (int index = 0; inValuesSensitive.size() > index; index++) {
                     inValuesSensitive.set(index, inValuesSensitive.get(index).trim());
                 }
                 inValuesSensitive.removeAll(Arrays.asList(null, ""));
-                String hashValueOne = getSaltedUserValue(userValue, configSalt, context.getKey());
+                String hashValueOne = getSaltedUserValue(userValue, configSalt, contextSalt);
                 return inValuesSensitive.contains(hashValueOne);
             case SENSITIVE_IS_NOT_ONE_OF:
                 //TODO add salt and salt error handle
                 List<String> notInValuesSensitive = new ArrayList<>(Arrays.asList(comparisonCondition.getStringArrayValue()));
-                for(int index = 0; notInValuesSensitive.size() > index; index++){
+                for (int index = 0; notInValuesSensitive.size() > index; index++) {
                     notInValuesSensitive.set(index, notInValuesSensitive.get(index).trim());
                 }
                 notInValuesSensitive.removeAll(Arrays.asList(null, ""));
-                String hashValueNotOne = getSaltedUserValue(userValue, configSalt, context.getKey());
+                String hashValueNotOne = getSaltedUserValue(userValue, configSalt, contextSalt);
                 return !notInValuesSensitive.contains(hashValueNotOne);
             case DATE_BEFORE:
             case DATE_AFTER:
                 try {
-                    Double userDoubleValue = Double.parseDouble(userValue.trim().replaceAll(",", "."));
+                    double userDoubleValue = Double.parseDouble(userValue.trim().replaceAll(",", "."));
                     Double comparisonDoubleValue = comparisonCondition.getDoubleValue();
                     return (Comparator.DATE_BEFORE.equals(comparator) && userDoubleValue < comparisonDoubleValue) ||
                             (Comparator.DATE_AFTER.equals(comparator) && userDoubleValue > comparisonDoubleValue);
@@ -258,11 +260,11 @@ class RolloutEvaluator {
                 }
             case HASHED_EQUALS:
                 //TODO add salt and salt error handle
-                String hashEquals = getSaltedUserValue(userValue, configSalt, context.getKey());
+                String hashEquals = getSaltedUserValue(userValue, configSalt, contextSalt);
                 return hashEquals.equals(comparisonCondition.getStringValue());
             case HASHED_NOT_EQUALS:
                 //TODO add salt and salt error handle
-                String hashNotEquals = getSaltedUserValue(userValue, configSalt, context.getKey());
+                String hashNotEquals = getSaltedUserValue(userValue, configSalt, contextSalt);
                 return !hashNotEquals.equals(comparisonCondition.getStringValue());
             case HASHED_STARTS_WITH:
             case HASHED_ENDS_WITH:
@@ -270,7 +272,7 @@ class RolloutEvaluator {
             case HASHED_NOT_ENDS_WITH:
                 //TODO add salt and salt error handle
                 List<String> withValues = new ArrayList<>(Arrays.asList(comparisonCondition.getStringArrayValue()));
-                for(int index = 0; withValues.size() > index; index++){
+                for (int index = 0; withValues.size() > index; index++) {
                     withValues.set(index, withValues.get(index).trim());
                 }
                 withValues.removeAll(Arrays.asList(null, ""));
@@ -297,8 +299,8 @@ class RolloutEvaluator {
                         } else { //HASHED_ENDS_WITH
                             userValueSubString = userValue.substring(userValue.length() - comparedTextLengthInt);
                         }
-                        String hashUserValueSub = getSaltedUserValue(userValueSubString, configSalt, context.getKey());
-                        if(hashUserValueSub.equals(comparisonHashValue)){
+                        String hashUserValueSub = getSaltedUserValue(userValueSubString, configSalt, contextSalt);
+                        if (hashUserValueSub.equals(comparisonHashValue)) {
                             foundEqual = true;
                         }
                     } catch (NumberFormatException e) {
@@ -315,11 +317,8 @@ class RolloutEvaluator {
                 //TODO add salt and salt error handle
                 List<String> containsHashedValues = new ArrayList<>(Arrays.asList(comparisonCondition.getStringArrayValue()));
                 String[] userCSVContainsHashSplit = userValue.split(",");
-                if (userCSVContainsHashSplit.length == 0) {
-                    return false;
-                }
                 for (String userValueSlice : userCSVContainsHashSplit) {
-                    String userValueSliceHash = getSaltedUserValue(userValueSlice.trim(), configSalt, context.getKey());
+                    String userValueSliceHash = getSaltedUserValue(userValueSlice.trim(), configSalt, contextSalt);
                     if (containsHashedValues.contains(userValueSliceHash)) {
                         return true;
                     }
@@ -334,7 +333,7 @@ class RolloutEvaluator {
                 }
                 boolean containsFlag = false;
                 for (String userValueSlice : userCSVNotContainsHashSplit) {
-                    String userValueSliceHash = getSaltedUserValue(userValueSlice.trim(), configSalt, context.getKey());
+                    String userValueSliceHash = getSaltedUserValue(userValueSlice.trim(), configSalt, contextSalt);
                     if (notContainsHashedValues.contains(userValueSliceHash)) {
                         containsFlag = true;
                     }
@@ -345,29 +344,54 @@ class RolloutEvaluator {
         return true;
     }
 
-    private static String getSaltedUserValue(String userValue, String configJsonSalt, String key) {
-        return new String(Hex.encodeHex(DigestUtils.sha256(userValue + configJsonSalt + key)));
+    private static String getSaltedUserValue(String userValue, String configJsonSalt, String contextSalt) {
+        return new String(Hex.encodeHex(DigestUtils.sha256(userValue + configJsonSalt + contextSalt)));
     }
 
-    private boolean evaluateSegmentCondition(SegmentCondition segmentCondition, EvaluationContext context, EvaluateLogger evaluateLogger) {
-        //TODO implement
-        if(context.getUser() == null){
+    private boolean evaluateSegmentCondition(SegmentCondition segmentCondition, EvaluationContext context, String configSalt, Segment[] segments, EvaluateLogger evaluateLogger) {
+        if (context.getUser() == null) {
             // evaluateLogger "Skipping % options because the User Object is missing."
             //TODO isUserMissing in context? check pyhton
             return false;
         }
-        return false;
+        int segmentIndex = segmentCondition.getSegmentIndex();
+        if (segmentIndex >= segments.length) {
+            //TODO log invalid segment
+            return false;
+        }
+        Segment segment = segments[segmentIndex];
+        String segmentName = segment.getName();
+        if (segmentName == null || segmentName.isEmpty()) {
+            //TODO log segment name is missing
+            return false;
+        }
+        //TODO add logging
+        boolean segmentRulesResult = false;
+        for (ComparisonCondition comparisonCondition : segment.getSegmentRules()) {
+            segmentRulesResult = evaluateComparisonCondition(comparisonCondition, context, configSalt, segmentName, evaluateLogger);
+            //this is an AND if one false we can start the evaluation on the segmentComperator
+            if (!segmentRulesResult) {
+                break;
+            }
+        }
+        SegmentComparator segmentComparator = SegmentComparator.fromId(segmentCondition.getSegmentComparator());
+
+        if (SegmentComparator.IS_IN_SEGMENT.equals(segmentComparator)) {
+            return segmentRulesResult;
+        } else {
+            return !segmentRulesResult;
+        }
     }
 
     private boolean evaluatePrerequisiteFlagCondition(PrerequisiteFlagCondition prerequisiteFlagCondition, EvaluationContext context, EvaluateLogger evaluateLogger) {
         //TODO add logger evaluateLogger
         String prerequisiteFlagKey = prerequisiteFlagCondition.getPrerequisiteFlagKey();
         Setting prerequsiteFlagSetting = context.getSettings().get(prerequisiteFlagKey);
-        if(prerequisiteFlagKey == null || prerequisiteFlagKey.isEmpty() || prerequsiteFlagSetting == null){
+        if (prerequisiteFlagKey == null || prerequisiteFlagKey.isEmpty() || prerequsiteFlagSetting == null) {
             // TODO Log error
             return false;
         }
-        if(context.getVisitedKeys().contains(prerequisiteFlagKey)){
+        if (context.getVisitedKeys().contains(prerequisiteFlagKey)) {
             //TODO log eval , return error message?
             //TODO log warning circular
             // logger.warn();
@@ -375,13 +399,13 @@ class RolloutEvaluator {
         }
 
         EvaluationResult evaluateResult = evaluate(prerequsiteFlagSetting, prerequisiteFlagKey, context.getUser(), context.getVisitedKeys(), context.getSettings(), evaluateLogger);
-        if(evaluateResult.value == null) {
+        if (evaluateResult.value == null) {
             //TODO log some error
             return false;
         }
         PrerequisiteComparator prerequisiteComparator = PrerequisiteComparator.fromId(prerequisiteFlagCondition.getPrerequisiteComparator());
         SettingsValue conditionValue = prerequisiteFlagCondition.getValue();
-        if(PrerequisiteComparator.EQUALS.equals(prerequisiteComparator)){
+        if (PrerequisiteComparator.EQUALS.equals(prerequisiteComparator)) {
             return conditionValue.equals(evaluateResult.value);
         } else {
             return !conditionValue.equals(evaluateResult.value);
@@ -389,7 +413,7 @@ class RolloutEvaluator {
     }
 
     private static EvaluationResult evaluatePercentageOptions(PercentageOption[] percentageOptions, String percentageOptionAttribute, EvaluationContext context, TargetingRule parentTargetingRule, EvaluateLogger evaluateLogger) {
-        if (context.getUser() == null){
+        if (context.getUser() == null) {
             // evaluateLogger "Skipping % options because the User Object is missing."
             //TODO isUserMissing in context? check pyhton
             return null;

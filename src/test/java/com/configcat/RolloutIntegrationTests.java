@@ -26,7 +26,9 @@ class RolloutIntegrationTests {
             "testmatrix_variationId.csv,PKDVCLf-Hq-h-kCzMp-L7Q/nQ5qkhRAUEa6beEyyrVLBA," + VARIATION_TEST_KIND + ",",
             "testmatrix_and_or.csv,configcat-sdk-1/XUbbCFZX_0mOU_uQ_XYGMg/FfwncdJg1kq0lBqxhYC_7g," + VALUE_TEST_KIND + ",https://test-cdn-eu.configcat.com",
             "testmatrix_comparators_v6.csv,configcat-sdk-1/XUbbCFZX_0mOU_uQ_XYGMg/Lv2mD9Tgx0Km27nuHjw_FA," + VALUE_TEST_KIND + ",https://test-cdn-eu.configcat.com",
-            "testmatrix_prerequisite_flag.csv,configcat-sdk-1/XUbbCFZX_0mOU_uQ_XYGMg/LGO_8DM9OUGpJixrqqqQcA,"+ VALUE_TEST_KIND+ ",https://test-cdn-eu.configcat.com"
+            "testmatrix_prerequisite_flag.csv,configcat-sdk-1/XUbbCFZX_0mOU_uQ_XYGMg/LGO_8DM9OUGpJixrqqqQcA,"+ VALUE_TEST_KIND+ ",https://test-cdn-eu.configcat.com",
+            "testmatrix_segment.csv, configcat-sdk-1/XUbbCFZX_0mOU_uQ_XYGMg/LP0_4hhbQkmVVJcsbO_2Lw," + VALUE_TEST_KIND + ",https://test-cdn-eu.configcat.com",
+
     })
     void testMatrixTest(String file, String sdkKey, String kind, String baseUrl)  throws IOException {
 
@@ -81,7 +83,7 @@ class RolloutIntegrationTests {
                     typeOfExpectedResult = Integer.class;
                 } else if (settingKey.startsWith("double") || settingKey.startsWith("decimal")|| settingKey.startsWith("mainDouble")){
                     typeOfExpectedResult = Double.class;
-                } else if (settingKey.startsWith("boolean") || settingKey.startsWith("bool") || settingKey.startsWith("mainBool")){
+                } else if (settingKey.startsWith("boolean") || settingKey.startsWith("bool") || settingKey.startsWith("mainBool") || settingKey.equals("developerAndBetaUserSegment")){
                     typeOfExpectedResult = Boolean.class;
                 } else {
                     //handle as String in any other case
@@ -102,7 +104,7 @@ class RolloutIntegrationTests {
                     }
                 }
 
-                if (!value.toLowerCase().equals(testObject[i + 4].toLowerCase())) {
+                if (!value.equalsIgnoreCase(testObject[i + 4])) {
                     errors.add(String.format("Identifier: %s, Key: %s. UV: %s Expected: %s, Result: %s \n", testObject[0], settingKey, testObject[3], testObject[i + 4], value));
                 }
                 i++;

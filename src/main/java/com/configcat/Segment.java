@@ -14,4 +14,8 @@ public class Segment {
     public String getName() {
         return name;
     }
+
+    public ComparisonCondition[] getSegmentRules() {
+        return segmentRules;
+    }
 }
