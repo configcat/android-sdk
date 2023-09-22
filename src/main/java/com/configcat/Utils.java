@@ -3,7 +3,6 @@ package com.configcat;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import java.util.List;
 
 final class Utils {
     private Utils() { /* prevent from instantiation*/ }
@@ -16,7 +15,6 @@ final class Utils {
             //TODO clarify the salt is required and always presented or should I handle when it missing?
             setting.setConfigSalt(config.getPreferences().getSalt());
             setting.setSegments(config.getSegments());
-            //TODO check override case
         }
         return config;
     }

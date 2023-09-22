@@ -16,6 +16,8 @@ class EvaluationContext {
     private List<String> visitedKeys;
 
     private Map<String, Setting> settings;
+    private boolean isUserMissing = false;
+    private boolean isUserAttributeMissing = false;
 
     public String getKey() {
         return key;
@@ -31,6 +33,22 @@ class EvaluationContext {
 
     public void setUser(User user) {
         this.user = user;
+    }
+
+    public boolean isUserMissing() {
+        return isUserMissing;
+    }
+
+    public void setUserMissing(boolean userMissing) {
+        isUserMissing = userMissing;
+    }
+
+    public boolean isUserAttributeMissing() {
+        return isUserAttributeMissing;
+    }
+    
+    public void setUserAttributeMissing(boolean userAttributeMissing) {
+        isUserAttributeMissing = userAttributeMissing;
     }
 
     public List<String> getVisitedKeys() {
