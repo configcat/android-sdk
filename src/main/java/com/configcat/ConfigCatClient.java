@@ -488,7 +488,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
     }
 
     private <T> EvaluationDetails<T> evaluate(Class<T> classOfT, Setting setting, String key, User user, Long fetchTime, Map<String, Setting> settings) {
-        EvaluationResult evaluationResult = this.rolloutEvaluator.evaluate(setting, key, user, null, settings, new EvaluateLogger(key));
+        EvaluationResult evaluationResult = this.rolloutEvaluator.evaluate(setting, key, user, settings, new EvaluateLogger());
         EvaluationDetails<Object> details = new EvaluationDetails<>(
                 this.parseObject(classOfT, evaluationResult.value, setting.getType()),
                 key,
@@ -522,10 +522,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
     }
 
     private boolean validateParseType(Class<?> classOfT){
-        if (classOfT == String.class || classOfT == Integer.class || classOfT == int.class || classOfT == Double.class || classOfT == double.class || classOfT == Boolean.class || classOfT == boolean.class){
-            return true;
-        }
-        return false;
+        return classOfT == String.class || classOfT == Integer.class || classOfT == int.class || classOfT == Double.class || classOfT == double.class || classOfT == Boolean.class || classOfT == boolean.class;
     }
 
     private Class<?> classBySettingType(SettingType settingType) {

@@ -31,104 +31,164 @@ class RolloutEvaluator {
         this.logger = logger;
     }
 
-    public EvaluationResult evaluate(Setting setting, String key, User user, List<String> visitedKeys, Map<String, Setting> settings, EvaluateLogger evaluateLogger) {
+    public EvaluationResult evaluate(Setting setting, String key, User user, Map<String, Setting> settings, EvaluateLogger evaluateLogger) {
         //TODO logger is not need to run if log level is INFO? check the trick
         try {
-
+            evaluateLogger.logEvaluation(key);
             if (user != null) {
                 evaluateLogger.logUserObject(user);
             }
+            evaluateLogger.increaseIndentLevel();
 
-            if (visitedKeys == null) {
-                visitedKeys = new ArrayList<>();
-            }
-            visitedKeys.add(key);
-            EvaluationContext context = new EvaluationContext(key, user, visitedKeys, settings);
+            EvaluationContext context = new EvaluationContext(key, user, null, settings);
 
-            if (setting.getTargetingRules() != null) {
-                EvaluationResult targetingRulesEvaluationResult = evaluateTargetingRules(setting, context, evaluateLogger);
-                if (targetingRulesEvaluationResult != null) return targetingRulesEvaluationResult;
-            }
+            EvaluationResult evaluationResult = evaluateSetting(setting, evaluateLogger, context);
 
-            if (setting.getPercentageOptions() != null && setting.getPercentageOptions().length > 0) {
-                EvaluationResult percentageOptionsEvaluationResult = evaluatePercentageOptions(setting.getPercentageOptions(), setting.getPercentageAttribute(), context, null, evaluateLogger);
-                if (percentageOptionsEvaluationResult != null) return percentageOptionsEvaluationResult;
-            }
-
-            evaluateLogger.logReturnValue(setting.getSettingsValue().toString());
-            return new EvaluationResult(setting.getSettingsValue(), setting.getVariationId(), null, null);
+            evaluateLogger.logReturnValue(evaluationResult.value.toString());
+            evaluateLogger.decreaseIndentLevel();
+            return evaluationResult;
         } finally {
             this.logger.info(5000, evaluateLogger.toPrint());
         }
     }
 
+    private EvaluationResult evaluateSetting(Setting setting, EvaluateLogger evaluateLogger, EvaluationContext context) {
+        EvaluationResult evaluationResult = null;
+        if (setting.getTargetingRules() != null) {
+            evaluationResult = evaluateTargetingRules(setting, context, evaluateLogger);
+        }
+        if (evaluationResult == null && setting.getPercentageOptions() != null && setting.getPercentageOptions().length > 0) {
+            evaluationResult = evaluatePercentageOptions(setting.getPercentageOptions(), setting.getPercentageAttribute(), context, null, evaluateLogger);
+        }
+        if (evaluationResult == null) {
+            evaluationResult = new EvaluationResult(setting.getSettingsValue(), setting.getVariationId(), null, null);
+        }
+        return evaluationResult;
+    }
+
     private EvaluationResult evaluateTargetingRules(Setting setting, EvaluationContext context, EvaluateLogger evaluateLogger) {
-        //TODO evaluation context should be added?
-        //TODO logger eval targeting rules apply first ....
 
+        evaluateLogger.logTargetingRules();
         for (TargetingRule rule : setting.getTargetingRules()) {
+            boolean evaluateConditionsResult;
+            SettingsValue servedValue = null;
+            if (rule.getServedValue() != null) {
+                servedValue = rule.getServedValue().getValue();
+            }
+            evaluateConditionsResult = evaluateConditions(rule.getConditions(), rule, context, setting.getConfigSalt(), context.getKey(), setting.getSegments(), evaluateLogger);
 
-            if (!evaluateConditions(rule.getConditions(), context, setting.getConfigSalt(), setting.getSegments(), evaluateLogger)) {
+            if (!evaluateConditionsResult) {
                 continue;
             }
-            // Conditions match, if rule.getServedValue() not null. we should return as logMatch value from SV
-            //if no SV then PO should be available
-            if (rule.getServedValue() != null) {
+            if (servedValue != null) {
                 return new EvaluationResult(rule.getServedValue().getValue(), rule.getServedValue().getVariationId(), rule, null);
             }
-            //if (PO.length <= 0) error case no SV and no PO
+
+            //if (PO.lenght <= 0) error case no SV and no PO
             if (rule.getPercentageOptions() == null || rule.getPercentageOptions().length == 0) {
                 //TODO error? log something?
                 continue;
             }
+
+            evaluateLogger.increaseIndentLevel();
             EvaluationResult evaluatePercentageOptionsResult = evaluatePercentageOptions(rule.getPercentageOptions(), setting.getPercentageAttribute(), context, rule, evaluateLogger);
+            evaluateLogger.decreaseIndentLevel();
+
             if (evaluatePercentageOptionsResult == null) {
+                evaluateLogger.logTargetingRuleIgnored();
                 continue;
             }
+
             return evaluatePercentageOptionsResult;
 
+
         }
-        //TODO logging should be reworked.
-        // evaluateLogger.logNoMatch(comparisonAttribute, userValue, comparator, comparisonCondition);
         return null;
     }
 
-    private boolean evaluateConditions(Condition[] conditions, EvaluationContext context, String configSalt, Segment[] segments, EvaluateLogger evaluateLogger) {
+    private boolean evaluateConditions(Object[] conditions, TargetingRule targetingRule, EvaluationContext context, String configSalt, String contextSalt, Segment[] segments, EvaluateLogger evaluateLogger) {
         //Conditions are ANDs so if One is not matching return false, if all matching return true
-        //TODO rework logging based on changes possibly
+        boolean firstConditionFlag = true;
         boolean conditionsEvaluationResult = false;
-        for (Condition condition : conditions) {
-            //TODO log IF, AND based on order
+        String error = null;
+        boolean newLine = false;
+        for (Object rawCondition : conditions) {
+            if (firstConditionFlag) {
+                firstConditionFlag = false;
+                evaluateLogger.newLine();
+                evaluateLogger.append("- IF ");
+                evaluateLogger.increaseIndentLevel();
+            } else {
+                evaluateLogger.increaseIndentLevel();
+                evaluateLogger.newLine();
+                evaluateLogger.append("AND ");
+            }
 
-            //TODO Condition, what if condition invalid? more then one condition added or none. rework basic if
-            if (condition.getComparisonCondition() != null) {
-                conditionsEvaluationResult = evaluateUserCondition(condition.getComparisonCondition(), context, configSalt, context.getKey(), evaluateLogger);
-            } else if (condition.getSegmentCondition() != null) {
-                //TODO evalSC
-                conditionsEvaluationResult = evaluateSegmentCondition(condition.getSegmentCondition(), context, configSalt, segments, evaluateLogger);
-            } else if (condition.getPrerequisiteFlagCondition() != null) {
-                conditionsEvaluationResult = evaluatePrerequisiteFlagCondition(condition.getPrerequisiteFlagCondition(), context, evaluateLogger);
-                //TODO evalPFC
+            if (targetingRule == null) {
+                try {
+                    conditionsEvaluationResult = evaluateUserCondition((UserCondition) rawCondition, context, configSalt, contextSalt, evaluateLogger);
+                } catch (RolloutEvaluatorException evaluatorException) {
+                    error = evaluatorException.getMessage();
+                    conditionsEvaluationResult = false;
+                }
+                newLine = conditions.length > 1;
+            } else {
+                Condition condition = (Condition) rawCondition;
+                if (condition.getComparisonCondition() != null) {
+                    try {
+                        conditionsEvaluationResult = evaluateUserCondition(condition.getComparisonCondition(), context, configSalt, contextSalt, evaluateLogger);
+                    } catch (RolloutEvaluatorException evaluatorException) {
+                        error = evaluatorException.getMessage();
+                        conditionsEvaluationResult = false;
+                    }
+                    newLine = conditions.length > 1;
+                } else if (condition.getSegmentCondition() != null) {
+                    try {
+                        conditionsEvaluationResult = evaluateSegmentCondition(condition.getSegmentCondition(), context, configSalt, segments, evaluateLogger);
+                    } catch (RolloutEvaluatorException evaluatorException) {
+                        error = evaluatorException.getMessage();
+                        conditionsEvaluationResult = false;
+                    }
+                    newLine = error == null || conditions.length > 1;
+                } else if (condition.getPrerequisiteFlagCondition() != null) {
+                    try {
+                        conditionsEvaluationResult = evaluatePrerequisiteFlagCondition(condition.getPrerequisiteFlagCondition(), context, evaluateLogger);
+                    } catch (RolloutEvaluatorException evaluatorException) {
+                        error = evaluatorException.getMessage();
+                        conditionsEvaluationResult = false;
+                    }
+                    newLine = error == null || conditions.length > 1;
+                }
             }
-            // else throw Some exception here?
+
+
+            if (targetingRule == null || conditions.length > 1) {
+                evaluateLogger.logConditionConsequence(conditionsEvaluationResult);
+            }
+            evaluateLogger.decreaseIndentLevel();
             if (!conditionsEvaluationResult) {
-                //TODO no match for the TR. LOG and go to the next one?
-                //TODO this should be return from a condEvalMethod
-                return false;
+                break;
             }
+        }
+        if(targetingRule != null){
+            evaluateLogger.logTargetingRuleConsequence(targetingRule, error, conditionsEvaluationResult, newLine);
+        }
+        if (error != null) {
+            evaluateLogger.logTargetingRuleIgnored();
         }
         return conditionsEvaluationResult;
     }
 
     private boolean evaluateUserCondition(UserCondition userCondition, EvaluationContext context, String configSalt, String contextSalt, EvaluateLogger evaluateLogger) {
-        //TODO evalLogger CC eval is happening
+        evaluateLogger.append(LogHelper.formatUserCondition(userCondition));
+
         if (context.getUser() == null) {
-            //TODO eval logger error must be logged as well
             if(!context.isUserMissing()){
                 context.setUserMissing(true);
                 this.logger.warn(3001, ConfigCatLogMessages.getUserObjectMissing(context.getKey()));
             }
-            return false;
+            throw new RolloutEvaluatorException("cannot evaluate, User Object is missing");
+
         }
 
         String comparisonAttribute = userCondition.getComparisonAttribute();
@@ -137,8 +197,8 @@ class RolloutEvaluator {
 
         if (userValue == null || userValue.isEmpty()) {
             logger.warn(3003, ConfigCatLogMessages.getUserAttributeMissing(context.getKey(), userCondition, comparisonAttribute));
-            //TODO eval logger needed
-            return false;
+            throw new RolloutEvaluatorException("cannot evaluate, the User." + comparisonAttribute + " attribute is missing");
+
         }
 
         if (comparator == null) {
@@ -187,8 +247,8 @@ class RolloutEvaluator {
                     return (matched && Comparator.SEMVER_IS_ONE_OF.equals(comparator)) || (!matched && Comparator.SEMVER_IS_NOT_ONE_OF.equals(comparator));
                 } catch (Exception e) {
                     String reason = "'" + userValue + "' is not a valid semantic version";
-                    this.logger.warn(3004, ConfigCatLogMessages.getUserAttributeInvalid(context.getKey(), userCondition, reason,comparisonAttribute));
-                    return false;
+                    this.logger.warn(3004, ConfigCatLogMessages.getUserAttributeInvalid(context.getKey(), userCondition, reason, comparisonAttribute));
+                    throw new RolloutEvaluatorException("cannot evaluate, the User." + comparisonAttribute + " attribute is invalid (" + reason + ")");
                 }
             case SEMVER_LESS:
             case SEMVER_LESS_EQULAS:
@@ -203,10 +263,9 @@ class RolloutEvaluator {
                             (Comparator.SEMVER_GREATER.equals(comparator) && cmpUserVersion.isGreaterThan(matchValue)) ||
                             (Comparator.SEMVER_GREATER_EQUALS.equals(comparator) && cmpUserVersion.compareTo(matchValue) >= 0);
                 } catch (Exception e) {
-                    //TODO eval log
-                    String reason = "'"+userValue+"' is not a valid semantic version";
-                    this.logger.warn(3004, ConfigCatLogMessages.getUserAttributeInvalid(context.getKey(), userCondition, reason,comparisonAttribute));
-                    return false;
+                    String reason = "'" + userValue + "' is not a valid semantic version";
+                    this.logger.warn(3004, ConfigCatLogMessages.getUserAttributeInvalid(context.getKey(), userCondition, reason, comparisonAttribute));
+                    throw new RolloutEvaluatorException("cannot evaluate, the User." + comparisonAttribute + " attribute is invalid (" + reason + ")");
                 }
             case NUMBER_EQUALS:
             case NUMBER_NOT_EQUALS:
@@ -225,10 +284,9 @@ class RolloutEvaluator {
                             (Comparator.NUMBER_GREATER.equals(comparator) && userDoubleValue > comparisonDoubleValue) ||
                             (Comparator.NUMBER_GREATER_EQUALS.equals(comparator) && userDoubleValue >= comparisonDoubleValue);
                 } catch (NumberFormatException e) {
-                    // TODO eval log
-                    String reason = "'"+userValue+"' is not a valid decimal number";
-                    this.logger.warn(3004, ConfigCatLogMessages.getUserAttributeInvalid(context.getKey(), userCondition, reason,comparisonAttribute));
-                    return false;
+                    String reason = "'" + userValue + "' is not a valid decimal number";
+                    this.logger.warn(3004, ConfigCatLogMessages.getUserAttributeInvalid(context.getKey(), userCondition, reason, comparisonAttribute));
+                    throw new RolloutEvaluatorException("cannot evaluate, the User." + comparisonAttribute + " attribute is invalid (" + reason + ")");
                 }
             case SENSITIVE_IS_ONE_OF:
                 //TODO salt error handle
@@ -256,10 +314,9 @@ class RolloutEvaluator {
                     return (Comparator.DATE_BEFORE.equals(comparator) && userDoubleValue < comparisonDoubleValue) ||
                             (Comparator.DATE_AFTER.equals(comparator) && userDoubleValue > comparisonDoubleValue);
                 } catch (NumberFormatException e) {
-                    // TODO eval log
                     String reason = "'" + userValue + "' is not a valid Unix timestamp (number of seconds elapsed since Unix epoch)";
-                    this.logger.warn(3004, ConfigCatLogMessages.getUserAttributeInvalid(context.getKey(), userCondition, reason,comparisonAttribute));
-                    return false;
+                    this.logger.warn(3004, ConfigCatLogMessages.getUserAttributeInvalid(context.getKey(), userCondition, reason, comparisonAttribute));
+                    throw new RolloutEvaluatorException("cannot evaluate, the User." + comparisonAttribute + " attribute is invalid (" + reason + ")");
                 }
             case HASHED_EQUALS:
                 //TODO add salt and salt error handle
@@ -307,8 +364,9 @@ class RolloutEvaluator {
                             foundEqual = true;
                         }
                     } catch (NumberFormatException e) {
-                        String message = evaluateLogger.logFormatError(comparisonAttribute, userValue, comparator, comparisonValueHashedStartsEnds, e);
-                        this.logger.warn(0, message);
+                        //TODO fix log warn here
+//                        String message = evaluateLogger.logFormatError(comparisonAttribute, userValue, comparator, comparisonValueHashedStartsEnds, e);
+//                        this.logger.warn(0, message);
                         return false;
                     }
                 }
@@ -352,74 +410,94 @@ class RolloutEvaluator {
     }
 
     private boolean evaluateSegmentCondition(SegmentCondition segmentCondition, EvaluationContext context, String configSalt, Segment[] segments, EvaluateLogger evaluateLogger) {
+        int segmentIndex = segmentCondition.getSegmentIndex();
+        Segment segment = null;
+        if (segmentIndex < segments.length) {
+            segment = segments[segmentIndex];
+        }
+        evaluateLogger.append(LogHelper.formatSegmentFlagCondition(segmentCondition, segment));
+
         if (context.getUser() == null) {
-            //TODO eval logger error must be logged as well
-            if(!context.isUserMissing()){
+            if (!context.isUserMissing()) {
                 context.setUserMissing(true);
                 logger.warn(3001, ConfigCatLogMessages.getUserObjectMissing(context.getKey()));
             }
+            throw new RolloutEvaluatorException("cannot evaluate, User Object is missing");
+        }
+
+        if (segment == null) {
+            //TODO exception?
             return false;
         }
-        int segmentIndex = segmentCondition.getSegmentIndex();
-        if (segmentIndex >= segments.length) {
-            //TODO log invalid segment
-            return false;
-        }
-        Segment segment = segments[segmentIndex];
         String segmentName = segment.getName();
         if (segmentName == null || segmentName.isEmpty()) {
-            //TODO log segment name is missing
+            //TODO exception?
             return false;
         }
-        //TODO add logging
-        boolean segmentRulesResult = false;
-        for (UserCondition userCondition : segment.getSegmentRules()) {
-            segmentRulesResult = evaluateUserCondition(userCondition, context, configSalt, segmentName, evaluateLogger);
-            //this is an AND if one false we can start the evaluation on the segmentComperator
-            if (!segmentRulesResult) {
-                break;
-            }
-        }
-        SegmentComparator segmentComparator = SegmentComparator.fromId(segmentCondition.getSegmentComparator());
 
-        if (SegmentComparator.IS_IN_SEGMENT.equals(segmentComparator)) {
-            return segmentRulesResult;
-        } else {
-            return !segmentRulesResult;
+        evaluateLogger.logSegmentEvaluationStart(segmentName);
+        boolean segmentRulesResult;
+        try {
+            segmentRulesResult = evaluateConditions(segment.getSegmentRules(), null, context, configSalt, segmentName, segments, evaluateLogger);
+        } catch (RolloutEvaluatorException evaluatorException) {
+            segmentRulesResult = false;
         }
+
+        SegmentComparator segmentComparator = SegmentComparator.fromId(segmentCondition.getSegmentComparator());
+        boolean result = segmentRulesResult;
+        if (SegmentComparator.IS_NOT_IN_SEGMENT.equals(segmentComparator)) {
+            result = !result;
+        }
+
+        evaluateLogger.logSegmentEvaluationResult(segmentCondition, segment, result, segmentRulesResult);
+
+        return result;
     }
 
     private boolean evaluatePrerequisiteFlagCondition(PrerequisiteFlagCondition prerequisiteFlagCondition, EvaluationContext context, EvaluateLogger evaluateLogger) {
-        //TODO add logger evaluateLogger
+        evaluateLogger.append(LogHelper.formatPrerequisiteFlagCondition(prerequisiteFlagCondition));
+
         String prerequisiteFlagKey = prerequisiteFlagCondition.getPrerequisiteFlagKey();
         Setting prerequsiteFlagSetting = context.getSettings().get(prerequisiteFlagKey);
         if (prerequisiteFlagKey == null || prerequisiteFlagKey.isEmpty() || prerequsiteFlagSetting == null) {
             // TODO Log error
             return false;
         }
-        if (context.getVisitedKeys().contains(prerequisiteFlagKey)) {
-            //TODO log eval
+
+        List<String> visitedKeys = context.getVisitedKeys();
+        if (visitedKeys == null) {
+            visitedKeys = new ArrayList<>();
+        }
+        visitedKeys.add(context.getKey());
+        if (visitedKeys.contains(prerequisiteFlagKey)) {
             String dependencyCycle = LogHelper.formatCircularDependencyList(context.getVisitedKeys(), prerequisiteFlagKey);
-            this.logger.warn(3004, ConfigCatLogMessages.getCircularDependencyDetected(context.getKey(),prerequisiteFlagCondition, dependencyCycle));
+            this.logger.warn(3005, ConfigCatLogMessages.getCircularDependencyDetected(context.getKey(), prerequisiteFlagCondition, dependencyCycle));
+            throw new RolloutEvaluatorException("cannot evaluate, circular dependency detected");
+        }
+
+        evaluateLogger.logPrerequisiteFlagEvaluationStart(prerequisiteFlagKey);
+
+        EvaluationContext prerequisiteFlagContext = new EvaluationContext(prerequisiteFlagKey, context.getUser(), visitedKeys, context.getSettings());
+
+        EvaluationResult evaluateResult = evaluateSetting(prerequsiteFlagSetting, evaluateLogger, prerequisiteFlagContext);
+        if (evaluateResult.value == null) {
             return false;
         }
 
-        EvaluationResult evaluateResult = evaluate(prerequsiteFlagSetting, prerequisiteFlagKey, context.getUser(), context.getVisitedKeys(), context.getSettings(), evaluateLogger);
-        if (evaluateResult.value == null) {
-            //TODO log some error
-            return false;
-        }
         PrerequisiteComparator prerequisiteComparator = PrerequisiteComparator.fromId(prerequisiteFlagCondition.getPrerequisiteComparator());
         SettingsValue conditionValue = prerequisiteFlagCondition.getValue();
-        if (PrerequisiteComparator.EQUALS.equals(prerequisiteComparator)) {
-            return conditionValue.equals(evaluateResult.value);
-        } else {
-            return !conditionValue.equals(evaluateResult.value);
+        boolean result = conditionValue.equals(evaluateResult.value);
+        if (PrerequisiteComparator.NOT_EQUALS.equals(prerequisiteComparator)) {
+            result = !result;
         }
+        evaluateLogger.logPrerequisiteFlagEvaluationResult(prerequisiteFlagCondition, evaluateResult.value, result);
+
+        return result;
     }
 
     private EvaluationResult evaluatePercentageOptions(PercentageOption[] percentageOptions, String percentageOptionAttribute, EvaluationContext context, TargetingRule parentTargetingRule, EvaluateLogger evaluateLogger) {
         if (context.getUser() == null) {
+            evaluateLogger.logPercentageOptionUserMissing();
             if(!context.isUserMissing()){
                 context.setUserMissing(true);
                 this.logger.warn(3001, ConfigCatLogMessages.getUserObjectMissing(context.getKey()));
@@ -434,6 +512,7 @@ class RolloutEvaluator {
         } else {
             percentageOptionAttributeValue = context.getUser().getAttribute(percentageOptionAttributeName);
             if (percentageOptionAttributeValue == null) {
+                evaluateLogger.logPercentageOptionUserAttributeMissing(percentageOptionAttributeName);
                 if(!context.isUserAttributeMissing()){
                     context.setUserAttributeMissing(true);
                     this.logger.warn(3003, ConfigCatLogMessages.getUserAttributeMissing(context.getKey(),percentageOptionAttributeName));
@@ -441,25 +520,32 @@ class RolloutEvaluator {
                 return null;
             }
         }
-        //TODO log missing Eval % option based on .....
+
+        evaluateLogger.logPercentageOptionEvaluation(percentageOptionAttributeName);
         String hashCandidate = context.getKey() + percentageOptionAttributeValue;
         int scale = 100;
         String hexHash = new String(Hex.encodeHex(DigestUtils.sha1(hashCandidate))).substring(0, 7);
         int longHash = Integer.parseInt(hexHash, 16);
         int scaled = longHash % scale;
+        evaluateLogger.logPercentageOptionEvaluationHash(percentageOptionAttributeName, scaled);
 
         int bucket = 0;
-        for (PercentageOption rule : percentageOptions) {
-
+        for (int i = 0; i < percentageOptions.length; i++) {
+            PercentageOption rule = percentageOptions[i];
             bucket += rule.getPercentage();
             if (scaled < bucket) {
-                evaluateLogger.logPercentageEvaluationReturnValue(rule.getValue().toString());
+                evaluateLogger.logPercentageEvaluationReturnValue(scaled, i, rule.getPercentage(), rule.getValue());
                 return new EvaluationResult(rule.getValue(), rule.getVariationId(), parentTargetingRule, rule);
             }
         }
 
         return null;
     }
-
-
 }
+
+class RolloutEvaluatorException extends RuntimeException {
+    public RolloutEvaluatorException(String message) {
+        super(message);
+    }
+}
+
