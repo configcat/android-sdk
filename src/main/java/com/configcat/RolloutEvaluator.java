@@ -100,8 +100,6 @@ class RolloutEvaluator {
             }
 
             return evaluatePercentageOptionsResult;
-
-
         }
         return null;
     }
@@ -206,8 +204,6 @@ class RolloutEvaluator {
             //TODO do we log the comparator is invalid somewhere?
         }
         switch (comparator) {
-            //TODO log match should be handled on return and just for the TR?
-            // evaluateLogger.logMatch(comparisonAttribute, userValue, comparator, containsValues, value);
             case CONTAINS_ANY_OF:
                 List<String> containsValues = new ArrayList<>(Arrays.asList(userCondition.getStringArrayValue()));
                 for (int index = 0; containsValues.size() > index; index++) {
@@ -470,7 +466,7 @@ class RolloutEvaluator {
         }
         visitedKeys.add(context.getKey());
         if (visitedKeys.contains(prerequisiteFlagKey)) {
-            String dependencyCycle = LogHelper.formatCircularDependencyList(context.getVisitedKeys(), prerequisiteFlagKey);
+            String dependencyCycle = LogHelper.formatCircularDependencyList(visitedKeys, prerequisiteFlagKey);
             this.logger.warn(3005, ConfigCatLogMessages.getCircularDependencyDetected(context.getKey(), prerequisiteFlagCondition, dependencyCycle));
             throw new RolloutEvaluatorException("cannot evaluate, circular dependency detected");
         }

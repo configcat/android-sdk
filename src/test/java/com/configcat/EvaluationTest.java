@@ -41,14 +41,14 @@ public class EvaluationTest {
             "epoch_date_validation",
             "number_validation",
             "comparators",
-            "circular_dependency", //TODO fix override
+            "circular_dependency",
             "prerequisite_flag",
             "segment",
             "options_after_targeting_rule",
             "options_based_on_user_id",
             "options_based_on_custom_attr",
             "options_within_targeting_rule",
-             "list_truncation", // TODO fix override
+             "list_truncation",
     })
     public void testEvaluation(String testDescriptorName) throws IOException {
 
