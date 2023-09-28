@@ -180,6 +180,11 @@ public final class ConfigCatClient implements ConfigurationProvider {
     }
 
     @Override
+    public Map<String, Object> getAllValues() {
+        return this.getAllValues(null);
+    }
+
+    @Override
     public Map<String, Object> getAllValues(User user) {
         try {
             return this.getAllValuesAsync(user).get();
@@ -191,6 +196,11 @@ public final class ConfigCatClient implements ConfigurationProvider {
             this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithEmptyValue("getAllValues", "empty map"), e);
             return new HashMap<>();
         }
+    }
+
+    @Override
+    public CompletableFuture<Map<String, Object>> getAllValuesAsync() {
+        return this.getAllValuesAsync(null);
     }
 
     @Override
@@ -222,6 +232,11 @@ public final class ConfigCatClient implements ConfigurationProvider {
     }
 
     @Override
+    public List<EvaluationDetails<?>> getAllValueDetails() {
+        return this.getAllValueDetails(null);
+    }
+
+    @Override
     public List<EvaluationDetails<?>> getAllValueDetails(User user) {
         try {
             return this.getAllValueDetailsAsync(user).get();
@@ -233,6 +248,11 @@ public final class ConfigCatClient implements ConfigurationProvider {
             this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithEmptyValue("getAllValueDetails", "empty list"), e);
             return new ArrayList<>();
         }
+    }
+
+    @Override
+    public CompletableFuture<List<EvaluationDetails<?>>> getAllValueDetailsAsync() {
+        return this.getAllValueDetailsAsync(null);
     }
 
     @Override
