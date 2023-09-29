@@ -11,9 +11,12 @@ final class Utils {
 
     public static Config deserializeConfig(String json){
         Config config = Utils.gson.fromJson(json, Config.class);
+        String salt = config.getPreferences().getSalt();
+        if(salt == null || salt.isEmpty()){
+            throw new IllegalArgumentException("Config JSON salt is missing.");
+        }
         for (Setting setting: config.getEntries().values()) {
-            //TODO clarify the salt is required and always presented or should I handle when it missing?
-            setting.setConfigSalt(config.getPreferences().getSalt());
+            setting.setConfigSalt(salt);
             setting.setSegments(config.getSegments());
         }
         return config;

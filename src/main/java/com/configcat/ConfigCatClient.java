@@ -505,7 +505,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
     private Object parseObject(Class<?> classOfT, SettingsValue settingsValue, SettingType settingType) {
         if(!validateParseType(classOfT))
-            throw new IllegalArgumentException("Only String, Integer, Double or Boolean types are supported");
+            throw new IllegalArgumentException("Only String, Integer, Double or Boolean types are supported.");
 
         if (classOfT == String.class && settingsValue.getStringValue() != null && SettingType.STRING.equals(settingType))
             return settingsValue.getStringValue();

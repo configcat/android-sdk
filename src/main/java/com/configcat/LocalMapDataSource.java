@@ -13,7 +13,6 @@ class LocalMapDataSource extends OverrideDataSource {
         if (source == null)
             throw new IllegalArgumentException("'source' cannot be null.");
 
-        Gson gson = new GsonBuilder().create();
         for (Map.Entry<String, Object> entry : source.entrySet()) {
             Setting setting = convertToSetting(entry.getValue());
             this.loadedSettings.put(entry.getKey(), setting);
@@ -40,8 +39,9 @@ class LocalMapDataSource extends OverrideDataSource {
         } else if (object instanceof Double){
             setting.setType(SettingType.DOUBLE);
             settingsValue.setDoubleValue((Double) object);
+        } else {
+            throw new IllegalArgumentException("Only String, Integer, Double or Boolean types are supported.");
         }
-        //TODO in case of none of above worked? throw error or try to cast to string
         setting.setSettingsValue(settingsValue);
         return setting;
     }

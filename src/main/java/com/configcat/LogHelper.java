@@ -71,6 +71,9 @@ final class LogHelper {
 
     public static String formatUserCondition(UserCondition userCondition){
         Comparator userComparator = Comparator.fromId(userCondition.getComparator());
+        if (userComparator == null) {
+            throw new IllegalArgumentException("Comparison operator is invalid.");
+        }
         String comparisonValue;
         switch (userComparator){
             case CONTAINS_ANY_OF:
@@ -128,11 +131,17 @@ final class LogHelper {
             segmentName = INVALID_REFERENCE;
         }
         SegmentComparator segmentComparator = SegmentComparator.fromId(segmentCondition.getSegmentComparator());
+        if (segmentComparator == null) {
+            throw new IllegalArgumentException("Segment comparison operator is invalid.");
+        }
         return "User " + segmentComparator.getName() + " '" + segmentName + "'";
     }
     public static String formatPrerequisiteFlagCondition(PrerequisiteFlagCondition prerequisiteFlagCondition){
         String prerequisiteFlagKey = prerequisiteFlagCondition.getPrerequisiteFlagKey();
         PrerequisiteComparator prerequisiteComparator = PrerequisiteComparator.fromId(prerequisiteFlagCondition.getPrerequisiteComparator());
+        if (prerequisiteComparator == null) {
+            throw new IllegalArgumentException("Prerequisite Flag comparison operator is invalid.");
+        }
         SettingsValue prerequisiteValue = prerequisiteFlagCondition.getValue();
         String comparisonValue = prerequisiteValue ==  null ? INVALID_VALUE : prerequisiteValue.toString();
         return "Flag '"+prerequisiteFlagKey+"' "+prerequisiteComparator.getName()+" '"+comparisonValue+"'";

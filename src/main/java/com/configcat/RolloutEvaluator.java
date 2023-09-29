@@ -86,8 +86,7 @@ class RolloutEvaluator {
 
             //if (PO.lenght <= 0) error case no SV and no PO
             if (rule.getPercentageOptions() == null || rule.getPercentageOptions().length == 0) {
-                //TODO error? log something?
-                continue;
+                throw new IllegalArgumentException("Targeting rule THEN part is missing or invalid.");
             }
 
             evaluateLogger.increaseIndentLevel();
@@ -200,8 +199,7 @@ class RolloutEvaluator {
         }
 
         if (comparator == null) {
-            return false;
-            //TODO do we log the comparator is invalid somewhere?
+            throw new IllegalArgumentException("Comparison operator is invalid.");
         }
         switch (comparator) {
             case CONTAINS_ANY_OF:
@@ -285,7 +283,6 @@ class RolloutEvaluator {
                     throw new RolloutEvaluatorException("cannot evaluate, the User." + comparisonAttribute + " attribute is invalid (" + reason + ")");
                 }
             case SENSITIVE_IS_ONE_OF:
-                //TODO salt error handle
                 List<String> inValuesSensitive = new ArrayList<>(Arrays.asList(userCondition.getStringArrayValue()));
                 for (int index = 0; inValuesSensitive.size() > index; index++) {
                     inValuesSensitive.set(index, inValuesSensitive.get(index).trim());
@@ -294,7 +291,6 @@ class RolloutEvaluator {
                 String hashValueOne = getSaltedUserValue(userValue, configSalt, contextSalt);
                 return inValuesSensitive.contains(hashValueOne);
             case SENSITIVE_IS_NOT_ONE_OF:
-                //TODO add salt and salt error handle
                 List<String> notInValuesSensitive = new ArrayList<>(Arrays.asList(userCondition.getStringArrayValue()));
                 for (int index = 0; notInValuesSensitive.size() > index; index++) {
                     notInValuesSensitive.set(index, notInValuesSensitive.get(index).trim());
@@ -315,18 +311,15 @@ class RolloutEvaluator {
                     throw new RolloutEvaluatorException("cannot evaluate, the User." + comparisonAttribute + " attribute is invalid (" + reason + ")");
                 }
             case HASHED_EQUALS:
-                //TODO add salt and salt error handle
                 String hashEquals = getSaltedUserValue(userValue, configSalt, contextSalt);
                 return hashEquals.equals(userCondition.getStringValue());
             case HASHED_NOT_EQUALS:
-                //TODO add salt and salt error handle
                 String hashNotEquals = getSaltedUserValue(userValue, configSalt, contextSalt);
                 return !hashNotEquals.equals(userCondition.getStringValue());
             case HASHED_STARTS_WITH:
             case HASHED_ENDS_WITH:
             case HASHED_NOT_STARTS_WITH:
             case HASHED_NOT_ENDS_WITH:
-                //TODO add salt and salt error handle
                 List<String> withValues = new ArrayList<>(Arrays.asList(userCondition.getStringArrayValue()));
                 for (int index = 0; withValues.size() > index; index++) {
                     withValues.set(index, withValues.get(index).trim());
@@ -335,9 +328,8 @@ class RolloutEvaluator {
                 boolean foundEqual = false;
                 for (String comparisonValueHashedStartsEnds : withValues) {
                     int indexOf = comparisonValueHashedStartsEnds.indexOf("_");
-                    //TODO is it false or skip
                     if (indexOf <= 0) {
-                        return false;
+                        throw new IllegalArgumentException("Comparison value is missing or invalid.");
                     }
                     String comparedTextLength = comparisonValueHashedStartsEnds.substring(0, indexOf);
                     try {
@@ -347,7 +339,7 @@ class RolloutEvaluator {
                         }
                         String comparisonHashValue = comparisonValueHashedStartsEnds.substring(indexOf + 1);
                         if (comparisonHashValue.isEmpty()) {
-                            return false;
+                            throw new IllegalArgumentException("Comparison value is missing or invalid.");
                         }
                         String userValueSubString;
                         if (Comparator.HASHED_STARTS_WITH.equals(comparator) || Comparator.HASHED_NOT_STARTS_WITH.equals(comparator)) {
@@ -360,10 +352,7 @@ class RolloutEvaluator {
                             foundEqual = true;
                         }
                     } catch (NumberFormatException e) {
-                        //TODO fix log warn here
-//                        String message = evaluateLogger.logFormatError(comparisonAttribute, userValue, comparator, comparisonValueHashedStartsEnds, e);
-//                        this.logger.warn(0, message);
-                        return false;
+                        throw new IllegalArgumentException("Comparison value is missing or invalid.");
                     }
                 }
                 if (Comparator.HASHED_NOT_STARTS_WITH.equals(comparator) || Comparator.HASHED_NOT_ENDS_WITH.equals(comparator)) {
@@ -371,7 +360,6 @@ class RolloutEvaluator {
                 }
                 return foundEqual;
             case HASHED_ARRAY_CONTAINS:
-                //TODO add salt and salt error handle
                 List<String> containsHashedValues = new ArrayList<>(Arrays.asList(userCondition.getStringArrayValue()));
                 String[] userCSVContainsHashSplit = userValue.split(",");
                 for (String userValueSlice : userCSVContainsHashSplit) {
@@ -382,7 +370,6 @@ class RolloutEvaluator {
                 }
                 return false;
             case HASHED_ARRAY_NOT_CONTAINS:
-                //TODO add salt and salt error handle
                 List<String> notContainsHashedValues = new ArrayList<>(Arrays.asList(userCondition.getStringArrayValue()));
                 String[] userCSVNotContainsHashSplit = userValue.split(",");
                 if (userCSVNotContainsHashSplit.length == 0) {
@@ -396,9 +383,9 @@ class RolloutEvaluator {
                     }
                 }
                 return !containsFlag;
-
+            default:
+                throw new IllegalArgumentException("Comparison operator is invalid.");
         }
-        return true;
     }
 
     private static String getSaltedUserValue(String userValue, String configJsonSalt, String contextSalt) {
@@ -422,13 +409,11 @@ class RolloutEvaluator {
         }
 
         if (segment == null) {
-            //TODO exception?
-            return false;
+            throw new IllegalArgumentException("Segment reference is invalid.");
         }
         String segmentName = segment.getName();
         if (segmentName == null || segmentName.isEmpty()) {
-            //TODO exception?
-            return false;
+            throw new IllegalArgumentException("Segment name is missing.");
         }
 
         evaluateLogger.logSegmentEvaluationStart(segmentName);
@@ -439,12 +424,23 @@ class RolloutEvaluator {
             segmentRulesResult = false;
         }
 
+        boolean result;
+
         SegmentComparator segmentComparator = SegmentComparator.fromId(segmentCondition.getSegmentComparator());
-        boolean result = segmentRulesResult;
-        if (SegmentComparator.IS_NOT_IN_SEGMENT.equals(segmentComparator)) {
-            result = !result;
+        if(segmentComparator == null){
+            throw new IllegalArgumentException("Segment comparison operator is invalid.");
         }
 
+        switch (segmentComparator) {
+            case IS_IN_SEGMENT:
+                result = segmentRulesResult;
+                break;
+            case IS_NOT_IN_SEGMENT:
+                result = !segmentRulesResult;
+                break;
+            default:
+                throw new IllegalArgumentException("Segment comparison operator is invalid.");
+        }
         evaluateLogger.logSegmentEvaluationResult(segmentCondition, segment, result, segmentRulesResult);
 
         return result;
@@ -456,8 +452,7 @@ class RolloutEvaluator {
         String prerequisiteFlagKey = prerequisiteFlagCondition.getPrerequisiteFlagKey();
         Setting prerequsiteFlagSetting = context.getSettings().get(prerequisiteFlagKey);
         if (prerequisiteFlagKey == null || prerequisiteFlagKey.isEmpty() || prerequsiteFlagSetting == null) {
-            // TODO Log error
-            return false;
+            throw new IllegalArgumentException("Prerequisite flag key is missing or invalid.");
         }
 
         List<String> visitedKeys = context.getVisitedKeys();
@@ -482,10 +477,23 @@ class RolloutEvaluator {
 
         PrerequisiteComparator prerequisiteComparator = PrerequisiteComparator.fromId(prerequisiteFlagCondition.getPrerequisiteComparator());
         SettingsValue conditionValue = prerequisiteFlagCondition.getValue();
-        boolean result = conditionValue.equals(evaluateResult.value);
-        if (PrerequisiteComparator.NOT_EQUALS.equals(prerequisiteComparator)) {
-            result = !result;
+
+        boolean result;
+
+        if(prerequisiteComparator == null){
+            throw new IllegalArgumentException("Prerequisite Flag comparison operator is invalid.");
         }
+        switch (prerequisiteComparator){
+            case EQUALS:
+                result = conditionValue.equals(evaluateResult.value);
+                break;
+            case NOT_EQUALS:
+                result = !conditionValue.equals(evaluateResult.value);
+                break;
+            default:
+                throw new IllegalArgumentException("Prerequisite Flag comparison operator is invalid.");
+        }
+
         evaluateLogger.logPrerequisiteFlagEvaluationResult(prerequisiteFlagCondition, evaluateResult.value, result);
 
         return result;
