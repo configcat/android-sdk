@@ -19,6 +19,8 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
     private final AtomicBoolean isClosed = new AtomicBoolean(false);
     private final ConfigCatLogger logger;
+    private final LogLevel clientLogLevel;
+
     private final RolloutEvaluator rolloutEvaluator;
     private final OverrideDataSource overrideDataSource;
     private final OverrideBehaviour overrideBehaviour;
@@ -30,6 +32,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
     private ConfigCatClient(String sdkKey, Options options) throws IllegalArgumentException {
         this.logger = new ConfigCatLogger(LoggerFactory.getLogger(ConfigCatClient.class), options.logLevel, options.hooks);
+        this.clientLogLevel = options.logLevel;
 
         this.sdkKey = sdkKey;
         this.overrideDataSource = options.overrideDataSource;
@@ -488,7 +491,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
     }
 
     private <T> EvaluationDetails<T> evaluate(Class<T> classOfT, Setting setting, String key, User user, Long fetchTime, Map<String, Setting> settings) {
-        EvaluationResult evaluationResult = this.rolloutEvaluator.evaluate(setting, key, user, settings, new EvaluateLogger());
+        EvaluationResult evaluationResult = this.rolloutEvaluator.evaluate(setting, key, user, settings, new EvaluateLogger(this.clientLogLevel));
         EvaluationDetails<Object> details = new EvaluationDetails<>(
                 this.parseObject(classOfT, evaluationResult.value, setting.getType()),
                 key,

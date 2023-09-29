@@ -32,7 +32,6 @@ class RolloutEvaluator {
     }
 
     public EvaluationResult evaluate(Setting setting, String key, User user, Map<String, Setting> settings, EvaluateLogger evaluateLogger) {
-        //TODO logger is not need to run if log level is INFO? check the trick
         try {
             evaluateLogger.logEvaluation(key);
             if (user != null) {
@@ -48,7 +47,9 @@ class RolloutEvaluator {
             evaluateLogger.decreaseIndentLevel();
             return evaluationResult;
         } finally {
-            this.logger.info(5000, evaluateLogger.toPrint());
+            if(evaluateLogger.isLoggable()){
+                this.logger.info(5000, evaluateLogger.toPrint());
+            }
         }
     }
 
