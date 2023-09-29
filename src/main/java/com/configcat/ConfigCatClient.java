@@ -445,7 +445,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                 return defaultValue;
             }
 
-            return this.evaluate(classOfT, checkSettingResult.value(), key, userObject, settingResult.fetchTime(),  settingResult.settings()).getValue();
+            return this.evaluate(classOfT, checkSettingResult.value(), key, userObject, settingResult.fetchTime(), settingResult.settings()).getValue();
         } catch (Exception e) {
             String error = ConfigCatLogMessages.getSettingEvaluationFailedForOtherReason(key, "defaultValue", defaultValue);
             this.hooks.invokeOnFlagEvaluated(EvaluationDetails.fromError(key, defaultValue, error + " " + e.getMessage(), userObject));
@@ -504,7 +504,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
     }
 
     private Object parseObject(Class<?> classOfT, SettingsValue settingsValue, SettingType settingType) {
-        if(!validateParseType(classOfT))
+        if (!validateParseType(classOfT))
             throw new IllegalArgumentException("Only String, Integer, Double or Boolean types are supported.");
 
         if (classOfT == String.class && settingsValue.getStringValue() != null && SettingType.STRING.equals(settingType))
@@ -513,15 +513,15 @@ public final class ConfigCatClient implements ConfigurationProvider {
             return settingsValue.getIntegerValue();
         else if ((classOfT == Double.class || classOfT == double.class) && settingsValue.getDoubleValue() != null && SettingType.DOUBLE.equals(settingType))
             return settingsValue.getDoubleValue();
-        else if ((classOfT == Boolean.class || classOfT == boolean.class) && settingsValue.getBooleanValue() !=  null && SettingType.BOOLEAN.equals(settingType))
+        else if ((classOfT == Boolean.class || classOfT == boolean.class) && settingsValue.getBooleanValue() != null && SettingType.BOOLEAN.equals(settingType))
             return settingsValue.getBooleanValue();
 
         throw new IllegalArgumentException("The type of a setting must match the type of the setting's default value. "
-                    + "Setting's type was {" + settingType + "} but the default value's type was {" + classOfT + "}. "
-                    + "Please use a default value which corresponds to the setting type {" + settingType + "}.");
+                + "Setting's type was {" + settingType + "} but the default value's type was {" + classOfT + "}. "
+                + "Please use a default value which corresponds to the setting type {" + settingType + "}.");
     }
 
-    private boolean validateParseType(Class<?> classOfT){
+    private boolean validateParseType(Class<?> classOfT) {
         return classOfT == String.class || classOfT == Integer.class || classOfT == int.class || classOfT == Double.class || classOfT == double.class || classOfT == Boolean.class || classOfT == boolean.class;
     }
 

@@ -46,7 +46,7 @@ class EvaluationContext {
     public boolean isUserAttributeMissing() {
         return isUserAttributeMissing;
     }
-    
+
     public void setUserAttributeMissing(boolean userAttributeMissing) {
         isUserAttributeMissing = userAttributeMissing;
     }

@@ -1,10 +1,11 @@
 package com.configcat;
 
+import java9.util.concurrent.CompletableFuture;
+
 import java.io.Closeable;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java9.util.concurrent.CompletableFuture;
 
 /**
  * Defines the public interface of the {@link ConfigCatClient}.
@@ -63,7 +64,7 @@ public interface ConfigurationProvider extends Closeable {
      * @param key          the identifier of a feature flag or setting.
      * @param defaultValue in case of any failure, this value will be returned.
      * @param <T>          the type of the desired feature flag or setting.
-     * @return  the result of the evaluation
+     * @return the result of the evaluation
      */
     <T> EvaluationDetails<T> getValueDetails(Class<T> classOfT, String key, T defaultValue);
 
@@ -75,7 +76,7 @@ public interface ConfigurationProvider extends Closeable {
      * @param user         the user object.
      * @param defaultValue in case of any failure, this value will be returned.
      * @param <T>          the type of the desired feature flag or setting.
-     * @return  the result of the evaluation
+     * @return the result of the evaluation
      */
     <T> EvaluationDetails<T> getValueDetails(Class<T> classOfT, String key, User user, T defaultValue);
 

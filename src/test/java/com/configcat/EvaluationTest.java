@@ -15,6 +15,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.slf4j.LoggerFactory;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -48,7 +49,7 @@ public class EvaluationTest {
             "options_based_on_user_id",
             "options_based_on_custom_attr",
             "options_within_targeting_rule",
-             "list_truncation",
+            "list_truncation",
     })
     public void testEvaluation(String testDescriptorName) throws IOException {
 
@@ -62,7 +63,7 @@ public class EvaluationTest {
         String jsonOverride = testSet.getJsonOverride();
         String baseUrl;
         MockWebServer server;
-        if (jsonOverride != null && !jsonOverride.isEmpty()){
+        if (jsonOverride != null && !jsonOverride.isEmpty()) {
             server = new MockWebServer();
             server.start();
             //override baseUrl in case of mockup
@@ -120,7 +121,7 @@ public class EvaluationTest {
 
             StringBuilder logResultBuilder = new StringBuilder();
             List<ILoggingEvent> logsList = listAppender.list;
-            for (ILoggingEvent logEvent: logsList) {
+            for (ILoggingEvent logEvent : logsList) {
                 logResultBuilder.append(formatLogLevel(logEvent.getLevel())).append(" ").append(logEvent.getFormattedMessage()).append("\n");
             }
             String logResult = logResultBuilder.toString();

@@ -54,23 +54,23 @@ public class User {
     @Override
     public String toString() {
         LinkedHashMap<String, String> tmp = new LinkedHashMap<>();
-        if(attributes.containsKey(IDENTIFIER)){
+        if (attributes.containsKey(IDENTIFIER)) {
             tmp.put(IDENTIFIER, attributes.get(IDENTIFIER));
         }
-        if(attributes.containsKey(EMAIL)){
+        if (attributes.containsKey(EMAIL)) {
             tmp.put(EMAIL, attributes.get(EMAIL));
         }
-        if(attributes.containsKey(COUNTRY)){
+        if (attributes.containsKey(COUNTRY)) {
             tmp.put(COUNTRY, attributes.get(COUNTRY));
         }
         tmp.putAll(attributes);
         StringBuilder userStringBuilder = new StringBuilder();
         userStringBuilder.append('{');
         Iterator it = tmp.entrySet().iterator();
-        while(it.hasNext()) {
-            Map.Entry me = (Map.Entry)it.next();
+        while (it.hasNext()) {
+            Map.Entry me = (Map.Entry) it.next();
             userStringBuilder.append('"').append(me.getKey()).append("\":\"").append(me.getValue()).append('"');
-            if(it.hasNext()){
+            if (it.hasNext()) {
                 userStringBuilder.append(',');
             }
         }

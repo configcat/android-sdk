@@ -32,9 +32,9 @@ class ConfigCatClientIntegrationTest {
         this.server.start();
 
         this.client = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
-                    options.pollingMode(PollingModes.lazyLoad(2));
-                    options.baseUrl(this.server.url("/").toString());
-            });
+            options.pollingMode(PollingModes.lazyLoad(2));
+            options.baseUrl(this.server.url("/").toString());
+        });
     }
 
     @AfterEach
@@ -208,9 +208,9 @@ class ConfigCatClientIntegrationTest {
     @Test
     void getAllKeys() {
         ConfigCatClient cl = ConfigCatClient.get("PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A", options -> {
-                    options.logLevel(LogLevel.INFO);
-                    options.dataGovernance(DataGovernance.EU_ONLY);
-                });
+            options.logLevel(LogLevel.INFO);
+            options.dataGovernance(DataGovernance.EU_ONLY);
+        });
 
         Collection<String> keys = cl.getAllKeys();
 

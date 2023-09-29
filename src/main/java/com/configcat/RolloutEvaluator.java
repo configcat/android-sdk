@@ -167,7 +167,7 @@ class RolloutEvaluator {
                 break;
             }
         }
-        if(targetingRule != null){
+        if (targetingRule != null) {
             evaluateLogger.logTargetingRuleConsequence(targetingRule, error, conditionsEvaluationResult, newLine);
         }
         if (error != null) {
@@ -180,7 +180,7 @@ class RolloutEvaluator {
         evaluateLogger.append(LogHelper.formatUserCondition(userCondition));
 
         if (context.getUser() == null) {
-            if(!context.isUserMissing()){
+            if (!context.isUserMissing()) {
                 context.setUserMissing(true);
                 this.logger.warn(3001, ConfigCatLogMessages.getUserObjectMissing(context.getKey()));
             }
@@ -427,7 +427,7 @@ class RolloutEvaluator {
         boolean result;
 
         SegmentComparator segmentComparator = SegmentComparator.fromId(segmentCondition.getSegmentComparator());
-        if(segmentComparator == null){
+        if (segmentComparator == null) {
             throw new IllegalArgumentException("Segment comparison operator is invalid.");
         }
 
@@ -480,10 +480,10 @@ class RolloutEvaluator {
 
         boolean result;
 
-        if(prerequisiteComparator == null){
+        if (prerequisiteComparator == null) {
             throw new IllegalArgumentException("Prerequisite Flag comparison operator is invalid.");
         }
-        switch (prerequisiteComparator){
+        switch (prerequisiteComparator) {
             case EQUALS:
                 result = conditionValue.equals(evaluateResult.value);
                 break;
@@ -502,7 +502,7 @@ class RolloutEvaluator {
     private EvaluationResult evaluatePercentageOptions(PercentageOption[] percentageOptions, String percentageOptionAttribute, EvaluationContext context, TargetingRule parentTargetingRule, EvaluateLogger evaluateLogger) {
         if (context.getUser() == null) {
             evaluateLogger.logPercentageOptionUserMissing();
-            if(!context.isUserMissing()){
+            if (!context.isUserMissing()) {
                 context.setUserMissing(true);
                 this.logger.warn(3001, ConfigCatLogMessages.getUserObjectMissing(context.getKey()));
             }
@@ -517,9 +517,9 @@ class RolloutEvaluator {
             percentageOptionAttributeValue = context.getUser().getAttribute(percentageOptionAttributeName);
             if (percentageOptionAttributeValue == null) {
                 evaluateLogger.logPercentageOptionUserAttributeMissing(percentageOptionAttributeName);
-                if(!context.isUserAttributeMissing()){
+                if (!context.isUserAttributeMissing()) {
                     context.setUserAttributeMissing(true);
-                    this.logger.warn(3003, ConfigCatLogMessages.getUserAttributeMissing(context.getKey(),percentageOptionAttributeName));
+                    this.logger.warn(3003, ConfigCatLogMessages.getUserAttributeMissing(context.getKey(), percentageOptionAttributeName));
                 }
                 return null;
             }

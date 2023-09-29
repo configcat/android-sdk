@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class DataGovernanceTest {
     private static final String JsonTemplate = "{ p: { u: \"%s\", r: %d, s: \"test-salt\"  }, f: {} }";

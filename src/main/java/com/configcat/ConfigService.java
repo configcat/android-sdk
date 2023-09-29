@@ -1,9 +1,8 @@
 package com.configcat;
 
+import java9.util.concurrent.CompletableFuture;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
-
-import java9.util.concurrent.CompletableFuture;
 
 import java.io.Closeable;
 import java.io.IOException;

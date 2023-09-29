@@ -26,11 +26,11 @@ class RolloutIntegrationTests {
             "testmatrix_variationId.csv,PKDVCLf-Hq-h-kCzMp-L7Q/nQ5qkhRAUEa6beEyyrVLBA," + VARIATION_TEST_KIND + ",",
             "testmatrix_and_or.csv,configcat-sdk-1/XUbbCFZX_0mOU_uQ_XYGMg/FfwncdJg1kq0lBqxhYC_7g," + VALUE_TEST_KIND + ",https://test-cdn-eu.configcat.com",
             "testmatrix_comparators_v6.csv,configcat-sdk-1/XUbbCFZX_0mOU_uQ_XYGMg/Lv2mD9Tgx0Km27nuHjw_FA," + VALUE_TEST_KIND + ",https://test-cdn-eu.configcat.com",
-            "testmatrix_prerequisite_flag.csv,configcat-sdk-1/XUbbCFZX_0mOU_uQ_XYGMg/LGO_8DM9OUGpJixrqqqQcA,"+ VALUE_TEST_KIND+ ",https://test-cdn-eu.configcat.com",
+            "testmatrix_prerequisite_flag.csv,configcat-sdk-1/XUbbCFZX_0mOU_uQ_XYGMg/LGO_8DM9OUGpJixrqqqQcA," + VALUE_TEST_KIND + ",https://test-cdn-eu.configcat.com",
             "testmatrix_segment.csv, configcat-sdk-1/XUbbCFZX_0mOU_uQ_XYGMg/LP0_4hhbQkmVVJcsbO_2Lw," + VALUE_TEST_KIND + ",https://test-cdn-eu.configcat.com",
 
     })
-    void testMatrixTest(String file, String sdkKey, String kind, String baseUrl)  throws IOException {
+    void testMatrixTest(String file, String sdkKey, String kind, String baseUrl) throws IOException {
 
         ConfigCatClient client = ConfigCatClient.get(sdkKey, options -> {
             options.baseUrl(baseUrl);
@@ -38,7 +38,7 @@ class RolloutIntegrationTests {
 
         Scanner csvScanner = new Scanner(new File("src/test/resources/" + file));
 
-        if(!csvScanner.hasNext())
+        if (!csvScanner.hasNext())
             Assertions.fail();
 
         String[] header = csvScanner.nextLine().split(";");
@@ -50,21 +50,20 @@ class RolloutIntegrationTests {
             String[] testObject = csvScanner.nextLine().split(";");
 
             User user = null;
-            if(!testObject[0].equals("##null##"))
-            {
+            if (!testObject[0].equals("##null##")) {
                 String email = "";
                 String country = "";
 
                 String identifier = testObject[0];
 
-                if(!testObject[1].isEmpty() && !testObject[1].equals("##null##"))
+                if (!testObject[1].isEmpty() && !testObject[1].equals("##null##"))
                     email = testObject[1];
 
-                if(!testObject[2].isEmpty() && !testObject[2].equals("##null##"))
+                if (!testObject[2].isEmpty() && !testObject[2].equals("##null##"))
                     country = testObject[2];
 
                 Map<String, String> customAttributes = new HashMap<>();
-                if(!testObject[3].isEmpty() && !testObject[3].equals("##null##"))
+                if (!testObject[3].isEmpty() && !testObject[3].equals("##null##"))
                     customAttributes.put(customKey, testObject[3]);
 
                 user = User.newBuilder()
@@ -79,11 +78,11 @@ class RolloutIntegrationTests {
                 String value;
 
                 Class typeOfExpectedResult;
-                if(settingKey.startsWith("int") || settingKey.startsWith("whole") || settingKey.startsWith("mainInt")){
+                if (settingKey.startsWith("int") || settingKey.startsWith("whole") || settingKey.startsWith("mainInt")) {
                     typeOfExpectedResult = Integer.class;
-                } else if (settingKey.startsWith("double") || settingKey.startsWith("decimal")|| settingKey.startsWith("mainDouble")){
+                } else if (settingKey.startsWith("double") || settingKey.startsWith("decimal") || settingKey.startsWith("mainDouble")) {
                     typeOfExpectedResult = Double.class;
-                } else if (settingKey.startsWith("boolean") || settingKey.startsWith("bool") || settingKey.startsWith("mainBool") || settingKey.equals("developerAndBetaUserSegment")){
+                } else if (settingKey.startsWith("boolean") || settingKey.startsWith("bool") || settingKey.startsWith("mainBool") || settingKey.equals("developerAndBetaUserSegment")) {
                     typeOfExpectedResult = Boolean.class;
                 } else {
                     //handle as String in any other case
@@ -94,7 +93,7 @@ class RolloutIntegrationTests {
                     value = valueDetails.getVariationId();
                 } else {
                     Object rawResult = client.getValue(typeOfExpectedResult, settingKey, user, null);
-                    if(typeOfExpectedResult.equals(Double.class)){
+                    if (typeOfExpectedResult.equals(Double.class)) {
                         DecimalFormat decimalFormat = new DecimalFormat("0.#####");
                         decimalFormat.setDecimalFormatSymbols(DecimalFormatSymbols.getInstance(Locale.UK));
                         value = decimalFormat.format(rawResult);

@@ -23,8 +23,8 @@ public class EntrySerializationTest {
     }
 
     @Test
-    void payloadSerializationPlatformIndependent()  {
-        String payloadTestConfigJson  = "{\"p\":{\"u\":\"https://cdn-global.configcat.com\",\"r\":0,\"s\": \"test-slat\"},\"f\":{\"testKey\":{\"v\":{\"s\":\"testValue\"},\"t\":1,\"p\":[],\"r\":[]}}}";
+    void payloadSerializationPlatformIndependent() {
+        String payloadTestConfigJson = "{\"p\":{\"u\":\"https://cdn-global.configcat.com\",\"r\":0,\"s\": \"test-slat\"},\"f\":{\"testKey\":{\"v\":{\"s\":\"testValue\"},\"t\":1,\"p\":[],\"r\":[]}}}";
 
         Config config = Utils.gson.fromJson(payloadTestConfigJson, Config.class);
         Entry entry = new Entry(config, "test-etag", payloadTestConfigJson, 1686756435844L);

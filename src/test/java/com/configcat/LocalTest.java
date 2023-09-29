@@ -9,10 +9,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class LocalTest {
     private static final String TEST_JSON = "{ p: { s: 'test-slat'}, f: { fakeKey: { t: 1, v: { s: %s }, p: [], r: [] } } }";
+
     @Test
     void invalidArguments() throws IOException {
         assertThrows(IllegalArgumentException.class, () -> ConfigCatClient.get("configcat-sdk-1/TEST_KEY1-123456789012/1234567890123456789012", options -> options.flagOverrides(null, null)));
@@ -36,8 +36,8 @@ class LocalTest {
 
         assertTrue(client.getValue(Boolean.class, "enabledFeature", User.newBuilder().build("test"), false));
         assertFalse(client.getValue(Boolean.class, "disabledFeature", User.newBuilder().build("test"), true));
-        assertEquals(5, (int)client.getValue(Integer.class, "intSetting", User.newBuilder().build("test"), 0));
-        assertEquals(3.14, (double)client.getValue(Double.class, "doubleSetting", User.newBuilder().build("test"), 0.0));
+        assertEquals(5, (int) client.getValue(Integer.class, "intSetting", User.newBuilder().build("test"), 0));
+        assertEquals(3.14, (double) client.getValue(Double.class, "doubleSetting", User.newBuilder().build("test"), 0.0));
         assertEquals("test", client.getValue(String.class, "stringSetting", User.newBuilder().build("test"), ""));
 
         client.close();

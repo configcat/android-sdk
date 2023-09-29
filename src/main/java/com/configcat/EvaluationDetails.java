@@ -35,11 +35,11 @@ public class EvaluationDetails<T> {
     }
 
     static <T> EvaluationDetails<T> fromError(String key, T defaultValue, String error, User user) {
-        return new EvaluationDetails<>(defaultValue, key,"", user, true, error, Constants.DISTANT_PAST, null, null);
+        return new EvaluationDetails<>(defaultValue, key, "", user, true, error, Constants.DISTANT_PAST, null, null);
     }
 
     <TR> EvaluationDetails<TR> asTypeSpecific() {
-        return new EvaluationDetails<>((TR)value, key, variationId, user, isDefaultValue, error, fetchTimeUnixMilliseconds, matchedTargetingRule, matchedPercentageOption);
+        return new EvaluationDetails<>((TR) value, key, variationId, user, isDefaultValue, error, fetchTimeUnixMilliseconds, matchedTargetingRule, matchedPercentageOption);
     }
 
     /**

@@ -9,6 +9,7 @@ import java.util.Map;
 public class OverrideDataSource {
     /**
      * Gets all the overrides defined in the given source.
+     *
      * @return the overrides key-setting map.
      */
     public Map<String, Setting> getLocalConfiguration() {
@@ -17,6 +18,7 @@ public class OverrideDataSource {
 
     /**
      * Create an override data source that stores the overrides in a key-value map.
+     *
      * @param map the map that holds the overrides.
      * @return the map based data source.
      */

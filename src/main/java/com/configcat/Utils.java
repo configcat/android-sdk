@@ -9,13 +9,13 @@ final class Utils {
 
     static final Gson gson = new GsonBuilder().create();
 
-    public static Config deserializeConfig(String json){
+    public static Config deserializeConfig(String json) {
         Config config = Utils.gson.fromJson(json, Config.class);
         String salt = config.getPreferences().getSalt();
-        if(salt == null || salt.isEmpty()){
+        if (salt == null || salt.isEmpty()) {
             throw new IllegalArgumentException("Config JSON salt is missing.");
         }
-        for (Setting setting: config.getEntries().values()) {
+        for (Setting setting : config.getEntries().values()) {
             setting.setConfigSalt(salt);
             setting.setSegments(config.getSegments());
         }
@@ -47,8 +47,13 @@ final class Result<T> {
         this.error = error;
     }
 
-    T value() { return this.value; }
-    String error() { return this.error; }
+    T value() {
+        return this.value;
+    }
+
+    String error() {
+        return this.error;
+    }
 
     static <T> Result<T> error(String error, T value) {
         return new Result<>(value, error);

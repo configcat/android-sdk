@@ -1,8 +1,5 @@
 package com.configcat;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,19 +21,19 @@ class LocalMapDataSource extends OverrideDataSource {
         return this.loadedSettings;
     }
 
-    private Setting convertToSetting(Object object){
+    private Setting convertToSetting(Object object) {
         Setting setting = new Setting();
         SettingsValue settingsValue = new SettingsValue();
-        if(object instanceof String){
+        if (object instanceof String) {
             setting.setType(SettingType.STRING);
             settingsValue.setStringValue((String) object);
-        } else if (object instanceof Boolean){
+        } else if (object instanceof Boolean) {
             setting.setType(SettingType.BOOLEAN);
             settingsValue.setBooleanValue((Boolean) object);
-        } else if (object instanceof Integer){
+        } else if (object instanceof Integer) {
             setting.setType(SettingType.INT);
             settingsValue.setIntegerValue((Integer) object);
-        } else if (object instanceof Double){
+        } else if (object instanceof Double) {
             setting.setType(SettingType.DOUBLE);
             settingsValue.setDoubleValue((Double) object);
         } else {
