@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 // Test cases based on EvaluationTest 1_rule_no_user test case.
 public class EvaluationLoggerTurnOffTest {
@@ -38,6 +39,8 @@ public class EvaluationLoggerTurnOffTest {
 
         List<ILoggingEvent> logsList = listAppender.list;
         assertEquals(2, logsList.size(), "Logged event size not match.");
+        assertTrue( Level.WARN.equals(logsList.get(0).getLevel()), "LogLevel mismatch.");
+        assertTrue(  Level.INFO.equals(logsList.get(1).getLevel()), "LogLevel mismatch.");
 
         client.close();
     }
@@ -66,6 +69,7 @@ public class EvaluationLoggerTurnOffTest {
 
         List<ILoggingEvent> logsList = listAppender.list;
         assertEquals(1, logsList.size(), "Logged event size not match.");
+        assertTrue( Level.WARN.equals(logsList.get(0).getLevel()), "LogLevel mismatch.");
 
         client.close();
     }
