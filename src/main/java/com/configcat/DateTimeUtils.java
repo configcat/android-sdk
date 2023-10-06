@@ -24,4 +24,8 @@ public class DateTimeUtils {
         simpleDateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
         return simpleDateFormat.format(new Date(dateInMilliSec));
     }
+
+    public static double getUnixSeconds(Date date) {
+        return Long.valueOf(date.getTime()).doubleValue() / 1000;
+    }
 }
