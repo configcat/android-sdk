@@ -11,12 +11,11 @@ import java.io.IOException;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 // Test cases based on EvaluationTest 1_rule_no_user test case.
-public class EvaluationLoggerTurnOffTest {
+class EvaluationLoggerTurnOffTest {
     @Test
-    public void testEvaluationLogLevelInfo() throws IOException {
+    void testEvaluationLogLevelInfo() throws IOException {
 
         ConfigCatClient client = ConfigCatClient.get("PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A", options -> {
             options.pollingMode(PollingModes.manualPoll());
@@ -35,18 +34,18 @@ public class EvaluationLoggerTurnOffTest {
 
         String returnValue = client.getValue(String.class, "stringContainsDogDefaultCat", null, "default");
 
-        assertEquals( "Cat", returnValue, "Return value not match.");
+        assertEquals("Cat", returnValue, "Return value not match.");
 
         List<ILoggingEvent> logsList = listAppender.list;
         assertEquals(2, logsList.size(), "Logged event size not match.");
-        assertTrue( Level.WARN.equals(logsList.get(0).getLevel()), "LogLevel mismatch.");
-        assertTrue(  Level.INFO.equals(logsList.get(1).getLevel()), "LogLevel mismatch.");
+        assertEquals(Level.WARN, logsList.get(0).getLevel(), "LogLevel mismatch.");
+        assertEquals(Level.INFO, logsList.get(1).getLevel(), "LogLevel mismatch.");
 
         client.close();
     }
 
     @Test
-    public void testEvaluationLogLevelWarning() throws IOException {
+    void testEvaluationLogLevelWarning() throws IOException {
         //based on 1_rule_no_user test case.
         ConfigCatClient client = ConfigCatClient.get("PKDVCLf-Hq-h-kCzMp-L7Q/psuH7BGHoUmdONrzzUOY7A", options -> {
             options.pollingMode(PollingModes.manualPoll());
@@ -65,11 +64,11 @@ public class EvaluationLoggerTurnOffTest {
 
         String returnValue = client.getValue(String.class, "stringContainsDogDefaultCat", null, "default");
 
-        assertEquals( "Cat", returnValue, "Return value not match.");
+        assertEquals("Cat", returnValue, "Return value not match.");
 
         List<ILoggingEvent> logsList = listAppender.list;
         assertEquals(1, logsList.size(), "Logged event size not match.");
-        assertTrue( Level.WARN.equals(logsList.get(0).getLevel()), "LogLevel mismatch.");
+        assertEquals(Level.WARN, logsList.get(0).getLevel(), "LogLevel mismatch.");
 
         client.close();
     }

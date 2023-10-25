@@ -6,9 +6,10 @@ import org.junit.jupiter.params.provider.CsvSource;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class UserAttributeHelperTest {
+
+class UserAttributeHelperTest {
 
     @ParameterizedTest
     @CsvSource(value = {
@@ -23,11 +24,11 @@ public class UserAttributeHelperTest {
             "stringlist; a,,b,c; [\"a\",\"\",\"b\",\"c\"]",
     },
     delimiter = ';')
-    public void testUserAttributeHelperMethod(String type, String input, String expected) throws ParseException {
+    void testUserAttributeHelperMethod(String type, String input, String expected) throws ParseException {
         String result;
         if ("datetime".equals(type)) {
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
-            result = User.attributeValueFrom(sdf.parse((String) input));
+            result = User.attributeValueFrom(sdf.parse(input));
         } else if ("double".equals(type)) {
             double doubleInput = Double.parseDouble(input);
             result = User.attributeValueFrom(doubleInput);
@@ -39,7 +40,7 @@ public class UserAttributeHelperTest {
             result = User.attributeValueFrom(splitInput);
         }
 
-        assertEquals("Formatted user attribute is not matching.", expected, result);
+        assertEquals(expected, result, "Formatted user attribute is not matching.");
 
     }
 

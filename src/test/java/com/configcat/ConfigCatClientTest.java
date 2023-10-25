@@ -39,7 +39,7 @@ class ConfigCatClientTest {
     }
 
     @Test
-    public void testSDKKeyValidation() throws IOException {
+    void testSDKKeyValidation() throws IOException {
 
         //TEST VALID
         ConfigCatClient client = ConfigCatClient.get("sdk-key-90123456789012/1234567890123456789012");
@@ -753,7 +753,7 @@ class ConfigCatClientTest {
     }
 
     @Test
-    public void getAllValueDetails() throws IOException {
+    void getAllValueDetails() throws IOException {
         MockWebServer server = new MockWebServer();
         server.start();
 
@@ -790,7 +790,7 @@ class ConfigCatClientTest {
     }
 
     @Test
-    public void getAllValueDetailsAsync() throws IOException, ExecutionException, InterruptedException {
+    void getAllValueDetailsAsync() throws IOException, ExecutionException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.start();
 

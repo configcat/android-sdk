@@ -22,10 +22,10 @@ import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.*;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @RunWith(Parameterized.class)
-public class EvaluationTest {
+class EvaluationTest {
 
     private static final String EVALUATION_FOLDER = "evaluation/";
     private static final String TEST_SDK_KEY = "configcat-sdk-test-key/0000000000000000000000";
@@ -51,7 +51,7 @@ public class EvaluationTest {
             "options_within_targeting_rule",
             "list_truncation",
     })
-    public void testEvaluation(String testDescriptorName) throws IOException {
+    void testEvaluation(String testDescriptorName) throws IOException {
 
         String testDescriptorContent = readFile(EVALUATION_FOLDER + testDescriptorName + JSON_EXTENSION);
         TestSet testSet = GSON.fromJson(testDescriptorContent, TestSet.class);
@@ -92,7 +92,7 @@ public class EvaluationTest {
             Logger clientLogger = (Logger) LoggerFactory.getLogger(ConfigCatClient.class);
             // create and start a ListAppender
             clientLogger.setLevel(Level.INFO);
-            ListAppender<ILoggingEvent> listAppender = new ListAppender<ILoggingEvent>();
+            ListAppender<ILoggingEvent> listAppender = new ListAppender<>();
             listAppender.start();
 
             clientLogger.addAppender(listAppender);
@@ -135,7 +135,7 @@ public class EvaluationTest {
                 System.out.println(error);
             });
         }
-        assertTrue("Errors found: " + errors.size(), errors.size() == 0);
+        assertEquals(0, errors.size(), "Errors found: " + errors.size());
         client.close();
     }
 

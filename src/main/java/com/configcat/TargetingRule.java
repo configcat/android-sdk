@@ -23,7 +23,6 @@ public class TargetingRule {
     private ServedValue servedValue;
 
     public Condition[] getConditions() {
-        //return conditions;
         return conditions != null ? conditions : new Condition[]{};
     }
 
