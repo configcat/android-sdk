@@ -8,6 +8,7 @@ public class EvaluateLogger {
         indentLevel = 0;
         isLoggable = logLevel.ordinal() <= LogLevel.INFO.ordinal();
     }
+
     private int indentLevel;
 
     private final boolean isLoggable;
@@ -194,6 +195,20 @@ public class EvaluateLogger {
         append("Segment evaluation result: User " + segmentResultComparator + ".");
         newLine();
         append("Condition (" + LogHelper.formatSegmentFlagCondition(segmentCondition, segment) + ") evaluates to " + result + ".");
+        decreaseIndentLevel();
+        newLine();
+        append(")");
+    }
+
+    public void logSegmentEvaluationError(SegmentCondition segmentCondition, Segment segment, String error) {
+        if (!isLoggable) {
+            return;
+        }
+        newLine();
+
+        append("Segment evaluation result: " + error + ".");
+        newLine();
+        append("Condition (" + LogHelper.formatSegmentFlagCondition(segmentCondition, segment) + ") failed to evaluate.");
         decreaseIndentLevel();
         newLine();
         append(")");

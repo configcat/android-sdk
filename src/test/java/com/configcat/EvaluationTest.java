@@ -102,7 +102,7 @@ class EvaluationTest {
                 typeOfExpectedResult = Integer.class;
             } else if (settingKey.startsWith("double") || settingKey.startsWith("decimal") || settingKey.startsWith("mainDouble")) {
                 typeOfExpectedResult = Double.class;
-            } else if (settingKey.startsWith("boolean") || settingKey.startsWith("bool") || settingKey.startsWith("mainBool") || settingKey.equals("developerAndBetaUserSegment") || settingKey.equals("featureWithSegmentTargeting") || settingKey.equals("featureWithNegatedSegmentTargeting")) {
+            } else if (settingKey.startsWith("boolean") || settingKey.startsWith("bool") || settingKey.startsWith("mainBool") || settingKey.equals("developerAndBetaUserSegment") || settingKey.equals("featureWithSegmentTargeting") || settingKey.equals("featureWithNegatedSegmentTargeting") || settingKey.equals("featureWithNegatedSegmentTargetingCleartext")) {
                 typeOfExpectedResult = Boolean.class;
             } else {
                 //handle as String in any other case
