@@ -4,8 +4,8 @@ package com.configcat;
  * Describes the Rollout Evaluator  User Condition Comparators.
  */
 public enum Comparator {
-    IS_ONE_OF(0,"IS ONE OF"),
-    IS_NOT_ONE_OF(1,"IS NOT ONE OF"),
+    IS_ONE_OF(0, "IS ONE OF"),
+    IS_NOT_ONE_OF(1, "IS NOT ONE OF"),
     CONTAINS_ANY_OF(2, "CONTAINS ANY OF"),
     NOT_CONTAINS_ANY_OF(3, "NOT CONTAINS ANY OF"),
     SEMVER_IS_ONE_OF(4, "IS ONE OF"),

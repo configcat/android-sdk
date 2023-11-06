@@ -82,6 +82,7 @@ public class User {
         }
         return Utils.gson.toJson(items);
     }
+
     /**
      * Creates a new builder instance.
      *

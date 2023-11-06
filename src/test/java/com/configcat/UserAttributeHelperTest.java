@@ -23,7 +23,7 @@ class UserAttributeHelperTest {
             "int;  3; 3",
             "stringlist; a,,b,c; [\"a\",\"\",\"b\",\"c\"]",
     },
-    delimiter = ';')
+            delimiter = ';')
     void testUserAttributeHelperMethod(String type, String input, String expected) throws ParseException {
         String result;
         if ("datetime".equals(type)) {
