@@ -5,6 +5,7 @@ import de.skuzzle.semantic.Version;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -350,6 +351,7 @@ class RolloutEvaluator {
             withValues.set(index, withValues.get(index).trim());
         }
         withValues.removeAll(Arrays.asList(null, ""));
+        byte[] userAttributeValueUTF8 = userAttributeValue.getBytes(StandardCharsets.UTF_8);
         boolean foundEqual = false;
         for (String comparisonValueHashedStartsEnds : withValues) {
             int indexOf = comparisonValueHashedStartsEnds.indexOf("_");
@@ -359,7 +361,7 @@ class RolloutEvaluator {
             String comparedTextLength = comparisonValueHashedStartsEnds.substring(0, indexOf);
             try {
                 int comparedTextLengthInt = Integer.parseInt(comparedTextLength);
-                if (userAttributeValue.length() < comparedTextLengthInt) {
+                if (userAttributeValueUTF8.length < comparedTextLengthInt) {
                     continue;
                 }
                 String comparisonHashValue = comparisonValueHashedStartsEnds.substring(indexOf + 1);
@@ -368,9 +370,9 @@ class RolloutEvaluator {
                 }
                 String userValueSubString;
                 if (Comparator.HASHED_STARTS_WITH.equals(comparator) || Comparator.HASHED_NOT_STARTS_WITH.equals(comparator)) {
-                    userValueSubString = userAttributeValue.substring(0, comparedTextLengthInt);
+                    userValueSubString = new String(Arrays.copyOfRange(userAttributeValueUTF8, 0, comparedTextLengthInt), StandardCharsets.UTF_8);
                 } else { //HASHED_ENDS_WITH
-                    userValueSubString = userAttributeValue.substring(userAttributeValue.length() - comparedTextLengthInt);
+                    userValueSubString = new String(Arrays.copyOfRange(userAttributeValueUTF8, userAttributeValueUTF8.length- comparedTextLengthInt, userAttributeValueUTF8.length), StandardCharsets.UTF_8);
                 }
                 String hashUserValueSub = getSaltedUserValue(userValueSubString, configSalt, contextSalt);
                 if (hashUserValueSub.equals(comparisonHashValue)) {
@@ -492,7 +494,7 @@ class RolloutEvaluator {
     }
 
     private boolean evaluateContainsAnyOf(UserCondition userCondition, String userValue, boolean negate) {
-        boolean containsResult = negate ? false : true;
+        boolean containsResult = !negate;
         List<String> containsValues = new ArrayList<>(Arrays.asList(userCondition.getStringArrayValue()));
         for (int index = 0; containsValues.size() > index; index++) {
             containsValues.set(index, containsValues.get(index).trim());
@@ -507,7 +509,16 @@ class RolloutEvaluator {
 
 
     private static String getSaltedUserValue(String userValue, String configJsonSalt, String contextSalt) {
-        return new String(Hex.encodeHex(DigestUtils.sha256(userValue + configJsonSalt + contextSalt)));
+        byte[] toHashBytes;
+        byte[] userValueBytes = userValue.getBytes(StandardCharsets.UTF_8);
+        byte[] configJsonSaltBytes = configJsonSalt.getBytes(StandardCharsets.UTF_8);
+        byte[] contextSaltBytes = contextSalt.getBytes(StandardCharsets.UTF_8);
+        toHashBytes = new byte[userValueBytes.length + configJsonSaltBytes.length + contextSaltBytes.length];
+        System.arraycopy(userValueBytes, 0, toHashBytes, 0, userValueBytes.length);
+        System.arraycopy(configJsonSaltBytes, 0, toHashBytes, userValueBytes.length, configJsonSaltBytes.length);
+        System.arraycopy(contextSaltBytes, 0, toHashBytes, userValueBytes.length + configJsonSaltBytes.length, contextSaltBytes.length);
+
+        return new String(Hex.encodeHex(DigestUtils.sha256(toHashBytes)));
     }
 
     private boolean evaluateSegmentCondition(SegmentCondition segmentCondition, EvaluationContext context, String configSalt, Segment[] segments, EvaluateLogger evaluateLogger) {
