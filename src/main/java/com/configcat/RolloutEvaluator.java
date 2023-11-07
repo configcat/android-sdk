@@ -28,6 +28,11 @@ class EvaluationResult {
 class RolloutEvaluator {
 
     public static final String USER_OBJECT_IS_MISSING = "cannot evaluate, User Object is missing";
+    public static final String CANNOT_EVALUATE_THE_USER_PREFIX = "cannot evaluate, the User.";
+    public static final String CANNOT_EVALUATE_THE_USER_MISSING = " attribute is missing";
+    public static final String COMPARISON_OPERATOR_IS_INVALID = "Comparison operator is invalid.";
+    public static final String CANNOT_EVALUATE_THE_USER_INVALID = " attribute is invalid (";
+    public static final String COMPARISON_VALUE_IS_MISSING_OR_INVALID = "Comparison value is missing or invalid.";
     private final ConfigCatLogger logger;
 
     public RolloutEvaluator(ConfigCatLogger logger) {
@@ -205,12 +210,12 @@ class RolloutEvaluator {
 
         if (userAttributeValue == null || userAttributeValue.isEmpty()) {
             logger.warn(3003, ConfigCatLogMessages.getUserAttributeMissing(context.getKey(), userCondition, comparisonAttribute));
-            throw new RolloutEvaluatorException("cannot evaluate, the User." + comparisonAttribute + " attribute is missing");
+            throw new RolloutEvaluatorException(CANNOT_EVALUATE_THE_USER_PREFIX + comparisonAttribute + CANNOT_EVALUATE_THE_USER_MISSING);
 
         }
 
         if (comparator == null) {
-            throw new IllegalArgumentException("Comparison operator is invalid.");
+            throw new IllegalArgumentException(COMPARISON_OPERATOR_IS_INVALID);
         }
         switch (comparator) {
             case CONTAINS_ANY_OF:
@@ -271,7 +276,7 @@ class RolloutEvaluator {
                 boolean hashedArrayContains = Comparator.HASHED_ARRAY_CONTAINS.equals(comparator) || Comparator.HASHED_ARRAY_NOT_CONTAINS.equals(comparator);
                 return evaluateArrayContains(userCondition, context, configSalt, contextSalt, comparisonAttribute, userAttributeValue, negateArrayContains, hashedArrayContains);
             default:
-                throw new IllegalArgumentException("Comparison operator is invalid.");
+                throw new IllegalArgumentException(COMPARISON_OPERATOR_IS_INVALID);
         }
     }
 
@@ -283,7 +288,7 @@ class RolloutEvaluator {
         } catch (JsonSyntaxException exception) {
             String reason = "'" + userAttributeValue + "' is not a valid JSON string array";
             this.logger.warn(3004, ConfigCatLogMessages.getUserAttributeInvalid(context.getKey(), userCondition, reason, comparisonAttribute));
-            throw new RolloutEvaluatorException("cannot evaluate, the User." + comparisonAttribute + " attribute is invalid (" + reason + ")");
+            throw new RolloutEvaluatorException(CANNOT_EVALUATE_THE_USER_PREFIX + comparisonAttribute + CANNOT_EVALUATE_THE_USER_INVALID + reason + ")");
         }
         if (userContainsValues.length == 0) {
             return false;
@@ -356,7 +361,7 @@ class RolloutEvaluator {
         for (String comparisonValueHashedStartsEnds : withValues) {
             int indexOf = comparisonValueHashedStartsEnds.indexOf("_");
             if (indexOf <= 0) {
-                throw new IllegalArgumentException("Comparison value is missing or invalid.");
+                throw new IllegalArgumentException(COMPARISON_VALUE_IS_MISSING_OR_INVALID);
             }
             String comparedTextLength = comparisonValueHashedStartsEnds.substring(0, indexOf);
             try {
@@ -366,7 +371,7 @@ class RolloutEvaluator {
                 }
                 String comparisonHashValue = comparisonValueHashedStartsEnds.substring(indexOf + 1);
                 if (comparisonHashValue.isEmpty()) {
-                    throw new IllegalArgumentException("Comparison value is missing or invalid.");
+                    throw new IllegalArgumentException(COMPARISON_VALUE_IS_MISSING_OR_INVALID);
                 }
                 String userValueSubString;
                 if (Comparator.HASHED_STARTS_WITH.equals(comparator) || Comparator.HASHED_NOT_STARTS_WITH.equals(comparator)) {
@@ -380,7 +385,7 @@ class RolloutEvaluator {
                     break;
                 }
             } catch (NumberFormatException e) {
-                throw new IllegalArgumentException("Comparison value is missing or invalid.");
+                throw new IllegalArgumentException(COMPARISON_VALUE_IS_MISSING_OR_INVALID);
             }
         }
         if (Comparator.HASHED_NOT_STARTS_WITH.equals(comparator) || Comparator.HASHED_NOT_ENDS_WITH.equals(comparator)) {
@@ -412,7 +417,7 @@ class RolloutEvaluator {
         } catch (NumberFormatException e) {
             String reason = "'" + userAttributeValue + "' is not a valid Unix timestamp (number of seconds elapsed since Unix epoch)";
             this.logger.warn(3004, ConfigCatLogMessages.getUserAttributeInvalid(context.getKey(), userCondition, reason, comparisonAttribute));
-            throw new RolloutEvaluatorException("cannot evaluate, the User." + comparisonAttribute + " attribute is invalid (" + reason + ")");
+            throw new RolloutEvaluatorException(CANNOT_EVALUATE_THE_USER_PREFIX + comparisonAttribute + CANNOT_EVALUATE_THE_USER_INVALID + reason + ")");
         }
     }
 
@@ -449,7 +454,7 @@ class RolloutEvaluator {
         } catch (NumberFormatException e) {
             String reason = "'" + userAttributeValue + "' is not a valid decimal number";
             this.logger.warn(3004, ConfigCatLogMessages.getUserAttributeInvalid(context.getKey(), userCondition, reason, comparisonAttribute));
-            throw new RolloutEvaluatorException("cannot evaluate, the User." + comparisonAttribute + " attribute is invalid (" + reason + ")");
+            throw new RolloutEvaluatorException(CANNOT_EVALUATE_THE_USER_PREFIX + comparisonAttribute + CANNOT_EVALUATE_THE_USER_INVALID + reason + ")");
         }
     }
 
@@ -465,7 +470,7 @@ class RolloutEvaluator {
         } catch (Exception e) {
             String reason = "'" + userAttributeValue + "' is not a valid semantic version";
             this.logger.warn(3004, ConfigCatLogMessages.getUserAttributeInvalid(context.getKey(), userCondition, reason, comparisonAttribute));
-            throw new RolloutEvaluatorException("cannot evaluate, the User." + comparisonAttribute + " attribute is invalid (" + reason + ")");
+            throw new RolloutEvaluatorException(CANNOT_EVALUATE_THE_USER_PREFIX + comparisonAttribute + CANNOT_EVALUATE_THE_USER_INVALID + reason + ")");
         }
     }
 
@@ -489,7 +494,7 @@ class RolloutEvaluator {
         } catch (Exception e) {
             String reason = "'" + userValue + "' is not a valid semantic version";
             this.logger.warn(3004, ConfigCatLogMessages.getUserAttributeInvalid(context.getKey(), userCondition, reason, comparisonAttribute));
-            throw new RolloutEvaluatorException("cannot evaluate, the User." + comparisonAttribute + " attribute is invalid (" + reason + ")");
+            throw new RolloutEvaluatorException(CANNOT_EVALUATE_THE_USER_PREFIX + comparisonAttribute + CANNOT_EVALUATE_THE_USER_INVALID + reason + ")");
         }
     }
 
