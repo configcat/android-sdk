@@ -237,10 +237,10 @@ class ConfigCatClientIntegrationTest {
         assertNull(details.getMatchedPercentageOption());
 
         Condition condition = details.getMatchedTargetingRule().getConditions()[0];
-        assertEquals("Email", condition.getComparisonCondition().getComparisonAttribute());
-        assertEquals(2, condition.getComparisonCondition().getComparator());
-        assertEquals(1, condition.getComparisonCondition().getStringArrayValue().length);
-        assertEquals("@configcat.com", condition.getComparisonCondition().getStringArrayValue()[0]);
+        assertEquals("Email", condition.getUserCondition().getComparisonAttribute());
+        assertEquals(2, condition.getUserCondition().getComparator());
+        assertEquals(1, condition.getUserCondition().getStringArrayValue().length);
+        assertEquals("@configcat.com", condition.getUserCondition().getStringArrayValue()[0]);
         assertEquals(user.getIdentifier(), details.getUser().getIdentifier());
     }
 
@@ -262,10 +262,10 @@ class ConfigCatClientIntegrationTest {
                 assertNull(details.getMatchedPercentageOption());
 
                 Condition condition = details.getMatchedTargetingRule().getConditions()[0];
-                assertEquals("Email", condition.getComparisonCondition().getComparisonAttribute());
-                assertEquals(2, condition.getComparisonCondition().getComparator());
-                assertEquals(1, condition.getComparisonCondition().getStringArrayValue().length);
-                assertEquals("@configcat.com", condition.getComparisonCondition().getStringArrayValue()[0]);
+                assertEquals("Email", condition.getUserCondition().getComparisonAttribute());
+                assertEquals(2, condition.getUserCondition().getComparator());
+                assertEquals(1, condition.getUserCondition().getStringArrayValue().length);
+                assertEquals("@configcat.com", condition.getUserCondition().getStringArrayValue()[0]);
                 assertEquals(user.getIdentifier(), details.getUser().getIdentifier());
                 called.set(true);
             });
