@@ -16,7 +16,6 @@ public final class ConfigCatClient implements ConfigurationProvider {
     private static final String BASE_URL_GLOBAL = "https://cdn-global.configcat.com";
     private static final String BASE_URL_EU = "https://cdn-eu.configcat.com";
     private static final Map<String, ConfigCatClient> INSTANCES = new HashMap<>();
-
     private final AtomicBoolean isClosed = new AtomicBoolean(false);
     private final ConfigCatLogger logger;
     private final LogLevel clientLogLevel;
@@ -491,7 +490,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                 }
 
                 for (TargetingRule targetingRule : setting.getTargetingRules()) {
-                    if (variationId.equals(targetingRule.getServedValue().getVariationId())) {
+                    if (targetingRule.getServedValue() != null && variationId.equals(targetingRule.getServedValue().getVariationId())) {
                         return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, targetingRule.getServedValue().getValue(), setting.getType()));
                     }
                 }
@@ -541,7 +540,8 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
         throw new IllegalArgumentException("The type of a setting must match the type of the setting's default value. "
                 + "Setting's type was {" + settingType + "} but the default value's type was {" + classOfT + "}. "
-                + "Please use a default value which corresponds to the setting type {" + settingType + "}.");
+                + "Please use a default value which corresponds to the setting type {" + settingType + "}."
+                + "Learn more: https://configcat.com/docs/sdk-reference/dotnet/#setting-type-mapping");
     }
 
     private boolean validateParseType(Class<?> classOfT) {

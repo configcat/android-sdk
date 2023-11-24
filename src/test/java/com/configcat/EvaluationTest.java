@@ -42,7 +42,6 @@ class EvaluationTest {
             "epoch_date_validation",
             "number_validation",
             "comparators",
-            "circular_dependency",
             "prerequisite_flag",
             "segment",
             "options_after_targeting_rule",
@@ -53,7 +52,7 @@ class EvaluationTest {
     })
     void testEvaluation(String testDescriptorName) throws IOException {
 
-        String testDescriptorContent = readFile(EVALUATION_FOLDER + testDescriptorName + JSON_EXTENSION);
+        String testDescriptorContent = Helpers.readFile(EVALUATION_FOLDER + testDescriptorName + JSON_EXTENSION);
         TestSet testSet = GSON.fromJson(testDescriptorContent, TestSet.class);
         String sdkKey = testSet.getSdkKey();
         if (sdkKey == null || sdkKey.isEmpty()) {
@@ -68,7 +67,7 @@ class EvaluationTest {
             server.start();
             //override baseUrl in case of mockup
             baseUrl = server.url("/").toString();
-            String overrideContent = readFile(EVALUATION_FOLDER + testDescriptorName + "/" + jsonOverride);
+            String overrideContent = Helpers.readFile(EVALUATION_FOLDER + testDescriptorName + "/" + jsonOverride);
             server.enqueue(new MockResponse().setResponseCode(200).setBody(overrideContent));
         } else {
             baseUrl = testSet.getBaseUrl();
@@ -117,7 +116,7 @@ class EvaluationTest {
             if (!returnValue.equals(result)) {
                 errors.add(String.format("Return value mismatch for test: %s Test Key: %s Expected: %s, Result: %s \n", testDescriptorName, settingKey, returnValue, result));
             }
-            String expectedLog = readFile(EVALUATION_FOLDER + testDescriptorName + "/" + test.getExpectedLog());
+            String expectedLog = Helpers.readFile(EVALUATION_FOLDER + testDescriptorName + "/" + test.getExpectedLog());
 
             StringBuilder logResultBuilder = new StringBuilder();
             List<ILoggingEvent> logsList = listAppender.list;
@@ -170,7 +169,7 @@ class EvaluationTest {
                 keySet.remove("Country");
             }
 
-            Map<String, String> customAttributes = new HashMap<>();
+            Map<String, Object> customAttributes = new HashMap<>();
             keySet.forEach(key -> customAttributes.put(key, jsonObject.get(key).getAsString()));
 
             user = User.newBuilder()
@@ -193,24 +192,6 @@ class EvaluationTest {
             return element.getAsBoolean();
         else
             throw new IllegalArgumentException("Only String, Integer, Double or Boolean types are supported");
-    }
-
-
-    private String readFile(String filePath) throws IOException {
-
-        try (InputStream stream = getClass().getClassLoader().getResourceAsStream(filePath)) {
-            if (stream == null) {
-                throw new IOException();
-            }
-            byte[] buffer = new byte[4096];
-            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            int temp;
-            while ((temp = stream.read(buffer)) != -1) {
-                outputStream.write(buffer, 0, temp);
-            }
-            return new String(outputStream.toByteArray(), Charset.defaultCharset());
-        }
-
     }
 
 }

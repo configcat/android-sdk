@@ -1,5 +1,9 @@
 package com.configcat;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.util.function.Supplier;
 
 final class Helpers {
@@ -36,5 +40,22 @@ final class Helpers {
                 throw new RuntimeException("Test timed out.");
             }
         }
+    }
+
+    public static String readFile(String filePath) throws IOException {
+
+        try (InputStream stream = Helpers.class.getClassLoader().getResourceAsStream(filePath)) {
+            if (stream == null) {
+                throw new IOException();
+            }
+            byte[] buffer = new byte[4096];
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            int temp;
+            while ((temp = stream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, temp);
+            }
+            return new String(outputStream.toByteArray(), Charset.defaultCharset());
+        }
+
     }
 }
