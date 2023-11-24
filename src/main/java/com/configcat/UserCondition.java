@@ -5,7 +5,7 @@ import com.google.gson.annotations.SerializedName;
 /**
  * User Condition.
  */
-public class UserCondition implements ConditionAccessor{
+public class UserCondition implements ConditionAccessor {
 
     /**
      * The User Object attribute that the condition is based on. Can be "User ID", "Email", "Country" or any custom attribute.

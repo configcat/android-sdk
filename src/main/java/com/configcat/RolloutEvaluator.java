@@ -3,8 +3,8 @@ package com.configcat;
 import de.skuzzle.semantic.Version;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
-import java.nio.charset.StandardCharsets;
 
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 class EvaluationResult {
@@ -191,7 +191,7 @@ class RolloutEvaluator {
         Comparator comparator = Comparator.fromId(userCondition.getComparator());
         Object userAttributeValue = context.getUser().getAttribute(comparisonAttribute);
 
-        if (userAttributeValue == null ||  (userAttributeValue instanceof String && ((String)userAttributeValue).isEmpty())) {
+        if (userAttributeValue == null || (userAttributeValue instanceof String && ((String) userAttributeValue).isEmpty())) {
             logger.warn(3003, ConfigCatLogMessages.getUserAttributeMissing(context.getKey(), userCondition, comparisonAttribute));
             throw new RolloutEvaluatorException(CANNOT_EVALUATE_THE_USER_PREFIX + comparisonAttribute + CANNOT_EVALUATE_THE_USER_MISSING);
 
@@ -200,93 +200,93 @@ class RolloutEvaluator {
         if (comparator == null) {
             throw new IllegalArgumentException(COMPARISON_OPERATOR_IS_INVALID);
         }
-        switch (comparator){
-        case CONTAINS_ANY_OF:
-        case NOT_CONTAINS_ANY_OF:
-        boolean negateContainsAnyOf = Comparator.NOT_CONTAINS_ANY_OF.equals(comparator);
-        String userAttributeForContains = getUserAttributeAsString(context.getKey(), userCondition, comparisonAttribute, userAttributeValue);
-        return evaluateContainsAnyOf(userCondition, userAttributeForContains, negateContainsAnyOf);
-        case SEMVER_IS_ONE_OF:
-        case SEMVER_IS_NOT_ONE_OF:
-        boolean negateSemverIsOneOf = Comparator.SEMVER_IS_NOT_ONE_OF.equals(comparator);
-        Version userAttributeValueForSemverIsOneOf = getUserAttributeAsVersion(context.getKey(), userCondition, comparisonAttribute, userAttributeValue);
-        return evaluateSemverIsOneOf(userCondition, userAttributeValueForSemverIsOneOf, negateSemverIsOneOf);
-        case SEMVER_LESS:
-        case SEMVER_LESS_EQULAS:
-        case SEMVER_GREATER:
-        case SEMVER_GREATER_EQUALS:
-        Version userAttributeValueForSemverOperators = getUserAttributeAsVersion(context.getKey(), userCondition, comparisonAttribute, userAttributeValue);
-        return evaluateSemver(userCondition, comparator, userAttributeValueForSemverOperators);
-        case NUMBER_EQUALS:
-        case NUMBER_NOT_EQUALS:
-        case NUMBER_LESS:
-        case NUMBER_LESS_EQUALS:
-        case NUMBER_GREATER:
-        case NUMBER_GREATER_EQUALS:
-        Double userAttributeAsDouble = getUserAttributeAsDouble(context.getKey(), userCondition, comparisonAttribute, userAttributeValue);
-        return evaluateNumbers(userCondition, comparator, userAttributeAsDouble);
-        case IS_ONE_OF:
-        case IS_NOT_ONE_OF:
-        case SENSITIVE_IS_ONE_OF:
-        case SENSITIVE_IS_NOT_ONE_OF:
-        boolean negateIsOneOf = Comparator.SENSITIVE_IS_NOT_ONE_OF.equals(comparator) || Comparator.IS_NOT_ONE_OF.equals(comparator);
-        boolean sensitiveIsOneOf = Comparator.SENSITIVE_IS_ONE_OF.equals(comparator) || Comparator.SENSITIVE_IS_NOT_ONE_OF.equals(comparator);
-        String userAttributeForIsOneOf = getUserAttributeAsString(context.getKey(), userCondition, comparisonAttribute, userAttributeValue);
-        return evaluateIsOneOf(userCondition, configSalt, contextSalt, userAttributeForIsOneOf, negateIsOneOf, sensitiveIsOneOf);
-        case DATE_BEFORE:
-        case DATE_AFTER:
-        double userAttributeForDate = getUserAttributeForDate(userCondition, context, comparisonAttribute, userAttributeValue);
-        return evaluateDate(userCondition, comparator, userAttributeForDate);
-        case TEXT_EQUALS:
-        case TEXT_NOT_EQUALS:
-        case HASHED_EQUALS:
-        case HASHED_NOT_EQUALS:
-        boolean negateEquals = Comparator.HASHED_NOT_EQUALS.equals(comparator) || Comparator.TEXT_NOT_EQUALS.equals(comparator);
-        boolean hashedEquals = Comparator.HASHED_EQUALS.equals(comparator) || Comparator.HASHED_NOT_EQUALS.equals(comparator);
-        String userAttributeForEquals = getUserAttributeAsString(context.getKey(), userCondition, comparisonAttribute, userAttributeValue);
-        return evaluateEquals(userCondition, configSalt, contextSalt, userAttributeForEquals, negateEquals, hashedEquals);
-        case HASHED_STARTS_WITH:
-        case HASHED_ENDS_WITH:
-        case HASHED_NOT_STARTS_WITH:
-        case HASHED_NOT_ENDS_WITH:
-        String userAttributeForHashedStartEnd = getUserAttributeAsString(context.getKey(), userCondition, comparisonAttribute, userAttributeValue);
-        return evaluateHashedStartOrEndsWith(userCondition, configSalt, contextSalt, comparator, userAttributeForHashedStartEnd);
-        case TEXT_STARTS_WITH:
-        case TEXT_NOT_STARTS_WITH:
-        boolean negateTextStartWith = Comparator.TEXT_NOT_STARTS_WITH.equals(comparator);
-        String userAttributeForTextStart = getUserAttributeAsString(context.getKey(), userCondition, comparisonAttribute, userAttributeValue);
-        return evaluateTextStartsWith(userCondition, userAttributeForTextStart, negateTextStartWith);
-        case TEXT_ENDS_WITH:
-        case TEXT_NOT_ENDS_WITH:
-        boolean negateTextEndsWith = Comparator.TEXT_NOT_ENDS_WITH.equals(comparator);
-        String userAttributeForTextEnd = getUserAttributeAsString(context.getKey(), userCondition, comparisonAttribute, userAttributeValue);
-        return evaluateTextEndsWith(userCondition, userAttributeForTextEnd, negateTextEndsWith);
-        case TEXT_ARRAY_CONTAINS:
-        case TEXT_ARRAY_NOT_CONTAINS:
-        case HASHED_ARRAY_CONTAINS:
-        case HASHED_ARRAY_NOT_CONTAINS:
-        boolean negateArrayContains = Comparator.HASHED_ARRAY_NOT_CONTAINS.equals(comparator) || Comparator.TEXT_ARRAY_NOT_CONTAINS.equals(comparator);
-        boolean hashedArrayContains = Comparator.HASHED_ARRAY_CONTAINS.equals(comparator) || Comparator.HASHED_ARRAY_NOT_CONTAINS.equals(comparator);
-        String[] userAttributeAsStringArray = getUserAttributeAsStringArray(userCondition, context, comparisonAttribute, userAttributeValue);
-        return evaluateArrayContains(userCondition, configSalt, contextSalt, userAttributeAsStringArray, negateArrayContains, hashedArrayContains);
-        default:
-        throw new IllegalArgumentException(COMPARISON_OPERATOR_IS_INVALID);
-    }
+        switch (comparator) {
+            case CONTAINS_ANY_OF:
+            case NOT_CONTAINS_ANY_OF:
+                boolean negateContainsAnyOf = Comparator.NOT_CONTAINS_ANY_OF.equals(comparator);
+                String userAttributeForContains = getUserAttributeAsString(context.getKey(), userCondition, comparisonAttribute, userAttributeValue);
+                return evaluateContainsAnyOf(userCondition, userAttributeForContains, negateContainsAnyOf);
+            case SEMVER_IS_ONE_OF:
+            case SEMVER_IS_NOT_ONE_OF:
+                boolean negateSemverIsOneOf = Comparator.SEMVER_IS_NOT_ONE_OF.equals(comparator);
+                Version userAttributeValueForSemverIsOneOf = getUserAttributeAsVersion(context.getKey(), userCondition, comparisonAttribute, userAttributeValue);
+                return evaluateSemverIsOneOf(userCondition, userAttributeValueForSemverIsOneOf, negateSemverIsOneOf);
+            case SEMVER_LESS:
+            case SEMVER_LESS_EQULAS:
+            case SEMVER_GREATER:
+            case SEMVER_GREATER_EQUALS:
+                Version userAttributeValueForSemverOperators = getUserAttributeAsVersion(context.getKey(), userCondition, comparisonAttribute, userAttributeValue);
+                return evaluateSemver(userCondition, comparator, userAttributeValueForSemverOperators);
+            case NUMBER_EQUALS:
+            case NUMBER_NOT_EQUALS:
+            case NUMBER_LESS:
+            case NUMBER_LESS_EQUALS:
+            case NUMBER_GREATER:
+            case NUMBER_GREATER_EQUALS:
+                Double userAttributeAsDouble = getUserAttributeAsDouble(context.getKey(), userCondition, comparisonAttribute, userAttributeValue);
+                return evaluateNumbers(userCondition, comparator, userAttributeAsDouble);
+            case IS_ONE_OF:
+            case IS_NOT_ONE_OF:
+            case SENSITIVE_IS_ONE_OF:
+            case SENSITIVE_IS_NOT_ONE_OF:
+                boolean negateIsOneOf = Comparator.SENSITIVE_IS_NOT_ONE_OF.equals(comparator) || Comparator.IS_NOT_ONE_OF.equals(comparator);
+                boolean sensitiveIsOneOf = Comparator.SENSITIVE_IS_ONE_OF.equals(comparator) || Comparator.SENSITIVE_IS_NOT_ONE_OF.equals(comparator);
+                String userAttributeForIsOneOf = getUserAttributeAsString(context.getKey(), userCondition, comparisonAttribute, userAttributeValue);
+                return evaluateIsOneOf(userCondition, configSalt, contextSalt, userAttributeForIsOneOf, negateIsOneOf, sensitiveIsOneOf);
+            case DATE_BEFORE:
+            case DATE_AFTER:
+                double userAttributeForDate = getUserAttributeForDate(userCondition, context, comparisonAttribute, userAttributeValue);
+                return evaluateDate(userCondition, comparator, userAttributeForDate);
+            case TEXT_EQUALS:
+            case TEXT_NOT_EQUALS:
+            case HASHED_EQUALS:
+            case HASHED_NOT_EQUALS:
+                boolean negateEquals = Comparator.HASHED_NOT_EQUALS.equals(comparator) || Comparator.TEXT_NOT_EQUALS.equals(comparator);
+                boolean hashedEquals = Comparator.HASHED_EQUALS.equals(comparator) || Comparator.HASHED_NOT_EQUALS.equals(comparator);
+                String userAttributeForEquals = getUserAttributeAsString(context.getKey(), userCondition, comparisonAttribute, userAttributeValue);
+                return evaluateEquals(userCondition, configSalt, contextSalt, userAttributeForEquals, negateEquals, hashedEquals);
+            case HASHED_STARTS_WITH:
+            case HASHED_ENDS_WITH:
+            case HASHED_NOT_STARTS_WITH:
+            case HASHED_NOT_ENDS_WITH:
+                String userAttributeForHashedStartEnd = getUserAttributeAsString(context.getKey(), userCondition, comparisonAttribute, userAttributeValue);
+                return evaluateHashedStartOrEndsWith(userCondition, configSalt, contextSalt, comparator, userAttributeForHashedStartEnd);
+            case TEXT_STARTS_WITH:
+            case TEXT_NOT_STARTS_WITH:
+                boolean negateTextStartWith = Comparator.TEXT_NOT_STARTS_WITH.equals(comparator);
+                String userAttributeForTextStart = getUserAttributeAsString(context.getKey(), userCondition, comparisonAttribute, userAttributeValue);
+                return evaluateTextStartsWith(userCondition, userAttributeForTextStart, negateTextStartWith);
+            case TEXT_ENDS_WITH:
+            case TEXT_NOT_ENDS_WITH:
+                boolean negateTextEndsWith = Comparator.TEXT_NOT_ENDS_WITH.equals(comparator);
+                String userAttributeForTextEnd = getUserAttributeAsString(context.getKey(), userCondition, comparisonAttribute, userAttributeValue);
+                return evaluateTextEndsWith(userCondition, userAttributeForTextEnd, negateTextEndsWith);
+            case TEXT_ARRAY_CONTAINS:
+            case TEXT_ARRAY_NOT_CONTAINS:
+            case HASHED_ARRAY_CONTAINS:
+            case HASHED_ARRAY_NOT_CONTAINS:
+                boolean negateArrayContains = Comparator.HASHED_ARRAY_NOT_CONTAINS.equals(comparator) || Comparator.TEXT_ARRAY_NOT_CONTAINS.equals(comparator);
+                boolean hashedArrayContains = Comparator.HASHED_ARRAY_CONTAINS.equals(comparator) || Comparator.HASHED_ARRAY_NOT_CONTAINS.equals(comparator);
+                String[] userAttributeAsStringArray = getUserAttributeAsStringArray(userCondition, context, comparisonAttribute, userAttributeValue);
+                return evaluateArrayContains(userCondition, configSalt, contextSalt, userAttributeAsStringArray, negateArrayContains, hashedArrayContains);
+            default:
+                throw new IllegalArgumentException(COMPARISON_OPERATOR_IS_INVALID);
+        }
     }
 
     @SuppressWarnings("unchecked")
     private String[] getUserAttributeAsStringArray(UserCondition userCondition, EvaluationContext context, String comparisonAttribute, Object userAttributeValue) {
         try {
-            if(userAttributeValue instanceof String[]){
-                return  (String[]) userAttributeValue;
+            if (userAttributeValue instanceof String[]) {
+                return (String[]) userAttributeValue;
             }
-            if(userAttributeValue instanceof List){
+            if (userAttributeValue instanceof List) {
                 List<String> list = (List<String>) userAttributeValue;
                 String[] userValueArray = new String[list.size()];
                 list.toArray(userValueArray);
                 return userValueArray;
             }
-            if(userAttributeValue instanceof String){
+            if (userAttributeValue instanceof String) {
                 return Utils.gson.fromJson((String) userAttributeValue, String[].class);
             }
         } catch (Exception exception) {
@@ -296,13 +296,14 @@ class RolloutEvaluator {
         this.logger.warn(3004, ConfigCatLogMessages.getUserAttributeInvalid(context.getKey(), userCondition, reason, comparisonAttribute));
         throw new RolloutEvaluatorException(CANNOT_EVALUATE_THE_USER_PREFIX + comparisonAttribute + CANNOT_EVALUATE_THE_USER_INVALID + reason + ")");
     }
+
     private double getUserAttributeForDate(UserCondition userCondition, EvaluationContext context, String comparisonAttribute, Object userAttributeValue) {
         try {
-            if(userAttributeValue instanceof Date){
+            if (userAttributeValue instanceof Date) {
                 return DateTimeUtils.getUnixSeconds((Date) userAttributeValue);
             }
             Double attributeToDouble = UserAttributeConverter.userAttributeToDouble(userAttributeValue);
-            if(attributeToDouble.isNaN()){
+            if (attributeToDouble.isNaN()) {
                 throw new NumberFormatException();
             }
             return attributeToDouble;
@@ -312,6 +313,7 @@ class RolloutEvaluator {
             throw new RolloutEvaluatorException(CANNOT_EVALUATE_THE_USER_PREFIX + comparisonAttribute + CANNOT_EVALUATE_THE_USER_INVALID + reason + ")");
         }
     }
+
     private String getUserAttributeAsString(String key, UserCondition userCondition, String userAttributeName, Object userAttributeValue) {
         if (userAttributeValue instanceof String) {
             return (String) userAttributeValue;
@@ -320,6 +322,7 @@ class RolloutEvaluator {
         this.logger.warn(3005, ConfigCatLogMessages.getUserObjectAttributeIsAutoConverted(key, userCondition, userAttributeName, convertedUserAttribute));
         return convertedUserAttribute;
     }
+
     private Version getUserAttributeAsVersion(String key, UserCondition userCondition, String comparisonAttribute, Object userValue) {
         if (userValue instanceof String) {
             try {
@@ -332,6 +335,7 @@ class RolloutEvaluator {
         this.logger.warn(3004, ConfigCatLogMessages.getUserAttributeInvalid(key, userCondition, reason, comparisonAttribute));
         throw new RolloutEvaluatorException(CANNOT_EVALUATE_THE_USER_PREFIX + comparisonAttribute + CANNOT_EVALUATE_THE_USER_INVALID + reason + ")");
     }
+
     private Double getUserAttributeAsDouble(String key, UserCondition userCondition, String comparisonAttribute, Object userAttributeValue) {
         Double converted;
         try {
@@ -340,7 +344,7 @@ class RolloutEvaluator {
             } else {
                 converted = UserAttributeConverter.userAttributeToDouble(userAttributeValue);
             }
-            if(converted.isNaN()){
+            if (converted.isNaN()) {
                 throw new NumberFormatException();
             }
             return converted;
@@ -478,6 +482,7 @@ class RolloutEvaluator {
         return (Comparator.DATE_BEFORE.equals(comparator) && userDoubleValue < comparisonDoubleValue) ||
                 (Comparator.DATE_AFTER.equals(comparator) && userDoubleValue > comparisonDoubleValue);
     }
+
     private boolean evaluateIsOneOf(UserCondition userCondition, String configSalt, String contextSalt, String userValue, boolean negateIsOneOf, boolean sensitiveIsOneOf) {
         List<String> inValues = new ArrayList<>(Arrays.asList(userCondition.getStringArrayValue()));
         for (int index = 0; inValues.size() > index; index++) {
@@ -528,19 +533,19 @@ class RolloutEvaluator {
         }
         inSemVerValues.removeAll(Arrays.asList(null, ""));
 
-            boolean matched = false;
-            for (String semVer : inSemVerValues) {
-                try {
-                    matched = userVersion.compareTo(Version.parseVersion(semVer, true)) == 0 || matched;
-                } catch (Version.VersionFormatException exception) {
-                    return false;
-                }
+        boolean matched = false;
+        for (String semVer : inSemVerValues) {
+            try {
+                matched = userVersion.compareTo(Version.parseVersion(semVer, true)) == 0 || matched;
+            } catch (Version.VersionFormatException exception) {
+                return false;
             }
+        }
 
-            if (negate) {
-                matched = !matched;
-            }
-            return matched;
+        if (negate) {
+            matched = !matched;
+        }
+        return matched;
     }
 
     private boolean evaluateContainsAnyOf(UserCondition userCondition, String userValue, boolean negate) {
@@ -614,7 +619,6 @@ class RolloutEvaluator {
 
         return result;
     }
-
 
 
     private boolean evaluatePrerequisiteFlagCondition(PrerequisiteFlagCondition prerequisiteFlagCondition, EvaluationContext context, EvaluateLogger evaluateLogger) {
@@ -692,7 +696,7 @@ class RolloutEvaluator {
             percentageOptionAttributeName = "Identifier";
             percentageOptionAttributeValue = context.getUser().getIdentifier();
         } else {
-            percentageOptionAttributeValue =  UserAttributeConverter.userAttributeToString(context.getUser().getAttribute(percentageOptionAttributeName));
+            percentageOptionAttributeValue = UserAttributeConverter.userAttributeToString(context.getUser().getAttribute(percentageOptionAttributeName));
             if (percentageOptionAttributeValue == null) {
                 evaluateLogger.logPercentageOptionUserAttributeMissing(percentageOptionAttributeName);
                 if (!context.isUserAttributeMissing()) {
