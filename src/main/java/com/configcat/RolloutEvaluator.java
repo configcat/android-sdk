@@ -76,10 +76,6 @@ class RolloutEvaluator {
         evaluateLogger.logTargetingRules();
         for (TargetingRule rule : setting.getTargetingRules()) {
             boolean evaluateConditionsResult;
-            SettingsValue servedValue = null;
-            if (rule.getServedValue() != null) {
-                servedValue = rule.getServedValue().getValue();
-            }
             String error = null;
             try {
                 evaluateConditionsResult = evaluateConditions(rule.getConditions(), rule, context, setting.getConfigSalt(), context.getKey(), setting.getSegments(), evaluateLogger);
@@ -93,7 +89,7 @@ class RolloutEvaluator {
                 }
                 continue;
             }
-            if (servedValue != null) {
+            if (rule.getServedValue() != null) {
                 return new EvaluationResult(rule.getServedValue().getValue(), rule.getServedValue().getVariationId(), rule, null);
             }
 
