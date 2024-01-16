@@ -651,6 +651,9 @@ class RolloutEvaluator {
         EvaluationContext prerequisiteFlagContext = new EvaluationContext(prerequisiteFlagKey, context.getUser(), visitedKeys, context.getSettings());
 
         EvaluationResult evaluateResult = evaluateSetting(prerequsiteFlagSetting, evaluateLogger, prerequisiteFlagContext);
+
+        visitedKeys.remove(context.getKey());
+
         if (evaluateResult.value == null) {
             return false;
         }
