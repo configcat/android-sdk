@@ -1,6 +1,5 @@
 package com.configcat;
 
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TreeMap;
@@ -24,14 +23,21 @@ public class User {
         this.attributes = new TreeMap<>();
         this.attributes.put(IDENTIFIER_KEY, identifier);
 
-        if (country != null && !country.isEmpty())
+        if (country != null && !country.isEmpty()){
             this.attributes.put(COUNTRY, country);
+        }
 
-        if (email != null && !email.isEmpty())
+        if (email != null && !email.isEmpty()) {
             this.attributes.put(EMAIL, email);
+        }
 
-        if (custom != null)
-            this.attributes.putAll(custom);
+        if (custom != null) {
+            for (Map.Entry<String, Object> entry : custom.entrySet()) {
+                if (!entry.getKey().equals(IDENTIFIER_KEY) && !entry.getKey().equals(COUNTRY) && !entry.getKey().equals(EMAIL)) {
+                    this.attributes.put(entry.getKey(), entry.getValue());
+                }
+            }
+        }
     }
 
     String getIdentifier() {
@@ -66,19 +72,12 @@ public class User {
         if (attributes.containsKey(COUNTRY)) {
             tmp.put(COUNTRY, attributes.get(COUNTRY));
         }
-        tmp.putAll(attributes);
-        StringBuilder userStringBuilder = new StringBuilder();
-        userStringBuilder.append('{');
-        Iterator<Map.Entry<String, Object>> it = tmp.entrySet().iterator();
-        while (it.hasNext()) {
-            Map.Entry<String, Object> me = it.next();
-            userStringBuilder.append('"').append(me.getKey()).append("\":\"").append(me.getValue()).append('"');
-            if (it.hasNext()) {
-                userStringBuilder.append(',');
+        for (Map.Entry<String, Object> entry : attributes.entrySet()) {
+            if (!entry.getKey().equals(IDENTIFIER_KEY) && !entry.getKey().equals(COUNTRY) && !entry.getKey().equals(EMAIL)) {
+                tmp.put(entry.getKey(), entry.getValue());
             }
         }
-        userStringBuilder.append('}');
-        return userStringBuilder.toString();
+        return Utils.gson.toJson(tmp);
     }
 
     /**

@@ -3,7 +3,7 @@ package com.configcat;
 /**
  * Describes the Rollout Evaluator  User Condition Comparators.
  */
-public enum Comparator {
+public enum UserComparator {
     IS_ONE_OF(0, "IS ONE OF"),
     IS_NOT_ONE_OF(1, "IS NOT ONE OF"),
     CONTAINS_ANY_OF(2, "CONTAINS ANY OF"),
@@ -11,7 +11,7 @@ public enum Comparator {
     SEMVER_IS_ONE_OF(4, "IS ONE OF"),
     SEMVER_IS_NOT_ONE_OF(5, "IS NOT ONE OF"),
     SEMVER_LESS(6, "<"),
-    SEMVER_LESS_EQULAS(7, "<="),
+    SEMVER_LESS_EQUALS(7, "<="),
     SEMVER_GREATER(8, ">"),
     SEMVER_GREATER_EQUALS(9, ">="),
     NUMBER_EQUALS(10, "="),
@@ -44,7 +44,7 @@ public enum Comparator {
     private final int id;
     private final String name;
 
-    Comparator(int id, String name) {
+    UserComparator(int id, String name) {
         this.id = id;
         this.name = name;
     }
@@ -53,8 +53,8 @@ public enum Comparator {
         return name;
     }
 
-    public static Comparator fromId(int id) {
-        for (Comparator comparator : Comparator.values()) {
+    public static UserComparator fromId(int id) {
+        for (UserComparator comparator : UserComparator.values()) {
             if (comparator.id == id) {
                 return comparator;
             }
