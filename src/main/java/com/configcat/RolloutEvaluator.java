@@ -335,7 +335,7 @@ class RolloutEvaluator {
             }
             return UserAttributeConverter.userAttributeToDouble(userAttributeValue);
         } catch (NumberFormatException e) {
-            //If cannot convert to double, continue with the error
+            //If it cannot convert to double, continue with the error
             String reason = "'" + userAttributeValue + "' is not a valid decimal number";
             this.logger.warn(3004, ConfigCatLogMessages.getUserAttributeInvalid(key, userCondition, reason, comparisonAttribute));
             throw new RolloutEvaluatorException(CANNOT_EVALUATE_THE_USER_PREFIX + comparisonAttribute + CANNOT_EVALUATE_THE_USER_INVALID + reason + ")");
@@ -428,13 +428,14 @@ class RolloutEvaluator {
                 if (comparisonHashValue.isEmpty()) {
                     throw new IllegalArgumentException(COMPARISON_VALUE_IS_MISSING_OR_INVALID);
                 }
-                String userValueSubString;
+                byte[] userValueSubStringByteArray;
                 if (UserComparator.HASHED_STARTS_WITH.equals(comparator) || UserComparator.HASHED_NOT_STARTS_WITH.equals(comparator)) {
-                    userValueSubString = new String(Arrays.copyOfRange(userAttributeValueUTF8, 0, comparedTextLengthInt), StandardCharsets.UTF_8);
+                    userValueSubStringByteArray = Arrays.copyOfRange(userAttributeValueUTF8, 0, comparedTextLengthInt);
                 } else { //HASHED_ENDS_WITH
-                    userValueSubString = new String(Arrays.copyOfRange(userAttributeValueUTF8, userAttributeValueUTF8.length - comparedTextLengthInt, userAttributeValueUTF8.length), StandardCharsets.UTF_8);
+                    userValueSubStringByteArray = Arrays.copyOfRange(userAttributeValueUTF8, userAttributeValueUTF8.length - comparedTextLengthInt, userAttributeValueUTF8.length);
                 }
-                String hashUserValueSub = getSaltedUserValue(userValueSubString, configSalt, contextSalt);
+                String hashUserValueSub = getSaltedUserValueSlice(userValueSubStringByteArray, configSalt, contextSalt);
+
                 if (hashUserValueSub.equals(comparisonHashValue)) {
                     foundEqual = true;
                     break;
@@ -550,7 +551,18 @@ class RolloutEvaluator {
 
 
     private static String getSaltedUserValue(String userValue, String configJsonSalt, String contextSalt) {
-        return new String(Hex.encodeHex(DigestUtils.sha256(userValue + configJsonSalt + contextSalt)));
+        return DigestUtils.sha256Hex(userValue + configJsonSalt + contextSalt);
+    }
+
+    private static String getSaltedUserValueSlice(byte[] userValueSliceUTF8, String configJsonSalt, String contextSalt) {
+        byte[] configSaltByteArray = configJsonSalt.getBytes(StandardCharsets.UTF_8);
+        byte[] contextSaltByteArray = contextSalt.getBytes(StandardCharsets.UTF_8);
+        byte[] concatByteArrays = new byte[userValueSliceUTF8.length + configSaltByteArray.length + contextSaltByteArray.length];
+
+        System.arraycopy(userValueSliceUTF8, 0, concatByteArrays, 0, userValueSliceUTF8.length);
+        System.arraycopy(configSaltByteArray, 0, concatByteArrays, userValueSliceUTF8.length, configSaltByteArray.length);
+        System.arraycopy(contextSaltByteArray, 0, concatByteArrays, userValueSliceUTF8.length + configSaltByteArray.length, contextSaltByteArray.length);
+        return DigestUtils.sha256Hex(concatByteArrays);
     }
 
     private boolean evaluateSegmentCondition(SegmentCondition segmentCondition, EvaluationContext context, String configSalt, Segment[] segments, EvaluateLogger evaluateLogger) {
