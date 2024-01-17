@@ -272,18 +272,29 @@ class RolloutEvaluator {
 
     @SuppressWarnings("unchecked")
     private String[] getUserAttributeAsStringArray(UserCondition userCondition, EvaluationContext context, String comparisonAttribute, Object userAttributeValue) {
+        String[] result = null;
         try {
             if (userAttributeValue instanceof String[]) {
-                return (String[]) userAttributeValue;
-            }
-            if (userAttributeValue instanceof List) {
+                result = (String[]) userAttributeValue;
+            } else if (userAttributeValue instanceof List) {
                 List<String> list = (List<String>) userAttributeValue;
                 String[] userValueArray = new String[list.size()];
                 list.toArray(userValueArray);
-                return userValueArray;
+                result = userValueArray;
+            }else if (userAttributeValue instanceof String) {
+                result = Utils.gson.fromJson((String) userAttributeValue, String[].class);
             }
-            if (userAttributeValue instanceof String) {
-                return Utils.gson.fromJson((String) userAttributeValue, String[].class);
+            if(result != null){
+                boolean containsNull = false;
+                for (String element: result) {
+                    if(element == null){
+                        containsNull = true;
+                        break;
+                    }
+                }
+                if(!containsNull){
+                    return result;
+                }
             }
         } catch (Exception exception) {
             // String array parse failed continue with the RolloutEvaluatorException
@@ -343,84 +354,61 @@ class RolloutEvaluator {
     }
 
     private boolean evaluateArrayContains(UserCondition userCondition, String configSalt, String contextSalt, String[] userContainsValues, boolean negateArrayContains, boolean hashedArrayContains) {
-        List<String> conditionContainsValues = new ArrayList<>(Arrays.asList(userCondition.getStringArrayValue()));
+        String[] comparisonValues = ensureComparisonValue(userCondition.getStringArrayValue());
 
         if (userContainsValues.length == 0) {
             return false;
         }
-        boolean containsFlag = false;
         for (String userContainsValue : userContainsValues) {
-            String userContainsValueConverted;
-            if (hashedArrayContains) {
-                userContainsValueConverted = getSaltedUserValue(userContainsValue.trim(), configSalt, contextSalt);
-            } else {
-                userContainsValueConverted = userContainsValue;
-            }
-            if (conditionContainsValues.contains(userContainsValueConverted)) {
-                containsFlag = true;
-                break;
+            String userContainsValueConverted = hashedArrayContains ? getSaltedUserValue(userContainsValue, configSalt, contextSalt) : userContainsValue;
+            for (String inValuesElement : comparisonValues) {
+                if (ensureComparisonValue(inValuesElement).equals(userContainsValueConverted)) {
+                    return !negateArrayContains;
+                }
             }
         }
-        if (negateArrayContains) {
-            containsFlag = !containsFlag;
-        }
-        return containsFlag;
+        return negateArrayContains;
     }
 
     private boolean evaluateTextStartsWith(UserCondition userCondition, String userAttributeValue, boolean negateTextStartWith) {
-        List<String> withTextValues = new ArrayList<>(Arrays.asList(userCondition.getStringArrayValue()));
-        for (int index = 0; withTextValues.size() > index; index++) {
-            withTextValues.set(index, withTextValues.get(index).trim());
-        }
-        withTextValues.removeAll(Arrays.asList(null, ""));
-        boolean textStartWith = false;
-        for (String textValue : withTextValues) {
-            if (userAttributeValue.startsWith(textValue)) {
-                textStartWith = true;
-                break;
+        String[] comparisonValues = ensureComparisonValue(userCondition.getStringArrayValue());
+
+        for (String textValue : comparisonValues) {
+            if (userAttributeValue.startsWith(ensureComparisonValue(textValue))) {
+                return !negateTextStartWith;
             }
         }
-        if (negateTextStartWith) {
-            return !textStartWith;
-        }
-        return textStartWith;
+        return negateTextStartWith;
     }
 
     private boolean evaluateTextEndsWith(UserCondition userCondition, String userAttributeValue, boolean negateTextEndsWith) {
-        List<String> withTextValues = new ArrayList<>(Arrays.asList(userCondition.getStringArrayValue()));
-        for (int index = 0; withTextValues.size() > index; index++) {
-            withTextValues.set(index, withTextValues.get(index).trim());
-        }
-        withTextValues.removeAll(Arrays.asList(null, ""));
-        boolean textEndsWith = false;
-        for (String textValue : withTextValues) {
-            if (userAttributeValue.endsWith(textValue)) {
-                textEndsWith = true;
-                break;
+        String[] comparisonValues = ensureComparisonValue(userCondition.getStringArrayValue());
+
+        for (String textValue : comparisonValues) {
+            if (userAttributeValue.endsWith(ensureComparisonValue(textValue))) {
+                return !negateTextEndsWith;
             }
         }
-        if (negateTextEndsWith) {
-            return !textEndsWith;
-        }
-        return textEndsWith;
+        return negateTextEndsWith;
     }
 
     private boolean evaluateHashedStartOrEndsWith(UserCondition userCondition, String configSalt, String contextSalt, UserComparator comparator, String userAttributeValue) {
-        List<String> withValues = new ArrayList<>(Arrays.asList(userCondition.getStringArrayValue()));
-        for (int index = 0; withValues.size() > index; index++) {
-            withValues.set(index, withValues.get(index).trim());
-        }
-        withValues.removeAll(Arrays.asList(null, ""));
+        String[] comparisonValues = ensureComparisonValue(userCondition.getStringArrayValue());
+
         byte[] userAttributeValueUTF8 = userAttributeValue.getBytes(StandardCharsets.UTF_8);
         boolean foundEqual = false;
-        for (String comparisonValueHashedStartsEnds : withValues) {
+        for (String comparisonValueHashedStartsEnds : comparisonValues) {
             int indexOf = comparisonValueHashedStartsEnds.indexOf("_");
             if (indexOf <= 0) {
                 throw new IllegalArgumentException(COMPARISON_VALUE_IS_MISSING_OR_INVALID);
             }
             String comparedTextLength = comparisonValueHashedStartsEnds.substring(0, indexOf);
+            int comparedTextLengthInt;
             try {
-                int comparedTextLengthInt = Integer.parseInt(comparedTextLength);
+                comparedTextLengthInt = Integer.parseInt(comparedTextLength);
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException(COMPARISON_VALUE_IS_MISSING_OR_INVALID);
+            }
                 if (userAttributeValueUTF8.length < comparedTextLengthInt) {
                     continue;
                 }
@@ -440,9 +428,6 @@ class RolloutEvaluator {
                     foundEqual = true;
                     break;
                 }
-            } catch (NumberFormatException e) {
-                throw new IllegalArgumentException(COMPARISON_VALUE_IS_MISSING_OR_INVALID);
-            }
         }
         if (UserComparator.HASHED_NOT_STARTS_WITH.equals(comparator) || UserComparator.HASHED_NOT_ENDS_WITH.equals(comparator)) {
             return !foundEqual;
@@ -451,46 +436,33 @@ class RolloutEvaluator {
     }
 
     private boolean evaluateEquals(UserCondition userCondition, String configSalt, String contextSalt, String userValue, boolean negateEquals, boolean hashedEquals) {
-        String valueEquals;
-        if (hashedEquals) {
-            valueEquals = getSaltedUserValue(userValue, configSalt, contextSalt);
-        } else {
-            valueEquals = userValue;
-        }
-        boolean equalsResult = valueEquals.equals(userCondition.getStringValue());
-        if (negateEquals) {
-            equalsResult = !equalsResult;
-        }
-        return equalsResult;
+        String comparisonValue = ensureComparisonValue(userCondition.getStringValue());
+
+        String valueEquals = hashedEquals ? getSaltedUserValue(userValue, configSalt, contextSalt) : userValue;
+        return negateEquals != valueEquals.equals(comparisonValue);
     }
 
     private boolean evaluateDate(UserCondition userCondition, UserComparator comparator, double userDoubleValue) {
-        Double comparisonDoubleValue = userCondition.getDoubleValue();
+        double comparisonDoubleValue = ensureComparisonValue(userCondition.getDoubleValue());
         return (UserComparator.DATE_BEFORE.equals(comparator) && userDoubleValue < comparisonDoubleValue) ||
                 (UserComparator.DATE_AFTER.equals(comparator) && userDoubleValue > comparisonDoubleValue);
     }
 
     private boolean evaluateIsOneOf(UserCondition userCondition, String configSalt, String contextSalt, String userValue, boolean negateIsOneOf, boolean sensitiveIsOneOf) {
-        List<String> inValues = new ArrayList<>(Arrays.asList(userCondition.getStringArrayValue()));
-        for (int index = 0; inValues.size() > index; index++) {
-            inValues.set(index, inValues.get(index).trim());
+        String[] comparisonValues = ensureComparisonValue(userCondition.getStringArrayValue());
+
+        String userIsOneOfValue = sensitiveIsOneOf ? getSaltedUserValue(userValue, configSalt, contextSalt) : userValue;
+
+        for (String inValuesElement : comparisonValues) {
+            if (ensureComparisonValue(inValuesElement).equals(userIsOneOfValue)) {
+                return !negateIsOneOf;
+            }
         }
-        inValues.removeAll(Arrays.asList(null, ""));
-        String userIsOneOfValue;
-        if (sensitiveIsOneOf) {
-            userIsOneOfValue = getSaltedUserValue(userValue, configSalt, contextSalt);
-        } else {
-            userIsOneOfValue = userValue;
-        }
-        boolean isOneOf = inValues.contains(userIsOneOfValue);
-        if (negateIsOneOf) {
-            isOneOf = !isOneOf;
-        }
-        return isOneOf;
+        return negateIsOneOf;
     }
 
     private boolean evaluateNumbers(UserCondition userCondition, UserComparator comparator, Double userValue) {
-        Double comparisonDoubleValue = userCondition.getDoubleValue();
+        Double comparisonDoubleValue = ensureComparisonValue(userCondition.getDoubleValue());
         return (UserComparator.NUMBER_EQUALS.equals(comparator) && userValue.equals(comparisonDoubleValue)) ||
                 (UserComparator.NUMBER_NOT_EQUALS.equals(comparator) && !userValue.equals(comparisonDoubleValue)) ||
                 (UserComparator.NUMBER_LESS.equals(comparator) && userValue < comparisonDoubleValue) ||
@@ -500,7 +472,7 @@ class RolloutEvaluator {
     }
 
     private boolean evaluateSemver(UserCondition userCondition, UserComparator comparator, Version userValue) {
-        String comparisonValue = userCondition.getStringValue();
+        String comparisonValue = ensureComparisonValue(userCondition.getStringValue());
         Version matchValue;
         try {
             matchValue = Version.parseVersion(comparisonValue.trim(), true);
@@ -514,39 +486,36 @@ class RolloutEvaluator {
     }
 
     private boolean evaluateSemverIsOneOf(UserCondition userCondition, Version userVersion, boolean negate) {
-        List<String> inSemVerValues = new ArrayList<>(Arrays.asList(userCondition.getStringArrayValue()));
-        for (int index = 0; inSemVerValues.size() > index; index++) {
-            inSemVerValues.set(index, inSemVerValues.get(index).trim());
-        }
-        inSemVerValues.removeAll(Arrays.asList(null, ""));
+        String[] comparisonValues = ensureComparisonValue(userCondition.getStringArrayValue());
 
         boolean matched = false;
-        for (String semVer : inSemVerValues) {
+        for (String semVer : comparisonValues) {
+            // Previous versions of the evaluation algorithm ignore empty comparison values.
+            // We keep this behavior for backward compatibility.
+            if (ensureComparisonValue(semVer).isEmpty()) {
+                continue;
+            }
             try {
-                matched = userVersion.compareTo(Version.parseVersion(semVer, true)) == 0 || matched;
+                matched = userVersion.compareTo(Version.parseVersion(semVer.trim(), true)) == 0 || matched;
             } catch (Version.VersionFormatException exception) {
+                // Previous versions of the evaluation algorithm ignored invalid comparison values.
+                // We keep this behavior for backward compatibility.
                 return false;
             }
         }
 
-        if (negate) {
-            matched = !matched;
-        }
-        return matched;
+        return negate != matched;
     }
 
     private boolean evaluateContainsAnyOf(UserCondition userCondition, String userValue, boolean negate) {
-        boolean containsResult = !negate;
-        List<String> containsValues = new ArrayList<>(Arrays.asList(userCondition.getStringArrayValue()));
-        for (int index = 0; containsValues.size() > index; index++) {
-            containsValues.set(index, containsValues.get(index).trim());
+        String[] comparisonValues = ensureComparisonValue(userCondition.getStringArrayValue());
+
+        for (String containsValue : comparisonValues) {
+            if (userValue.contains(ensureComparisonValue(containsValue))) {
+                return !negate;
+            }
         }
-        containsValues.removeAll(Arrays.asList(null, ""));
-        for (String containsValue : containsValues) {
-            if (userValue.contains(containsValue))
-                return containsResult;
-        }
-        return !containsResult;
+        return negate;
     }
 
 
@@ -727,6 +696,13 @@ class RolloutEvaluator {
         }
 
         throw new IllegalArgumentException("Sum of percentage option percentages are less than 100.");
+    }
+
+    private static <T> T ensureComparisonValue(T value) {
+        if (value == null) {
+            throw new IllegalArgumentException(COMPARISON_VALUE_IS_MISSING_OR_INVALID);
+        }
+        return value;
     }
 }
 
