@@ -47,7 +47,7 @@ class RolloutIntegrationTests {
             options.baseUrl(baseUrl);
         });
 
-        Scanner csvScanner = new Scanner(new File("src/test/resources/" + file), "UTF-8");
+        Scanner csvScanner = new Scanner(new File("src/test/resources/matrix/" + file), "UTF-8");
 
         if (!csvScanner.hasNext())
             Assertions.fail();
