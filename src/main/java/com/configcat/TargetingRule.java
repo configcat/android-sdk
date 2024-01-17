@@ -3,39 +3,41 @@ package com.configcat;
 import com.google.gson.annotations.SerializedName;
 
 /**
- * Targeting rule.
+ * Describes a targeting rule.
  */
 public class TargetingRule {
-    /**
-     * The list of conditions (where there is a logical AND relation between the items).
-     */
+
     @SerializedName(value = "c")
     private Condition[] conditions;
-    /**
-     * The list of percentage options associated with the targeting rule or {@code null} if the targeting rule has a simple value THEN part.
-     */
     @SerializedName(value = "p")
     private PercentageOption[] percentageOptions;
-    /**
-     * The value associated with the targeting rule or {@code null} if the targeting rule has percentage options THEN part.
-     */
     @SerializedName(value = "s")
-    private ServedValue servedValue;
+    private SimpleValue simpleValue;
 
+    /**
+     * The list of conditions that are combined with the AND logical operator.
+     * Items can be one of the following types: {@link UserCondition}, {@link SegmentCondition} or {@link PrerequisiteFlagCondition}.
+     */
     public Condition[] getConditions() {
         return conditions != null ? conditions : new Condition[]{};
     }
 
+    /**
+     * The list of percentage options associated with the targeting rule or {@code null} if the targeting rule has a simple value THEN part.
+     */
     public PercentageOption[] getPercentageOptions() {
         return percentageOptions;
     }
 
-    public ServedValue getServedValue() {
-        return servedValue;
+    /**
+     * The simple value associated with the targeting rule or {@code null} if the targeting rule has percentage options THEN part.
+     */
+    public SimpleValue getSimpleValue() {
+        return simpleValue;
     }
 }
 
-class ServedValue {
+class SimpleValue {
     @SerializedName(value = "v")
     private SettingsValue value;
     @SerializedName(value = "i")

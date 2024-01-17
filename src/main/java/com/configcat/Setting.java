@@ -3,37 +3,20 @@ package com.configcat;
 import com.google.gson.annotations.SerializedName;
 
 /**
- * ConfigCat Feature Flag / Setting.
+ * Feature flag or setting.
  */
 public class Setting {
-    /**
-     * Setting type.
-     */
+
     @SerializedName(value = "t")
     private SettingType type = SettingType.BOOLEAN;
-    /**
-     * The User Object attribute which serves as the basis of percentage options evaluation.
-     */
     @SerializedName(value = "a")
     private String percentageAttribute;
-    /**
-     * The list of percentage options.
-     */
     @SerializedName(value = "p")
     private PercentageOption[] percentageOptions;
-    /**
-     * The list of targeting rules (where there is a logical OR relation between the items).
-     */
     @SerializedName(value = "r")
     private TargetingRule[] targetingRules;
-    /**
-     * The value of the setting.
-     */
     @SerializedName(value = "v")
     private SettingsValue settingsValue;
-    /**
-     * The variation ID of the setting.
-     */
     @SerializedName(value = "i")
     private String variationId;
 
@@ -56,26 +39,45 @@ public class Setting {
         this.segments = segments;
     }
 
+    /**
+     * Setting type.
+     */
     public SettingType getType() {
         return type;
     }
 
+    /**
+     * The User Object attribute which serves as the basis of percentage options evaluation.
+     */
     public String getPercentageAttribute() {
         return percentageAttribute;
     }
 
+    /**
+     * The list of percentage options.
+     */
     public PercentageOption[] getPercentageOptions() {
         return percentageOptions;
     }
 
+    /**
+     * The list of targeting rules (where there is a logical OR relation between the items).
+     */
     public TargetingRule[] getTargetingRules() {
         return targetingRules;
     }
 
+    /**
+     * Setting value.
+     * Can be a value of the following types: {@link Boolean}, {@link String}, {@link Integer} or {@link Double}.
+     */
     public SettingsValue getSettingsValue() {
         return settingsValue;
     }
 
+    /**
+     * Variation ID.
+     */
     public String getVariationId() {
         return variationId;
     }

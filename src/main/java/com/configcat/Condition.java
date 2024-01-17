@@ -3,7 +3,7 @@ package com.configcat;
 import com.google.gson.annotations.SerializedName;
 
 /**
- * Container class for different condition types.
+ * Represents a condition.
  */
 public class Condition implements ConditionAccessor {
 
@@ -13,7 +13,6 @@ public class Condition implements ConditionAccessor {
     private SegmentCondition segmentCondition;
     @SerializedName(value = "p")
     private PrerequisiteFlagCondition prerequisiteFlagCondition;
-
 
     @Override
     public UserCondition getUserCondition() {

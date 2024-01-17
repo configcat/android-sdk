@@ -89,8 +89,8 @@ class RolloutEvaluator {
                 }
                 continue;
             }
-            if (rule.getServedValue() != null) {
-                return new EvaluationResult(rule.getServedValue().getValue(), rule.getServedValue().getVariationId(), rule, null);
+            if (rule.getSimpleValue() != null) {
+                return new EvaluationResult(rule.getSimpleValue().getValue(), rule.getSimpleValue().getVariationId(), rule, null);
             }
 
             if (rule.getPercentageOptions() == null || rule.getPercentageOptions().length == 0) {

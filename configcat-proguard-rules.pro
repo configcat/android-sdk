@@ -10,7 +10,7 @@
 -keep class com.configcat.SettingsValue { *; }
 -keep class com.configcat.Segment { *; }
 -keep class com.configcat.Condition { *; }
--keep class com.configcat.ServedValue { *; }
+-keep class com.configcat.SimpleValue { *; }
 -keep class com.configcat.Condition { *; }
 -keep class com.configcat.UserCondition { *; }
 -keep class com.configcat.SegmentCondition { *; }

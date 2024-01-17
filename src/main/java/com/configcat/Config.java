@@ -6,34 +6,31 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * ConfigCat config.
+ * Details of a ConfigCat config.
  */
 public class Config {
 
+    @SerializedName(value = "p")
+    private Preferences preferences;
+    @SerializedName(value = "f")
+    private Map<String, Setting> entries = new HashMap<>();
+    @SerializedName(value = "s")
+    private Segment[] segments;
     /**
      * The config preferences.
      */
-    @SerializedName(value = "p")
-    private Preferences preferences;
-    /**
-     * Map of flags / settings.
-     */
-    @SerializedName(value = "f")
-    private Map<String, Setting> entries = new HashMap<>();
-    /**
-     * List of segments.
-     */
-    @SerializedName(value = "s")
-    private Segment[] segments;
-
     public Preferences getPreferences() {
         return preferences;
     }
-
+    /**
+     * The list of segments.
+     */
     public Segment[] getSegments() {
         return segments;
     }
-
+    /**
+     * The map of settings.
+     */
     public Map<String, Setting> getEntries() {
         return entries;
     }

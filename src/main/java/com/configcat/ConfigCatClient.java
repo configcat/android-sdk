@@ -468,8 +468,8 @@ public final class ConfigCatClient implements ConfigurationProvider {
                 }
 
                 for (TargetingRule targetingRule : setting.getTargetingRules()) {
-                    if (targetingRule.getServedValue() != null && variationId.equals(targetingRule.getServedValue().getVariationId())) {
-                        return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, targetingRule.getServedValue().getValue(), setting.getType()));
+                    if (targetingRule.getSimpleValue() != null && variationId.equals(targetingRule.getSimpleValue().getVariationId())) {
+                        return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, targetingRule.getSimpleValue().getValue(), setting.getType()));
                     }
                     if (targetingRule.getPercentageOptions() != null) {
                         for (PercentageOption percentageRule : targetingRule.getPercentageOptions()) {
