@@ -281,18 +281,18 @@ class RolloutEvaluator {
                 String[] userValueArray = new String[list.size()];
                 list.toArray(userValueArray);
                 result = userValueArray;
-            }else if (userAttributeValue instanceof String) {
+            } else if (userAttributeValue instanceof String) {
                 result = Utils.gson.fromJson((String) userAttributeValue, String[].class);
             }
-            if(result != null){
+            if (result != null) {
                 boolean containsNull = false;
-                for (String element: result) {
-                    if(element == null){
+                for (String element : result) {
+                    if (element == null) {
                         containsNull = true;
                         break;
                     }
                 }
-                if(!containsNull){
+                if (!containsNull) {
                     return result;
                 }
             }
@@ -409,25 +409,25 @@ class RolloutEvaluator {
             } catch (NumberFormatException e) {
                 throw new IllegalArgumentException(COMPARISON_VALUE_IS_MISSING_OR_INVALID);
             }
-                if (userAttributeValueUTF8.length < comparedTextLengthInt) {
-                    continue;
-                }
-                String comparisonHashValue = comparisonValueHashedStartsEnds.substring(indexOf + 1);
-                if (comparisonHashValue.isEmpty()) {
-                    throw new IllegalArgumentException(COMPARISON_VALUE_IS_MISSING_OR_INVALID);
-                }
-                byte[] userValueSubStringByteArray;
-                if (UserComparator.HASHED_STARTS_WITH.equals(comparator) || UserComparator.HASHED_NOT_STARTS_WITH.equals(comparator)) {
-                    userValueSubStringByteArray = Arrays.copyOfRange(userAttributeValueUTF8, 0, comparedTextLengthInt);
-                } else { //HASHED_ENDS_WITH
-                    userValueSubStringByteArray = Arrays.copyOfRange(userAttributeValueUTF8, userAttributeValueUTF8.length - comparedTextLengthInt, userAttributeValueUTF8.length);
-                }
-                String hashUserValueSub = getSaltedUserValueSlice(userValueSubStringByteArray, configSalt, contextSalt);
+            if (userAttributeValueUTF8.length < comparedTextLengthInt) {
+                continue;
+            }
+            String comparisonHashValue = comparisonValueHashedStartsEnds.substring(indexOf + 1);
+            if (comparisonHashValue.isEmpty()) {
+                throw new IllegalArgumentException(COMPARISON_VALUE_IS_MISSING_OR_INVALID);
+            }
+            byte[] userValueSubStringByteArray;
+            if (UserComparator.HASHED_STARTS_WITH.equals(comparator) || UserComparator.HASHED_NOT_STARTS_WITH.equals(comparator)) {
+                userValueSubStringByteArray = Arrays.copyOfRange(userAttributeValueUTF8, 0, comparedTextLengthInt);
+            } else { //HASHED_ENDS_WITH
+                userValueSubStringByteArray = Arrays.copyOfRange(userAttributeValueUTF8, userAttributeValueUTF8.length - comparedTextLengthInt, userAttributeValueUTF8.length);
+            }
+            String hashUserValueSub = getSaltedUserValueSlice(userValueSubStringByteArray, configSalt, contextSalt);
 
-                if (hashUserValueSub.equals(comparisonHashValue)) {
-                    foundEqual = true;
-                    break;
-                }
+            if (hashUserValueSub.equals(comparisonHashValue)) {
+                foundEqual = true;
+                break;
+            }
         }
         if (UserComparator.HASHED_NOT_STARTS_WITH.equals(comparator) || UserComparator.HASHED_NOT_ENDS_WITH.equals(comparator)) {
             return !foundEqual;

@@ -13,9 +13,9 @@ class EvaluationContext {
 
     private String key;
     private User user;
-    private List<String> visitedKeys;
+    private final List<String> visitedKeys;
 
-    private Map<String, Setting> settings;
+    private final Map<String, Setting> settings;
     private boolean isUserMissing = false;
     private boolean isUserAttributeMissing = false;
 

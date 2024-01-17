@@ -1,10 +1,10 @@
 package com.configcat;
 
 public class Entry {
-    private Config config;
-    private String eTag;
-    private String configJson;
-    private long fetchTime;
+    private final Config config;
+    private final String eTag;
+    private final String configJson;
+    private final long fetchTime;
 
     public Config getConfig() {
         return config;

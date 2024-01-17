@@ -23,7 +23,7 @@ public class User {
         this.attributes = new TreeMap<>();
         this.attributes.put(IDENTIFIER_KEY, identifier);
 
-        if (country != null && !country.isEmpty()){
+        if (country != null && !country.isEmpty()) {
             this.attributes.put(COUNTRY, country);
         }
 
