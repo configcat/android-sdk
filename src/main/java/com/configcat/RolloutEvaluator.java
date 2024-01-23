@@ -398,7 +398,7 @@ class RolloutEvaluator {
         byte[] userAttributeValueUTF8 = userAttributeValue.getBytes(StandardCharsets.UTF_8);
         boolean foundEqual = false;
         for (String comparisonValueHashedStartsEnds : comparisonValues) {
-            int indexOf = comparisonValueHashedStartsEnds.indexOf("_");
+            int indexOf = ensureComparisonValue(comparisonValueHashedStartsEnds).indexOf("_");
             if (indexOf <= 0) {
                 throw new IllegalArgumentException(COMPARISON_VALUE_IS_MISSING_OR_INVALID);
             }

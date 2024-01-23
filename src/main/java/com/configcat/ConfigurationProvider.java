@@ -15,7 +15,7 @@ public interface ConfigurationProvider extends Closeable {
      * Gets the value of a feature flag or setting as T identified by the given {@code key}.
      *
      * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
-     * @param key          the identifier of a feature flag or setting.
+     * @param key          the identifier of the feature flag or setting.
      * @param defaultValue in case of any failure, this value will be returned.
      * @param <T>          the type of the desired feature flag or setting.
      * @return the configuration value identified by the given key.
@@ -26,7 +26,7 @@ public interface ConfigurationProvider extends Closeable {
      * Gets the value of a feature flag or setting as T identified by the given {@code key}.
      *
      * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
-     * @param key          the identifier of a feature flag or setting.
+     * @param key          the identifier of the feature flag or setting.
      * @param user         the user object.
      * @param defaultValue in case of any failure, this value will be returned.
      * @param <T>          the type of the desired feature flag or setting.
@@ -38,7 +38,7 @@ public interface ConfigurationProvider extends Closeable {
      * Gets the value of a feature flag or setting as T asynchronously identified by the given {@code key}.
      *
      * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
-     * @param key          the identifier of a feature flag or setting.
+     * @param key          the identifier of the feature flag or setting.
      * @param defaultValue in case of any failure, this value will be returned.
      * @param <T>          the type of the desired feature flag or setting.
      * @return a future which computes the configuration value identified by the given key.
@@ -49,7 +49,7 @@ public interface ConfigurationProvider extends Closeable {
      * Gets the value of a feature flag or setting as T asynchronously identified by the given {@code key}.
      *
      * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
-     * @param key          the identifier of a feature flag or setting.
+     * @param key          the identifier of the feature flag or setting.
      * @param user         the user object.
      * @param defaultValue in case of any failure, this value will be returned.
      * @param <T>          the type of the desired feature flag or setting.
@@ -61,7 +61,7 @@ public interface ConfigurationProvider extends Closeable {
      * Gets the value of a feature flag or setting as T identified by the given {@code key}.
      *
      * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
-     * @param key          the identifier of a feature flag or setting.
+     * @param key          the identifier of the feature flag or setting.
      * @param defaultValue in case of any failure, this value will be returned.
      * @param <T>          the type of the desired feature flag or setting.
      * @return the result of the evaluation
@@ -72,7 +72,7 @@ public interface ConfigurationProvider extends Closeable {
      * Gets the value of a feature flag or setting as T identified by the given {@code key}.
      *
      * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
-     * @param key          the identifier of a feature flag or setting.
+     * @param key          the identifier of the feature flag or setting.
      * @param user         the user object.
      * @param defaultValue in case of any failure, this value will be returned.
      * @param <T>          the type of the desired feature flag or setting.
@@ -84,10 +84,10 @@ public interface ConfigurationProvider extends Closeable {
      * Gets the value of a feature flag or setting as T asynchronously identified by the given {@code key}.
      *
      * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
-     * @param key          the identifier of a feature flag or setting.
+     * @param key          the identifier of the feature flag or setting.
      * @param defaultValue in case of any failure, this value will be returned.
      * @param <T>          the type of the desired feature flag or setting.
-     * @return a future which computes the the evaluation details.
+     * @return a future which computes the evaluation details.
      */
     <T> CompletableFuture<EvaluationDetails<T>> getValueDetailsAsync(Class<T> classOfT, String key, T defaultValue);
 
@@ -95,11 +95,11 @@ public interface ConfigurationProvider extends Closeable {
      * Gets the value of a feature flag or setting as T asynchronously identified by the given {@code key}.
      *
      * @param classOfT     the class of T. Only {@link String}, {@link Integer}, {@link Double} or {@link Boolean} types are supported.
-     * @param key          the identifier of a feature flag or setting.
+     * @param key          the identifier of the feature flag or setting.
      * @param user         the user object.
      * @param defaultValue in case of any failure, this value will be returned.
      * @param <T>          the type of the desired feature flag or setting.
-     * @return a future which computes the the evaluation details.
+     * @return a future which computes the evaluation details.
      */
     <T> CompletableFuture<EvaluationDetails<T>> getValueDetailsAsync(Class<T> classOfT, String key, User user, T defaultValue);
 
@@ -199,6 +199,8 @@ public interface ConfigurationProvider extends Closeable {
 
     /**
      * Initiates a force refresh synchronously on the cached configuration.
+     *
+     * @return the refresh result.
      */
     RefreshResult forceRefresh();
 
@@ -210,19 +212,21 @@ public interface ConfigurationProvider extends Closeable {
     CompletableFuture<RefreshResult> forceRefreshAsync();
 
     /**
-     * Sets the default user.
+     * Sets defaultUser value.
+     * If no user specified in the following calls {getValue}, {getAllValues}, {getValueDetails}, {getAllValueDetails}
+     * the default user value will be used.
      *
-     * @param user the default user.
+     * @param user The new default user.
      */
     void setDefaultUser(User user);
 
     /**
-     * Sets the default user to null.
+     * Set default user value to null.
      */
     void clearDefaultUser();
 
     /**
-     * Configures the SDK to allow HTTP requests.
+     * Set the client to offline mode. HTTP calls are not allowed.
      */
     void setOnline();
 
@@ -232,9 +236,9 @@ public interface ConfigurationProvider extends Closeable {
     void setOffline();
 
     /**
-     * Indicates whether the SDK is in offline mode or not.
+     * Get the client offline mode status.
      *
-     * @return true when the SDK is configured not to initiate HTTP requests, otherwise false.
+     * @return True if the client is in offline mode, otherwise false.
      */
     boolean isOffline();
 
