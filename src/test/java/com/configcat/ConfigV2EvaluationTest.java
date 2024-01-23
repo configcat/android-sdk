@@ -75,7 +75,15 @@ public class ConfigV2EvaluationTest {
                 Arguments.of("stringDependsOnString", "2", "john@notsensitivecompany.com", null, "Cat"),
                 Arguments.of("stringDependsOnString", "2", "john@notsensitivecompany.com", OverrideBehaviour.REMOTE_OVER_LOCAL, "Cat"),
                 Arguments.of("stringDependsOnString", "2", "john@notsensitivecompany.com", OverrideBehaviour.LOCAL_OVER_REMOTE, "Dog"),
-                Arguments.of("stringDependsOnString", "2", "john@notsensitivecompany.com", OverrideBehaviour.LOCAL_ONLY, null)
+                Arguments.of("stringDependsOnString", "2", "john@notsensitivecompany.com", OverrideBehaviour.LOCAL_ONLY, null),
+                Arguments.of("stringDependsOnInt", "1", "john@sensitivecompany.com", null, "Dog"),
+                Arguments.of("stringDependsOnInt", "1", "john@sensitivecompany.com", OverrideBehaviour.REMOTE_OVER_LOCAL, "Dog"),
+                Arguments.of("stringDependsOnInt", "1", "john@sensitivecompany.com", OverrideBehaviour.LOCAL_OVER_REMOTE, "Falcon"),
+                Arguments.of("stringDependsOnInt", "1", "john@sensitivecompany.com", OverrideBehaviour.LOCAL_ONLY, "Falcon"),
+                Arguments.of("stringDependsOnInt", "2", "john@notsensitivecompany.com", null, "Cat"),
+                Arguments.of("stringDependsOnInt", "2", "john@notsensitivecompany.com", OverrideBehaviour.REMOTE_OVER_LOCAL, "Cat"),
+                Arguments.of("stringDependsOnInt", "2", "john@notsensitivecompany.com", OverrideBehaviour.LOCAL_OVER_REMOTE, "Falcon"),
+                Arguments.of("stringDependsOnInt", "2", "john@notsensitivecompany.com", OverrideBehaviour.LOCAL_ONLY, "Falcon")
         );
     }
 
@@ -189,6 +197,7 @@ public class ConfigV2EvaluationTest {
         }
         Map<String, Object> overrideMap = new HashMap<>();
         overrideMap.put("mainStringFlag", "private");
+        overrideMap.put("stringDependsOnInt", "Falcon");
 
         ConfigCatClient client = ConfigCatClient.get("configcat-sdk-1/JcPbCGl_1E-K9M-fJOyKyQ/JoGwdqJZQ0K2xDy7LnbyOg", options -> {
             if (overrideBehaviour != null) {
