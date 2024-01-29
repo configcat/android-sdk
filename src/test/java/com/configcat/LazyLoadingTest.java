@@ -14,10 +14,10 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class LazyLoadingPolicyTest {
+class LazyLoadingTest {
     private ConfigService policy;
     private MockWebServer server;
-    private final ConfigCatLogger logger = new ConfigCatLogger(LoggerFactory.getLogger(LazyLoadingPolicyTest.class));
+    private final ConfigCatLogger logger = new ConfigCatLogger(LoggerFactory.getLogger(LazyLoadingTest.class));
 
     private static final String TEST_JSON = "{ p: { s: 'test-salt'}, f: { fakeKey: { v: { s: %s }, p: [], r: [] } } }";
 

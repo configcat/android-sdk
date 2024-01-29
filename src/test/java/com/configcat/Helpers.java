@@ -24,6 +24,12 @@ final class Helpers {
         return entry.serialize();
     }
 
+    static String cacheValueFromConfigJsonWithEtag(String json, String etag) {
+        Config config = Utils.gson.fromJson(json, Config.class);
+        Entry entry = new Entry(config, etag, json, System.currentTimeMillis());
+        return entry.serialize();
+    }
+
     static String entryToJson(Entry entry) {
         return Utils.gson.toJson(entry);
     }

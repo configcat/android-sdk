@@ -6,18 +6,20 @@ import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+
+import org.slf4j.LoggerFactory;
+
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class ManualPollingPolicyTest {
+class ManualPollingTest {
     private ConfigService policy;
     private MockWebServer server;
-    private final ConfigCatLogger logger = new ConfigCatLogger(LoggerFactory.getLogger(ManualPollingPolicyTest.class));
+    private final ConfigCatLogger logger = new ConfigCatLogger(LoggerFactory.getLogger(ManualPollingTest.class));
     private static final String TEST_JSON = "{ p: { s: 'test-slat'}, f: { fakeKey: { v: { s: %s }, p: [], r: [] } } }";
 
     @BeforeEach
