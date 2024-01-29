@@ -18,7 +18,7 @@ import static org.mockito.Mockito.*;
 
 class AutoPollingTest {
     private MockWebServer server;
-    private final ConfigCatLogger logger = new ConfigCatLogger(LoggerFactory.getLogger(AutoPollingPolicyTest.class), LogLevel.WARNING, new ConfigCatHooks());
+    private final ConfigCatLogger logger = new ConfigCatLogger(LoggerFactory.getLogger(AutoPollingTest.class), LogLevel.WARNING, new ConfigCatHooks());
     private static final String TEST_JSON = "{ p: { s: 'test-salt'}, f: { fakeKey: { v: {s: %s}, p: [] ,r: [] } } }";
 
     @BeforeEach

@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class ManualPollingTest {
     private ConfigService policy;
     private MockWebServer server;
-    private final ConfigCatLogger logger = new ConfigCatLogger(LoggerFactory.getLogger(ManualPollingPolicyTest.class));
+    private final ConfigCatLogger logger = new ConfigCatLogger(LoggerFactory.getLogger(ManualPollingTest.class));
     private static final String TEST_JSON = "{ p: { s: 'test-slat'}, f: { fakeKey: { v: { s: %s }, p: [], r: [] } } }";
 
     @BeforeEach
@@ -100,7 +100,7 @@ class ManualPollingTest {
         assertEquals("test", service.getSettings().get().settings().get("fakeKey").getSettingsValue().getStringValue());
 
         service.refresh().get();
-        assertEquals("test2", service.getSettings().get().settings().get("fakeKey").getValue().getAsString());
+        assertEquals("test2", service.getSettings().get().settings().get("fakeKey").getSettingsValue().getStringValue());
 
         assertEquals(1, cache.getMap().size());
 
