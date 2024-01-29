@@ -1,10 +1,6 @@
 package com.configcat;
 
-import android.graphics.drawable.shapes.OvalShape;
-
 import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 class FailingCache extends ConfigCache {
 

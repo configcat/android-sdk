@@ -233,7 +233,7 @@ class ConfigFetcher implements Closeable {
 
     private Result<Config> deserializeConfig(String json) {
         try {
-            return Result.success(Utils.gson.fromJson(json, Config.class));
+            return Result.success(Utils.deserializeConfig(json));
         } catch (Exception e) {
             String message = ConfigCatLogMessages.FETCH_RECEIVED_200_WITH_INVALID_BODY_ERROR;
             this.logger.error(1105, message, e);
