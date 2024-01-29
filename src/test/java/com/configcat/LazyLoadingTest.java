@@ -6,11 +6,9 @@ import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import java.io.IOException;
-
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -19,8 +17,9 @@ import static org.junit.jupiter.api.Assertions.*;
 class LazyLoadingTest {
     private ConfigService policy;
     private MockWebServer server;
-    private final ConfigCatLogger logger = new ConfigCatLogger(LoggerFactory.getLogger(LazyLoadingTest.class));
-    private static final String TEST_JSON = "{ f: { fakeKey: { v: %s, p: [] ,r: [] } } }";
+    private final ConfigCatLogger logger = new ConfigCatLogger(LoggerFactory.getLogger(LazyLoadingPolicyTest.class));
+
+    private static final String TEST_JSON = "{ p: { s: 'test-salt'}, f: { fakeKey: { v: { s: %s }, p: [], r: [] } } }";
 
     @BeforeEach
     public void setUp() throws IOException {
@@ -45,13 +44,13 @@ class LazyLoadingTest {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test2")).setBodyDelay(3, TimeUnit.SECONDS));
 
         //first call
-        assertEquals("test", this.policy.getSettings().get().settings().get("fakeKey").getValue().getAsString());
+        assertEquals("test", this.policy.getSettings().get().settings().get("fakeKey").getSettingsValue().getStringValue());
 
         //wait for cache invalidation
         Thread.sleep(6000);
 
         //next call will block until the new value is fetched
-        assertEquals("test2", this.policy.getSettings().get().settings().get("fakeKey").getValue().getAsString());
+        assertEquals("test2", this.policy.getSettings().get().settings().get("fakeKey").getSettingsValue().getStringValue());
     }
 
     @Test
@@ -65,13 +64,13 @@ class LazyLoadingTest {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test2")).setBodyDelay(3, TimeUnit.SECONDS));
 
         //first call
-        assertEquals("test", lPolicy.getSettings().get().settings().get("fakeKey").getValue().getAsString());
+        assertEquals("test", lPolicy.getSettings().get().settings().get("fakeKey").getSettingsValue().getStringValue());
 
         //wait for cache invalidation
         Thread.sleep(6000);
 
         //next call will block until the new value is fetched
-        assertEquals("test2", lPolicy.getSettings().get().settings().get("fakeKey").getValue().getAsString());
+        assertEquals("test2", lPolicy.getSettings().get().settings().get("fakeKey").getSettingsValue().getStringValue());
     }
 
     @Test
@@ -80,13 +79,13 @@ class LazyLoadingTest {
         this.server.enqueue(new MockResponse().setResponseCode(500));
 
         //first call
-        assertEquals("test", this.policy.getSettings().get().settings().get("fakeKey").getValue().getAsString());
+        assertEquals("test", this.policy.getSettings().get().settings().get("fakeKey").getSettingsValue().getStringValue());
 
         //wait for cache invalidation
         Thread.sleep(6000);
 
         //previous value returned because of the refresh failure
-        assertEquals("test", this.policy.getSettings().get().settings().get("fakeKey").getValue().getAsString());
+        assertEquals("test", this.policy.getSettings().get().settings().get("fakeKey").getSettingsValue().getStringValue());
     }
 
     @Test
@@ -135,27 +134,6 @@ class LazyLoadingTest {
         assertFalse(service.getSettings().get().settings().isEmpty());
 
         assertEquals(1, this.server.getRequestCount());
-    }
-
-    @Test
-    void testCacheTTLRespectsExternalCache() throws Exception {
-        this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test-remote")));
-
-        ConfigCache cache = new SingleValueCache(Helpers.cacheValueFromConfigJsonWithEtag(String.format(TEST_JSON, "test-local"), "etag"));
-
-        PollingMode mode = PollingModes
-                .lazyLoad(1);
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
-        ConfigService service = new ConfigService("", mode, cache ,logger, fetcher,  new ConfigCatHooks(), false);
-
-        assertEquals("test-local", service.getSettings().get().settings().get("fakeKey").getValue().getAsString());
-        assertEquals(0, this.server.getRequestCount());
-        Thread.sleep(1000);
-
-        cache.write("", Helpers.cacheValueFromConfigJsonWithEtag(String.format(TEST_JSON, "test-local2"), "etag2"));
-        assertEquals("test-local2", service.getSettings().get().settings().get("fakeKey").getValue().getAsString());
-
-        assertEquals(0, this.server.getRequestCount());
     }
 
     @Test

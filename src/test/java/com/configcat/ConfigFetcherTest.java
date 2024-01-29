@@ -8,11 +8,9 @@ import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.time.Instant;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -20,13 +18,11 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.doThrow;
 
 class ConfigFetcherTest {
     private MockWebServer server;
     private final ConfigCatLogger logger = new ConfigCatLogger(LoggerFactory.getLogger(ConfigFetcherTest.class), LogLevel.WARNING, new ConfigCatHooks());
-    private static final String TEST_JSON = "{ f: { fakeKey: { v: fakeValue, s: 0, p: [] ,r: [] } } }";
-    private static final String TEST_JSON2 = "{ f: { fakeKey: { v: fakeValue2, s: 0, p: [] ,r: [] } } }";
+    private static final String TEST_JSON = "{ p: { s: 'test-salt' }, f: { fakeKey: { v: {s: 'fakeValue'}, s: 0, p: [] ,r: [] } } }";
 
     @BeforeEach
     public void setUp() throws IOException {
@@ -49,7 +45,7 @@ class ConfigFetcherTest {
 
         FetchResponse fResult = fetcher.fetchAsync(null).get();
 
-        assertEquals("fakeValue", fResult.entry().getConfig().getEntries().get("fakeKey").getValue().getAsString());
+        assertEquals("fakeValue", fResult.entry().getConfig().getEntries().get("fakeKey").getSettingsValue().getStringValue());
         assertTrue(fResult.isFetched());
         assertFalse(fResult.isNotModified());
         assertFalse(fResult.isFailed());
@@ -101,7 +97,7 @@ class ConfigFetcherTest {
                 "", this.server.url("/").toString(), false, PollingModes.manualPoll().getPollingIdentifier());
 
         ConfigService policy = new ConfigService("", PollingModes.autoPoll(2), cache, logger, fetcher, new ConfigCatHooks(), false);
-        assertEquals("fakeValue", policy.getSettings().get().settings().get("fakeKey").getValue().getAsString());
+        assertEquals("fakeValue", policy.getSettings().get().settings().get("fakeKey").getSettingsValue().getStringValue());
 
         verify(cache, never()).write(anyString(), eq(TEST_JSON));
 
@@ -118,7 +114,7 @@ class ConfigFetcherTest {
                 "", this.server.url("/").toString(), false, PollingModes.manualPoll().getPollingIdentifier());
 
         ConfigService policy = new ConfigService("", PollingModes.autoPoll(2), cache, logger, fetcher, new ConfigCatHooks(), false);
-        assertEquals("fakeValue", policy.getSettings().get().settings().get("fakeKey").getValue().getAsString());
+        assertEquals("fakeValue", policy.getSettings().get().settings().get("fakeKey").getSettingsValue().getStringValue());
 
         verify(cache, never()).write(anyString(), eq(TEST_JSON));
 
@@ -138,7 +134,7 @@ class ConfigFetcherTest {
 
         FetchResponse response = fetcher.fetchAsync(null).get();
         assertTrue(response.isFetched());
-        assertEquals("fakeValue", response.entry().getConfig().getEntries().get("fakeKey").getValue().getAsString());
+        assertEquals("fakeValue", response.entry().getConfig().getEntries().get("fakeKey").getSettingsValue().getStringValue());
 
         fetcher.close();
     }

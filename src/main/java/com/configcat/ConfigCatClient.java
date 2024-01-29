@@ -1,17 +1,13 @@
 package com.configcat;
 
-import com.google.gson.JsonElement;
-
+import java9.util.concurrent.CompletableFuture;
 import java9.util.function.Consumer;
 import okhttp3.OkHttpClient;
-
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import java9.util.concurrent.CompletableFuture;
 
 /**
  * A client for handling configurations provided by ConfigCat.
@@ -20,9 +16,10 @@ public final class ConfigCatClient implements ConfigurationProvider {
     private static final String BASE_URL_GLOBAL = "https://cdn-global.configcat.com";
     private static final String BASE_URL_EU = "https://cdn-eu.configcat.com";
     private static final Map<String, ConfigCatClient> INSTANCES = new HashMap<>();
-
     private final AtomicBoolean isClosed = new AtomicBoolean(false);
     private final ConfigCatLogger logger;
+    private final LogLevel clientLogLevel;
+
     private final RolloutEvaluator rolloutEvaluator;
     private final OverrideDataSource overrideDataSource;
     private final OverrideBehaviour overrideBehaviour;
@@ -34,6 +31,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
     private ConfigCatClient(String sdkKey, Options options) throws IllegalArgumentException {
         this.logger = new ConfigCatLogger(LoggerFactory.getLogger(ConfigCatClient.class), options.logLevel, options.hooks);
+        this.clientLogLevel = options.logLevel;
 
         this.sdkKey = sdkKey;
         this.overrideDataSource = options.overrideDataSource;
@@ -43,18 +41,17 @@ public final class ConfigCatClient implements ConfigurationProvider {
         this.rolloutEvaluator = new RolloutEvaluator(this.logger);
 
         if (this.overrideBehaviour != OverrideBehaviour.LOCAL_ONLY) {
-            boolean hasCustomBaseUrl = options.baseUrl != null && !options.baseUrl.isEmpty();
             ConfigFetcher fetcher = new ConfigFetcher(options.httpClient == null
                     ? new OkHttpClient()
                     : options.httpClient,
                     this.logger,
                     sdkKey,
-                    !hasCustomBaseUrl
+                    !options.isBaseURLCustom()
                             ? options.dataGovernance == DataGovernance.GLOBAL
                             ? BASE_URL_GLOBAL
                             : BASE_URL_EU
                             : options.baseUrl,
-                    hasCustomBaseUrl,
+                    options.isBaseURLCustom(),
                     options.pollingMode.getPollingIdentifier());
 
             this.configService = new ConfigService(sdkKey, options.pollingMode, options.cache, logger, fetcher, options.hooks, options.offline);
@@ -71,14 +68,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         if (key == null || key.isEmpty())
             throw new IllegalArgumentException("'key' cannot be null or empty.");
 
-        if (classOfT != String.class &&
-                classOfT != Integer.class &&
-                classOfT != int.class &&
-                classOfT != Double.class &&
-                classOfT != double.class &&
-                classOfT != Boolean.class &&
-                classOfT != boolean.class)
-            throw new IllegalArgumentException("Only String, Integer, Double or Boolean types are supported.");
+        validateReturnType(classOfT);
 
         try {
             return this.getValueAsync(classOfT, key, user, defaultValue).get();
@@ -92,6 +82,12 @@ public final class ConfigCatClient implements ConfigurationProvider {
         }
     }
 
+    private static <T> void validateReturnType(Class<T> classOfT) {
+        if (!(classOfT == String.class || classOfT == Integer.class || classOfT == int.class || classOfT == Double.class || classOfT == double.class || classOfT == Boolean.class || classOfT == boolean.class)) {
+            throw new IllegalArgumentException("Only String, Integer, Double or Boolean types are supported.");
+        }
+    }
+
     @Override
     public <T> CompletableFuture<T> getValueAsync(Class<T> classOfT, String key, T defaultValue) {
         return this.getValueAsync(classOfT, key, null, defaultValue);
@@ -102,14 +98,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         if (key == null || key.isEmpty())
             throw new IllegalArgumentException("'key' cannot be null or empty.");
 
-        if (classOfT != String.class &&
-                classOfT != Integer.class &&
-                classOfT != int.class &&
-                classOfT != Double.class &&
-                classOfT != double.class &&
-                classOfT != Boolean.class &&
-                classOfT != boolean.class)
-            throw new IllegalArgumentException("Only String, Integer, Double or Boolean types are supported.");
+        validateReturnType(classOfT);
 
         return this.getSettingsAsync()
                 .thenApply(settingsResult -> this.getValueFromSettingsMap(classOfT, settingsResult, key, user, defaultValue));
@@ -125,14 +114,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         if (key == null || key.isEmpty())
             throw new IllegalArgumentException("'key' cannot be null or empty.");
 
-        if (classOfT != String.class &&
-                classOfT != Integer.class &&
-                classOfT != int.class &&
-                classOfT != Double.class &&
-                classOfT != double.class &&
-                classOfT != Boolean.class &&
-                classOfT != boolean.class)
-            throw new IllegalArgumentException("Only String, Integer, Double or Boolean types are supported.");
+        validateReturnType(classOfT);
 
         try {
             return this.getValueDetailsAsync(classOfT, key, user, defaultValue).get();
@@ -157,17 +139,10 @@ public final class ConfigCatClient implements ConfigurationProvider {
         if (key == null || key.isEmpty())
             throw new IllegalArgumentException("'key' cannot be null or empty.");
 
-        if (classOfT != String.class &&
-                classOfT != Integer.class &&
-                classOfT != int.class &&
-                classOfT != Double.class &&
-                classOfT != double.class &&
-                classOfT != Boolean.class &&
-                classOfT != boolean.class)
-            throw new IllegalArgumentException("Only String, Integer, Double or Boolean types are supported.");
+        validateReturnType(classOfT);
 
         return this.getSettingsAsync()
-                .thenApply(settingsResult ->{
+                .thenApply(settingsResult -> {
                     Result<Setting> checkSettingResult = checkSettingAvailable(settingsResult, key, defaultValue);
                     if (checkSettingResult.error() != null) {
                         EvaluationDetails<Object> evaluationDetails = EvaluationDetails.fromError(key, defaultValue, checkSettingResult.error(), user);
@@ -175,7 +150,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                         return evaluationDetails.asTypeSpecific();
                     }
                     return this.evaluate(classOfT, checkSettingResult.value(),
-                            key, user != null ? user : this.defaultUser, settingsResult.fetchTime());
+                            key, user != null ? user : this.defaultUser, settingsResult.fetchTime(), settingsResult.settings());
                 });
     }
 
@@ -219,7 +194,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                         for (String key : keys) {
                             Setting setting = settingMap.get(key);
                             if (setting == null) continue;
-                            Object value = this.evaluate(classBySettingType(setting.getType()), setting, key, userObject, settingsResult.fetchTime()).getValue();
+                            Object value = this.evaluate(classBySettingType(setting.getType()), setting, key, userObject, settingsResult.fetchTime(), settingMap).getValue();
                             result.put(key, value);
                         }
 
@@ -269,8 +244,8 @@ public final class ConfigCatClient implements ConfigurationProvider {
                         for (String key : settings.keySet()) {
                             Setting setting = settings.get(key);
 
-                            EvaluationDetails<?> evaluationDetails = this.evaluate(this.classBySettingType(setting.getType()), setting,
-                                    key, user != null ? user : this.defaultUser, settingResult.fetchTime());
+                            EvaluationDetails<?> evaluationDetails = this.evaluate(this.classBySettingType(Objects.requireNonNull(setting).getType()), setting,
+                                    key, user != null ? user : this.defaultUser, settingResult.fetchTime(), settings);
                             result.add(evaluationDetails);
                         }
 
@@ -470,7 +445,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                 return defaultValue;
             }
 
-            return this.evaluate(classOfT, checkSettingResult.value(), key, userObject, settingResult.fetchTime()).getValue();
+            return this.evaluate(classOfT, checkSettingResult.value(), key, userObject, settingResult.fetchTime(), settingResult.settings()).getValue();
         } catch (Exception e) {
             String error = ConfigCatLogMessages.getSettingEvaluationFailedForOtherReason(key, "defaultValue", defaultValue);
             this.hooks.invokeOnFlagEvaluated(EvaluationDetails.fromError(key, defaultValue, error + " " + e.getMessage(), userObject));
@@ -489,18 +464,25 @@ public final class ConfigCatClient implements ConfigurationProvider {
                 String settingKey = node.getKey();
                 Setting setting = node.getValue();
                 if (variationId.equals(setting.getVariationId())) {
-                    return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, setting.getValue()));
+                    return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, setting.getSettingsValue(), setting.getType()));
                 }
 
-                for (RolloutRule rolloutRule : setting.getRolloutRules()) {
-                    if (variationId.equals(rolloutRule.getVariationId())) {
-                        return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, rolloutRule.getValue()));
+                for (TargetingRule targetingRule : setting.getTargetingRules()) {
+                    if (targetingRule.getSimpleValue() != null && variationId.equals(targetingRule.getSimpleValue().getVariationId())) {
+                        return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, targetingRule.getSimpleValue().getValue(), setting.getType()));
+                    }
+                    if (targetingRule.getPercentageOptions() != null) {
+                        for (PercentageOption percentageRule : targetingRule.getPercentageOptions()) {
+                            if (variationId.equals(percentageRule.getVariationId())) {
+                                return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, percentageRule.getValue(), setting.getType()));
+                            }
+                        }
                     }
                 }
 
-                for (PercentageRule percentageRule : setting.getPercentageItems()) {
-                    if (variationId.equals(percentageRule.getVariationId())) {
-                        return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, percentageRule.getValue()));
+                for (PercentageOption percentageOption : setting.getPercentageOptions()) {
+                    if (variationId.equals(percentageOption.getVariationId())) {
+                        return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, percentageOption.getValue(), setting.getType()));
                     }
                 }
             }
@@ -512,10 +494,10 @@ public final class ConfigCatClient implements ConfigurationProvider {
         }
     }
 
-    private <T> EvaluationDetails<T> evaluate(Class<T> classOfT, Setting setting, String key, User user, Long fetchTime) {
-        EvaluationResult evaluationResult = this.rolloutEvaluator.evaluate(setting, key, user);
+    private <T> EvaluationDetails<T> evaluate(Class<T> classOfT, Setting setting, String key, User user, Long fetchTime, Map<String, Setting> settings) {
+        EvaluationResult evaluationResult = this.rolloutEvaluator.evaluate(setting, key, user, settings, new EvaluateLogger(this.clientLogLevel));
         EvaluationDetails<Object> details = new EvaluationDetails<>(
-                this.parseObject(classOfT, evaluationResult.value),
+                this.parseObject(classOfT, evaluationResult.value, setting.getType()),
                 key,
                 evaluationResult.variationId,
                 user,
@@ -523,22 +505,27 @@ public final class ConfigCatClient implements ConfigurationProvider {
                 null,
                 fetchTime,
                 evaluationResult.targetingRule,
-                evaluationResult.percentageRule);
+                evaluationResult.percentageOption);
         this.hooks.invokeOnFlagEvaluated(details);
         return details.asTypeSpecific();
     }
 
-    private Object parseObject(Class<?> classOfT, JsonElement element) {
-        if (classOfT == String.class)
-            return element.getAsString();
-        else if (classOfT == Integer.class || classOfT == int.class)
-            return element.getAsInt();
-        else if (classOfT == Double.class || classOfT == double.class)
-            return element.getAsDouble();
-        else if (classOfT == Boolean.class || classOfT == boolean.class)
-            return element.getAsBoolean();
-        else
-            throw new IllegalArgumentException("Only String, Integer, Double or Boolean types are supported");
+    private Object parseObject(Class<?> classOfT, SettingsValue settingsValue, SettingType settingType) {
+        validateReturnType(classOfT);
+
+        if (classOfT == String.class && settingsValue.getStringValue() != null && SettingType.STRING.equals(settingType))
+            return settingsValue.getStringValue();
+        else if ((classOfT == Integer.class || classOfT == int.class) && settingsValue.getIntegerValue() != null && SettingType.INT.equals(settingType))
+            return settingsValue.getIntegerValue();
+        else if ((classOfT == Double.class || classOfT == double.class) && settingsValue.getDoubleValue() != null && SettingType.DOUBLE.equals(settingType))
+            return settingsValue.getDoubleValue();
+        else if ((classOfT == Boolean.class || classOfT == boolean.class) && settingsValue.getBooleanValue() != null && SettingType.BOOLEAN.equals(settingType))
+            return settingsValue.getBooleanValue();
+
+        throw new IllegalArgumentException("The type of a setting must match the type of the setting's default value. "
+                + "Setting's type was {" + settingType + "} but the default value's type was {" + classOfT + "}. "
+                + "Please use a default value which corresponds to the setting type {" + settingType + "}."
+                + "Learn more: https://configcat.com/docs/sdk-reference/dotnet/#setting-type-mapping");
     }
 
     private Class<?> classBySettingType(SettingType settingType) {
@@ -600,29 +587,46 @@ public final class ConfigCatClient implements ConfigurationProvider {
      */
     public static ConfigCatClient get(String sdkKey, Consumer<Options> optionsCallback) {
         if (sdkKey == null || sdkKey.isEmpty())
-            throw new IllegalArgumentException("'sdkKey' cannot be null or empty.");
+            throw new IllegalArgumentException("SDK Key cannot be null or empty.");
+
+        Options clientOptions = new Options();
+
+        if (optionsCallback != null) {
+            Options options = new Options();
+            optionsCallback.accept(options);
+            clientOptions = options;
+        }
+
+        if (!OverrideBehaviour.LOCAL_ONLY.equals(clientOptions.overrideBehaviour) && !isValidKey(sdkKey, clientOptions.isBaseURLCustom()))
+            throw new IllegalArgumentException("SDK Key '" + sdkKey + "' is invalid.");
 
         synchronized (INSTANCES) {
-            ConfigCatClient existing = INSTANCES.get(sdkKey);
-            if (existing != null) {
+            ConfigCatClient client = INSTANCES.get(sdkKey);
+            if (client != null) {
                 if (optionsCallback != null) {
-                    existing.logger.warn(3000, ConfigCatLogMessages.getClientIsAlreadyCreated(sdkKey));
+                    client.logger.warn(3000, ConfigCatLogMessages.getClientIsAlreadyCreated(sdkKey));
                 }
-                return existing;
+                return client;
             }
 
-            ConfigCatClient client;
-            if (optionsCallback != null) {
-                Options options = new Options();
-                optionsCallback.accept(options);
-                client = new ConfigCatClient(sdkKey, options);
-            } else {
-                client = new ConfigCatClient(sdkKey, new Options());
-            }
-
+            client = new ConfigCatClient(sdkKey, clientOptions);
             INSTANCES.put(sdkKey, client);
             return client;
         }
+    }
+
+    private static boolean isValidKey(final String sdkKey, final boolean isCustomBaseURL) {
+        //configcat-proxy/ rules
+        if (isCustomBaseURL && sdkKey.length() > Constants.SDK_KEY_PROXY_PREFIX.length() && sdkKey.startsWith(Constants.SDK_KEY_PROXY_PREFIX)) {
+            return true;
+        }
+        String[] splitSDKKey = sdkKey.split("/");
+        //22/22 rules
+        if (splitSDKKey.length == 2 && splitSDKKey[0].length() == Constants.SDK_KEY_SECTION_LENGTH && splitSDKKey[1].length() == Constants.SDK_KEY_SECTION_LENGTH) {
+            return true;
+        }
+        //configcat-sdk-1/22/22 rules
+        return splitSDKKey.length == 3 && splitSDKKey[0].equals(Constants.SDK_KEY_PREFIX) && splitSDKKey[1].length() == Constants.SDK_KEY_SECTION_LENGTH && splitSDKKey[2].length() == Constants.SDK_KEY_SECTION_LENGTH;
     }
 
     /**
@@ -692,7 +696,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
         /**
          * Default: Global. Set this parameter to be in sync with the Data Governance preference on the Dashboard:
-         * https://app.configcat.com/organization/data-governance (Only Organization Admins have access)
+         * <a href="https://app.configcat.com/organization/data-governance">Link</a> (Only Organization Admins have access)
          *
          * @param dataGovernance the {@link DataGovernance} parameter.
          */
@@ -756,6 +760,10 @@ public final class ConfigCatClient implements ConfigurationProvider {
          */
         public ConfigCatHooks hooks() {
             return this.hooks;
+        }
+
+        private boolean isBaseURLCustom() {
+            return this.baseUrl != null && !this.baseUrl.isEmpty();
         }
     }
 

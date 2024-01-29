@@ -11,8 +11,8 @@ public class EvaluationDetails<T> {
     private final boolean isDefaultValue;
     private final String error;
     private final long fetchTimeUnixMilliseconds;
-    private final RolloutRule matchedEvaluationRule;
-    private final PercentageRule matchedEvaluationPercentageRule;
+    private final TargetingRule matchedTargetingRule;
+    private final PercentageOption matchedPercentageOption;
 
     public EvaluationDetails(T value,
                              String key,
@@ -21,8 +21,8 @@ public class EvaluationDetails<T> {
                              boolean isDefaultValue,
                              String error,
                              long fetchTimeUnixMilliseconds,
-                             RolloutRule matchedEvaluationRule,
-                             PercentageRule matchedEvaluationPercentageRule) {
+                             TargetingRule matchedTargetingRule,
+                             PercentageOption matchedPercentageOption) {
         this.value = value;
         this.key = key;
         this.variationId = variationId;
@@ -30,16 +30,16 @@ public class EvaluationDetails<T> {
         this.isDefaultValue = isDefaultValue;
         this.error = error;
         this.fetchTimeUnixMilliseconds = fetchTimeUnixMilliseconds;
-        this.matchedEvaluationRule = matchedEvaluationRule;
-        this.matchedEvaluationPercentageRule = matchedEvaluationPercentageRule;
+        this.matchedTargetingRule = matchedTargetingRule;
+        this.matchedPercentageOption = matchedPercentageOption;
     }
 
     static <T> EvaluationDetails<T> fromError(String key, T defaultValue, String error, User user) {
-        return new EvaluationDetails<>(defaultValue, key,"", user, true, error, Constants.DISTANT_PAST, null, null);
+        return new EvaluationDetails<>(defaultValue, key, "", user, true, error, Constants.DISTANT_PAST, null, null);
     }
 
     <TR> EvaluationDetails<TR> asTypeSpecific() {
-        return new EvaluationDetails<>((TR)value, key, variationId, user, isDefaultValue, error, fetchTimeUnixMilliseconds, matchedEvaluationRule, matchedEvaluationPercentageRule);
+        return new EvaluationDetails<>((TR) value, key, variationId, user, isDefaultValue, error, fetchTimeUnixMilliseconds, matchedTargetingRule, matchedPercentageOption);
     }
 
     /**
@@ -85,7 +85,7 @@ public class EvaluationDetails<T> {
     }
 
     /**
-     * The last download time of the current config in unix milliseconds format.
+     * The last fetch time of the config.json in unix milliseconds format.
      */
     public Long getFetchTimeUnixMilliseconds() {
         return fetchTimeUnixMilliseconds;
@@ -94,14 +94,14 @@ public class EvaluationDetails<T> {
     /**
      * If the evaluation was based on a targeting rule, this field contains that specific rule.
      */
-    public RolloutRule getMatchedEvaluationRule() {
-        return matchedEvaluationRule;
+    public TargetingRule getMatchedTargetingRule() {
+        return matchedTargetingRule;
     }
 
     /**
      * If the evaluation was based on a percentage rule, this field contains that specific rule.
      */
-    public PercentageRule getMatchedEvaluationPercentageRule() {
-        return matchedEvaluationPercentageRule;
+    public PercentageOption getMatchedPercentageOption() {
+        return matchedPercentageOption;
     }
 }

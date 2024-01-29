@@ -19,8 +19,8 @@ import static org.junit.jupiter.api.Assertions.*;
 class ManualPollingTest {
     private ConfigService policy;
     private MockWebServer server;
-    private final ConfigCatLogger logger = new ConfigCatLogger(LoggerFactory.getLogger(ManualPollingTest.class));
-    private static final String TEST_JSON = "{ f: { fakeKey: { v: %s, p: [] ,r: [] } } }";
+    private final ConfigCatLogger logger = new ConfigCatLogger(LoggerFactory.getLogger(ManualPollingPolicyTest.class));
+    private static final String TEST_JSON = "{ p: { s: 'test-slat'}, f: { fakeKey: { v: { s: %s }, p: [], r: [] } } }";
 
     @BeforeEach
     public void setUp() throws IOException {
@@ -45,11 +45,11 @@ class ManualPollingTest {
 
         //first call
         this.policy.refresh().get();
-        assertEquals("test", this.policy.getSettings().get().settings().get("fakeKey").getValue().getAsString());
+        assertEquals("test", this.policy.getSettings().get().settings().get("fakeKey").getSettingsValue().getStringValue());
 
         //next call will get the new value
         this.policy.refresh().get();
-        assertEquals("test2", this.policy.getSettings().get().settings().get("fakeKey").getValue().getAsString());
+        assertEquals("test2", this.policy.getSettings().get().settings().get("fakeKey").getSettingsValue().getStringValue());
     }
 
     @Test
@@ -63,11 +63,11 @@ class ManualPollingTest {
 
         //first call
         lPolicy.refresh().get();
-        assertEquals("test", lPolicy.getSettings().get().settings().get("fakeKey").getValue().getAsString());
+        assertEquals("test", lPolicy.getSettings().get().settings().get("fakeKey").getSettingsValue().getStringValue());
 
         //next call will get the new value
         lPolicy.refresh().get();
-        assertEquals("test2", lPolicy.getSettings().get().settings().get("fakeKey").getValue().getAsString());
+        assertEquals("test2", lPolicy.getSettings().get().settings().get("fakeKey").getSettingsValue().getStringValue());
 
         lPolicy.close();
     }
@@ -79,11 +79,11 @@ class ManualPollingTest {
 
         //first call
         this.policy.refresh().get();
-        assertEquals("test", this.policy.getSettings().get().settings().get("fakeKey").getValue().getAsString());
+        assertEquals("test", this.policy.getSettings().get().settings().get("fakeKey").getSettingsValue().getStringValue());
 
         //previous value returned because of the refresh failure
         this.policy.refresh().get();
-        assertEquals("test", this.policy.getSettings().get().settings().get("fakeKey").getValue().getAsString());
+        assertEquals("test", this.policy.getSettings().get().settings().get("fakeKey").getSettingsValue().getStringValue());
     }
 
     @Test
@@ -97,7 +97,7 @@ class ManualPollingTest {
         ConfigService service = new ConfigService("", mode, cache, logger, fetcher, new ConfigCatHooks(), false);
 
         service.refresh().get();
-        assertEquals("test", service.getSettings().get().settings().get("fakeKey").getValue().getAsString());
+        assertEquals("test", service.getSettings().get().settings().get("fakeKey").getSettingsValue().getStringValue());
 
         service.refresh().get();
         assertEquals("test2", service.getSettings().get().settings().get("fakeKey").getValue().getAsString());
