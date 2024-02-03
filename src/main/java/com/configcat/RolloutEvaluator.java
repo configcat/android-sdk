@@ -1,7 +1,6 @@
 package com.configcat;
 
 import de.skuzzle.semantic.Version;
-import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 
 import java.nio.charset.StandardCharsets;
@@ -662,7 +661,7 @@ class RolloutEvaluator {
         }
         String percentageOptionAttributeValue;
         String percentageOptionAttributeName = percentageOptionAttribute;
-        if (percentageOptionAttributeName == null || percentageOptionAttributeName.isEmpty()) {
+        if (percentageOptionAttributeName == null) {
             percentageOptionAttributeName = "Identifier";
             percentageOptionAttributeValue = context.getUser().getIdentifier();
         } else {
@@ -680,7 +679,7 @@ class RolloutEvaluator {
         evaluateLogger.logPercentageOptionEvaluation(percentageOptionAttributeName);
         String hashCandidate = context.getKey() + percentageOptionAttributeValue;
         int scale = 100;
-        String hexHash = new String(Hex.encodeHex(DigestUtils.sha1(hashCandidate))).substring(0, 7);
+        String hexHash = DigestUtils.sha1Hex(hashCandidate.getBytes(StandardCharsets.UTF_8)).substring(0, 7);
         int longHash = Integer.parseInt(hexHash, 16);
         int scaled = longHash % scale;
         evaluateLogger.logPercentageOptionEvaluationHash(percentageOptionAttributeName, scaled);

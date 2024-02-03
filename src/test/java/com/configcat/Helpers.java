@@ -3,7 +3,7 @@ package com.configcat;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.function.Supplier;
 
 final class Helpers {
@@ -28,10 +28,6 @@ final class Helpers {
         Config config = Utils.gson.fromJson(json, Config.class);
         Entry entry = new Entry(config, etag, json, System.currentTimeMillis());
         return entry.serialize();
-    }
-
-    static String entryToJson(Entry entry) {
-        return Utils.gson.toJson(entry);
     }
 
     static void waitFor(Supplier<Boolean> predicate) throws InterruptedException {
@@ -60,7 +56,7 @@ final class Helpers {
             while ((temp = stream.read(buffer)) != -1) {
                 outputStream.write(buffer, 0, temp);
             }
-            return new String(outputStream.toByteArray(), Charset.defaultCharset());
+            return new String(outputStream.toByteArray(), StandardCharsets.UTF_8);
         }
 
     }
