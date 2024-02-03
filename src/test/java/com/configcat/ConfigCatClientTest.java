@@ -80,6 +80,14 @@ class ConfigCatClientTest {
         IllegalArgumentException builderException = assertThrows(
                 IllegalArgumentException.class, () -> ConfigCatClient.get("configcat-proxy/", options -> options.baseUrl("https://my-configcat-proxy")));
         assertEquals("SDK Key 'configcat-proxy/' is invalid.", builderException.getMessage());
+
+        //TEST OverrideBehaviour.LOCAL_ONLY skip sdkKey validation
+        ConfigCatClient clientLocalOnly = ConfigCatClient.get("sdk-key-90123456789012", options -> {
+            options.flagOverrides(OverrideDataSource.map(new HashMap<>()), OverrideBehaviour.LOCAL_ONLY);
+        });
+        assertNotNull(clientLocalOnly);
+
+        ConfigCatClient.closeAll();
     }
 
     @Test
