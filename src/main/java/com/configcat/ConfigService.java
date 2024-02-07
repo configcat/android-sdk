@@ -45,7 +45,7 @@ class ConfigService implements Closeable {
     private String cachedEntryString = "";
     private Entry cachedEntry = Entry.EMPTY;
     private CompletableFuture<Result<Entry>> runningTask;
-    private final AtomicBoolean initialized  = new AtomicBoolean(false);
+    private final AtomicBoolean initialized = new AtomicBoolean(false);
     private final AtomicBoolean offline;
     private final AtomicBoolean closed = new AtomicBoolean(false);
     private final String cacheKey;

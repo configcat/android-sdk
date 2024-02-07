@@ -98,8 +98,8 @@ public class ConfigV2EvaluationTest {
                 Arguments.of("numberToStringConversion", 0.12345d, "1"),
                 Arguments.of("numberToStringConversion", .12345f, "1"),
                 Arguments.of("numberToStringConversion", 0.12345f, "1"),
-                Arguments.of("numberToStringConversionInt", (byte)125, "4"),
-                Arguments.of("numberToStringConversionInt", (short)125, "4"),
+                Arguments.of("numberToStringConversionInt", (byte) 125, "4"),
+                Arguments.of("numberToStringConversionInt", (short) 125, "4"),
                 Arguments.of("numberToStringConversionInt", 125, "4"),
                 Arguments.of("numberToStringConversionInt", 125L, "4"),
                 Arguments.of("numberToStringConversionPositiveExp", -1.23456789e96, "2"),
@@ -112,14 +112,14 @@ public class ConfigV2EvaluationTest {
                 Arguments.of("numberToStringConversionNaN", Float.NaN, "3"),
                 Arguments.of("numberToStringConversionPositiveInf", Float.POSITIVE_INFINITY, "4"),
                 Arguments.of("numberToStringConversionNegativeInf", Float.NEGATIVE_INFINITY, "3"),
-                Arguments.of("dateToStringConversion",  "date:2023-03-31T23:59:59.999Z", "3"),
+                Arguments.of("dateToStringConversion", "date:2023-03-31T23:59:59.999Z", "3"),
                 Arguments.of("dateToStringConversion", 1680307199.999, "3"),
                 Arguments.of("dateToStringConversionNaN", Double.NaN, "3"),
                 Arguments.of("dateToStringConversionPositiveInf", Double.POSITIVE_INFINITY, "1"),
                 Arguments.of("dateToStringConversionNegativeInf", Double.NEGATIVE_INFINITY, "5"),
-                Arguments.of("stringArrayToStringConversion", new String[] { "read", "Write", " eXecute " }, "4"),
+                Arguments.of("stringArrayToStringConversion", new String[]{"read", "Write", " eXecute "}, "4"),
                 Arguments.of("stringArrayToStringConversionEmpty", new String[0], "5"),
-                Arguments.of("stringArrayToStringConversionSpecialChars", new String[] { "+<>%\"'\\/\t\r\n" }, "3"),
+                Arguments.of("stringArrayToStringConversionSpecialChars", new String[]{"+<>%\"'\\/\t\r\n"}, "3"),
                 Arguments.of("stringArrayToStringConversionUnicode", "specialCharacter:specialCharacters.txt", "2")
         );
     }
@@ -261,22 +261,22 @@ public class ConfigV2EvaluationTest {
             options.baseUrl(server.url("/").toString());
         });
 
-        if(userAttribute instanceof String){
+        if (userAttribute instanceof String) {
             String userAttributeString = (String) userAttribute;
-            if (userAttributeString.startsWith("date:")){
+            if (userAttributeString.startsWith("date:")) {
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss.SSSSSSS'Z'");
                 sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
                 userAttribute = sdf.parse(userAttributeString.substring(5));
             }
-            if (userAttributeString.startsWith("specialCharacter:")){
+            if (userAttributeString.startsWith("specialCharacter:")) {
                 ClassLoader classLoader = getClass().getClassLoader();
 
                 Scanner scanner = new Scanner(new File(Objects.requireNonNull(classLoader.getResource(userAttributeString.substring(17))).getFile()), "UTF-8");
-                if(!scanner.hasNext()){
+                if (!scanner.hasNext()) {
                     fail();
                 }
                 String specialCharacters = scanner.nextLine();
-                userAttribute =  new String[] {specialCharacters};
+                userAttribute = new String[]{specialCharacters};
             }
 
         }
