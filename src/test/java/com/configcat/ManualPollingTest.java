@@ -18,7 +18,7 @@ class ManualPollingTest {
     private ConfigService policy;
     private MockWebServer server;
     private final ConfigCatLogger logger = new ConfigCatLogger(LoggerFactory.getLogger(ManualPollingTest.class));
-    private static final String TEST_JSON = "{ p: { s: 'test-slat'}, f: { fakeKey: { v: { s: %s }, p: [], r: [] } } }";
+    private static final String TEST_JSON = "{ p: { s: 'test-salt'}, f: { fakeKey: { v: { s: %s }, p: [], r: [] } } }";
 
     @BeforeEach
     public void setUp() throws IOException {
