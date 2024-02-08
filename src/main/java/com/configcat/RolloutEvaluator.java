@@ -171,7 +171,7 @@ class RolloutEvaluator {
     }
 
     private boolean evaluateUserCondition(UserCondition userCondition, EvaluationContext context, String configSalt, String contextSalt, EvaluateLogger evaluateLogger) {
-        evaluateLogger.append(LogHelper.formatUserCondition(userCondition));
+        evaluateLogger.append(EvaluateLogger.formatUserCondition(userCondition));
 
         if (context.getUser() == null) {
             if (!context.isUserMissing()) {
@@ -227,7 +227,7 @@ class RolloutEvaluator {
                 boolean negateIsOneOf = UserComparator.SENSITIVE_IS_NOT_ONE_OF.equals(comparator) || UserComparator.IS_NOT_ONE_OF.equals(comparator);
                 boolean sensitiveIsOneOf = UserComparator.SENSITIVE_IS_ONE_OF.equals(comparator) || UserComparator.SENSITIVE_IS_NOT_ONE_OF.equals(comparator);
                 String userAttributeForIsOneOf = getUserAttributeAsString(context.getKey(), userCondition, comparisonAttribute, userAttributeValue);
-                return evaluateIsOneOf(userCondition, configSalt, contextSalt, userAttributeForIsOneOf, negateIsOneOf, sensitiveIsOneOf);
+                return evaluateIsOneOf(userCondition, ensureConfigSalt(configSalt), contextSalt, userAttributeForIsOneOf, negateIsOneOf, sensitiveIsOneOf);
             case DATE_BEFORE:
             case DATE_AFTER:
                 double userAttributeForDate = getUserAttributeForDate(userCondition, context, comparisonAttribute, userAttributeValue);
@@ -239,13 +239,13 @@ class RolloutEvaluator {
                 boolean negateEquals = UserComparator.HASHED_NOT_EQUALS.equals(comparator) || UserComparator.TEXT_NOT_EQUALS.equals(comparator);
                 boolean hashedEquals = UserComparator.HASHED_EQUALS.equals(comparator) || UserComparator.HASHED_NOT_EQUALS.equals(comparator);
                 String userAttributeForEquals = getUserAttributeAsString(context.getKey(), userCondition, comparisonAttribute, userAttributeValue);
-                return evaluateEquals(userCondition, configSalt, contextSalt, userAttributeForEquals, negateEquals, hashedEquals);
+                return evaluateEquals(userCondition, ensureConfigSalt(configSalt), contextSalt, userAttributeForEquals, negateEquals, hashedEquals);
             case HASHED_STARTS_WITH:
             case HASHED_ENDS_WITH:
             case HASHED_NOT_STARTS_WITH:
             case HASHED_NOT_ENDS_WITH:
                 String userAttributeForHashedStartEnd = getUserAttributeAsString(context.getKey(), userCondition, comparisonAttribute, userAttributeValue);
-                return evaluateHashedStartOrEndsWith(userCondition, configSalt, contextSalt, comparator, userAttributeForHashedStartEnd);
+                return evaluateHashedStartOrEndsWith(userCondition, ensureConfigSalt(configSalt), contextSalt, comparator, userAttributeForHashedStartEnd);
             case TEXT_STARTS_WITH:
             case TEXT_NOT_STARTS_WITH:
                 boolean negateTextStartWith = UserComparator.TEXT_NOT_STARTS_WITH.equals(comparator);
@@ -263,7 +263,7 @@ class RolloutEvaluator {
                 boolean negateArrayContains = UserComparator.HASHED_ARRAY_NOT_CONTAINS.equals(comparator) || UserComparator.TEXT_ARRAY_NOT_CONTAINS.equals(comparator);
                 boolean hashedArrayContains = UserComparator.HASHED_ARRAY_CONTAINS.equals(comparator) || UserComparator.HASHED_ARRAY_NOT_CONTAINS.equals(comparator);
                 String[] userAttributeAsStringArray = getUserAttributeAsStringArray(userCondition, context, comparisonAttribute, userAttributeValue);
-                return evaluateArrayContains(userCondition, configSalt, contextSalt, userAttributeAsStringArray, negateArrayContains, hashedArrayContains);
+                return evaluateArrayContains(userCondition, ensureConfigSalt(configSalt), contextSalt, userAttributeAsStringArray, negateArrayContains, hashedArrayContains);
             default:
                 throw new IllegalArgumentException(COMPARISON_OPERATOR_IS_INVALID);
         }
@@ -539,7 +539,7 @@ class RolloutEvaluator {
         if (segmentIndex < segments.length) {
             segment = segments[segmentIndex];
         }
-        evaluateLogger.append(LogHelper.formatSegmentFlagCondition(segmentCondition, segment));
+        evaluateLogger.append(EvaluateLogger.formatSegmentFlagCondition(segmentCondition, segment));
 
         if (context.getUser() == null) {
             if (!context.isUserMissing()) {
@@ -588,7 +588,7 @@ class RolloutEvaluator {
 
 
     private boolean evaluatePrerequisiteFlagCondition(PrerequisiteFlagCondition prerequisiteFlagCondition, EvaluationContext context, EvaluateLogger evaluateLogger) {
-        evaluateLogger.append(LogHelper.formatPrerequisiteFlagCondition(prerequisiteFlagCondition));
+        evaluateLogger.append(EvaluateLogger.formatPrerequisiteFlagCondition(prerequisiteFlagCondition));
 
         String prerequisiteFlagKey = prerequisiteFlagCondition.getPrerequisiteFlagKey();
         Setting prerequsiteFlagSetting = context.getSettings().get(prerequisiteFlagKey);
@@ -610,7 +610,7 @@ class RolloutEvaluator {
         }
         visitedKeys.add(context.getKey());
         if (visitedKeys.contains(prerequisiteFlagKey)) {
-            String dependencyCycle = LogHelper.formatCircularDependencyList(visitedKeys, prerequisiteFlagKey);
+            String dependencyCycle = EvaluateLogger.formatCircularDependencyList(visitedKeys, prerequisiteFlagKey);
             throw new IllegalArgumentException("Circular dependency detected between the following depending flags: " + dependencyCycle + ".");
         }
 
@@ -702,6 +702,13 @@ class RolloutEvaluator {
             throw new IllegalArgumentException(COMPARISON_VALUE_IS_MISSING_OR_INVALID);
         }
         return value;
+    }
+
+    private static String ensureConfigSalt(String configSalt){
+        if(configSalt == null){
+            throw new IllegalArgumentException("Config JSON salt is missing.");
+        }
+        return configSalt;
     }
 }
 

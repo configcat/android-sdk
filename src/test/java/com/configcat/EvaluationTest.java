@@ -114,11 +114,12 @@ class EvaluationTest {
                 errors.add(String.format("Return value mismatch for test: %s Test Key: %s Expected: %s, Result: %s \n", testDescriptorName, settingKey, returnValue, result));
             }
             String expectedLog = Helpers.readFile(EVALUATION_FOLDER + testDescriptorName + "/" + test.getExpectedLog());
+            expectedLog = expectedLog.replaceAll("\r\n", "\n");
 
             StringBuilder logResultBuilder = new StringBuilder();
             List<ILoggingEvent> logsList = listAppender.list;
             for (ILoggingEvent logEvent : logsList) {
-                logResultBuilder.append(formatLogLevel(logEvent.getLevel())).append(" ").append(logEvent.getFormattedMessage()).append("\n");
+                logResultBuilder.append(formatLogLevel(logEvent.getLevel())).append(" ").append(logEvent.getFormattedMessage().replaceAll("\r\n", "\n")).append("\n");
             }
             String logResult = logResultBuilder.toString();
             if (!expectedLog.equals(logResult)) {
