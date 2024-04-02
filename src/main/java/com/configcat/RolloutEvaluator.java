@@ -625,6 +625,7 @@ class RolloutEvaluator {
         if (evaluateResult.value == null) {
             return false;
         }
+        validateSettingValueType(evaluateResult.value, prerequisiteFlagSetting.getType());
 
         PrerequisiteComparator prerequisiteComparator = PrerequisiteComparator.fromId(prerequisiteFlagCondition.getPrerequisiteComparator());
         SettingValue conditionValue = prerequisiteFlagCondition.getValue();
@@ -636,10 +637,10 @@ class RolloutEvaluator {
         }
         switch (prerequisiteComparator) {
             case EQUALS:
-                result = conditionValue.equals(evaluateResult.value);
+                result = conditionValue.equalsBasedOnSettingType(evaluateResult.value, prerequisiteFlagSetting.getType());
                 break;
             case NOT_EQUALS:
-                result = !conditionValue.equals(evaluateResult.value);
+                result = !conditionValue.equalsBasedOnSettingType(evaluateResult.value, prerequisiteFlagSetting.getType());
                 break;
             default:
                 throw new IllegalArgumentException("Prerequisite Flag comparison operator is invalid.");
@@ -709,6 +710,15 @@ class RolloutEvaluator {
             throw new IllegalArgumentException("Config JSON salt is missing.");
         }
         return configSalt;
+    }
+
+    private void validateSettingValueType(SettingValue settingValue, SettingType settingType) {
+        if ( (SettingType.STRING.equals(settingType) && settingValue.getStringValue() == null)
+                || (SettingType.INT.equals(settingType) && settingValue.getIntegerValue() == null )
+                || (SettingType.DOUBLE.equals(settingType) && settingValue.getDoubleValue() == null)
+                || (SettingType.BOOLEAN.equals(settingType) && settingValue.getBooleanValue() == null)) {
+            throw new IllegalArgumentException("Setting value is not of the expected type " + settingType.name() + ".");
+        }
     }
 }
 
