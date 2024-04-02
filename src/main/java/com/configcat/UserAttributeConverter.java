@@ -25,6 +25,9 @@ final class UserAttributeConverter {
             Date userAttributeDate = (Date) userAttribute;
             return doubleToString(DateTimeUtils.getUnixSeconds(userAttributeDate));
         }
+        if (userAttribute instanceof Float) {
+            return doubleToString(((Float) userAttribute).doubleValue());
+        }
         if (userAttribute instanceof Double) {
             return doubleToString((Double) userAttribute);
         }
