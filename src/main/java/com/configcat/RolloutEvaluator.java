@@ -7,12 +7,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 class EvaluationResult {
-    public final SettingsValue value;
+    public final SettingValue value;
     public final String variationId;
     public final TargetingRule targetingRule;
     public final PercentageOption percentageOption;
 
-    EvaluationResult(SettingsValue value, String variationId, TargetingRule targetingRule, PercentageOption percentageOption) {
+    EvaluationResult(SettingValue value, String variationId, TargetingRule targetingRule, PercentageOption percentageOption) {
         this.value = value;
         this.variationId = variationId;
         this.targetingRule = targetingRule;
@@ -627,7 +627,7 @@ class RolloutEvaluator {
         }
 
         PrerequisiteComparator prerequisiteComparator = PrerequisiteComparator.fromId(prerequisiteFlagCondition.getPrerequisiteComparator());
-        SettingsValue conditionValue = prerequisiteFlagCondition.getValue();
+        SettingValue conditionValue = prerequisiteFlagCondition.getValue();
 
         boolean result;
 

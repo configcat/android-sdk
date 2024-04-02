@@ -512,17 +512,17 @@ public final class ConfigCatClient implements ConfigurationProvider {
         return details.asTypeSpecific();
     }
 
-    private Object parseObject(Class<?> classOfT, SettingsValue settingsValue, SettingType settingType) {
+    private Object parseObject(Class<?> classOfT, SettingValue settingValue, SettingType settingType) {
         validateReturnType(classOfT);
 
-        if (classOfT == String.class && settingsValue.getStringValue() != null && SettingType.STRING.equals(settingType))
-            return settingsValue.getStringValue();
-        else if ((classOfT == Integer.class || classOfT == int.class) && settingsValue.getIntegerValue() != null && SettingType.INT.equals(settingType))
-            return settingsValue.getIntegerValue();
-        else if ((classOfT == Double.class || classOfT == double.class) && settingsValue.getDoubleValue() != null && SettingType.DOUBLE.equals(settingType))
-            return settingsValue.getDoubleValue();
-        else if ((classOfT == Boolean.class || classOfT == boolean.class) && settingsValue.getBooleanValue() != null && SettingType.BOOLEAN.equals(settingType))
-            return settingsValue.getBooleanValue();
+        if (classOfT == String.class && settingValue.getStringValue() != null && SettingType.STRING.equals(settingType))
+            return settingValue.getStringValue();
+        else if ((classOfT == Integer.class || classOfT == int.class) && settingValue.getIntegerValue() != null && SettingType.INT.equals(settingType))
+            return settingValue.getIntegerValue();
+        else if ((classOfT == Double.class || classOfT == double.class) && settingValue.getDoubleValue() != null && SettingType.DOUBLE.equals(settingType))
+            return settingValue.getDoubleValue();
+        else if ((classOfT == Boolean.class || classOfT == boolean.class) && settingValue.getBooleanValue() != null && SettingType.BOOLEAN.equals(settingType))
+            return settingValue.getBooleanValue();
 
         throw new IllegalArgumentException("The type of a setting must match the type of the specified default value. "
                 + "Setting's type was {" + settingType + "} but the default value's type was {" + classOfT + "}. "
