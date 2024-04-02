@@ -71,11 +71,6 @@ public class SettingValue {
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hash(booleanValue, stringValue, integerValue, doubleValue);
-    }
-
-    @Override
     public String toString() {
         if (booleanValue != null) {
             return booleanValue.toString();
