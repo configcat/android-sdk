@@ -7,7 +7,7 @@
 -keep class com.configcat.EvaluationDetails { *; }
 -keep class com.configcat.TargetingRule { *; }
 -keep class com.configcat.SettingType { *; }
--keep class com.configcat.SettingsValue { *; }
+-keep class com.configcat.SettingValue { *; }
 -keep class com.configcat.Segment { *; }
 -keep class com.configcat.Condition { *; }
 -keep class com.configcat.SimpleValue { *; }
