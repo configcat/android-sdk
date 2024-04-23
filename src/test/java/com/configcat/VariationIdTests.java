@@ -128,7 +128,7 @@ class VariationIdTests {
     }
 
     @Test
-    public void getKeyAndValueIncorrectTargetingRule() {
+    void getKeyAndValueIncorrectTargetingRule() {
         server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON_INCORRECT));
         Map.Entry<String, Boolean> result = client.getKeyAndValue(boolean.class, "targetPercentageId2");
         assertNull(result);
