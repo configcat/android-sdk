@@ -16,7 +16,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class VariationIdTests {
 
-    private static final String TEST_JSON = "{ p: { s: 'test-salt' },  f: { key1: { v: { b: true }, i: 'fakeId1', p: [] ,r: [] }, key2: { v: { b: false }, i: 'fakeId2', p: [] ,r: [] } } }";
+    private static final String TEST_JSON = "{ 'p':{ 'u': 'https://cdn-global.configcat.com', 'r': '0 ', 's': 'test-salt'}, 'f':{ 'key1':{ 't':0, 'r':[ { 'c':[ { 'u':{ 'a': 'Email', 'c': 2 , 'l ':[ '@configcat.com' ] } } ], 's':{ 'v': { 'b':true }, 'i': 'rolloutId1' } }, { 'c': [ { 'u' :{ 'a': 'Email', 'c': 2, 'l' : [ '@test.com' ] } } ], 's' : { 'v' : { 'b': false }, 'i': 'rolloutId2' } } ], 'p':[ { 'p':50, 'v' : { 'b': true }, 'i' : 'percentageId1'  },  { 'p' : 50, 'v' : { 'b': false }, 'i': 'percentageId2' } ], 'v':{ 'b':true }, 'i': 'fakeId1' }, 'key2': { 't':0, 'v': { 'b': false }, 'i': 'fakeId2' }, 'key3': { 't': 0, 'r':[ { 'c': [ { 'u':{ 'a': 'Email', 'c':2,  'l':[ '@configcat.com' ] } } ], 'p': [{ 'p':50, 'v':{ 'b': true  }, 'i' : 'targetPercentageId1' },  { 'p': 50, 'v': { 'b':false }, 'i' : 'targetPercentageId2' } ] } ], 'v':{ 'b': false  }, 'i': 'fakeId3' } } }";
+    private static final String TEST_JSON_INCORRECT = "{ 'p':{ 'u': 'https://cdn-global.configcat.com', 'r': '0 ', 's': 'test-salt' }, 'f' :{ 'incorrect' : { 't': 0, 'r': [ {'c': [ {'u': {'a': 'Email', 'c': 2, 'l': ['@configcat.com'] } } ] } ],'v': {'b': false}, 'i': 'incorrectId' } } }";
     private ConfigCatClient client;
     private MockWebServer server;
 
@@ -64,9 +65,11 @@ class VariationIdTests {
         server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
 
         List<EvaluationDetails<?>> allValueDetails = client.getAllValueDetails(null);
-        assertEquals(2, allValueDetails.size());
+        assertEquals(3, allValueDetails.size());
         assertEquals("fakeId1", allValueDetails.get(0).getVariationId());
         assertEquals("fakeId2", allValueDetails.get(1).getVariationId());
+        assertEquals("fakeId3", allValueDetails.get(2).getVariationId());
+
     }
 
     @Test
@@ -82,9 +85,11 @@ class VariationIdTests {
         server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
 
         List<EvaluationDetails<?>> allValueDetails = client.getAllValueDetailsAsync(null).get();
-        assertEquals(2, allValueDetails.size());
+        assertEquals(3, allValueDetails.size());
         assertEquals("fakeId1", allValueDetails.get(0).getVariationId());
         assertEquals("fakeId2", allValueDetails.get(1).getVariationId());
+        assertEquals("fakeId3", allValueDetails.get(2).getVariationId());
+
     }
 
     @Test
@@ -93,6 +98,18 @@ class VariationIdTests {
         Map.Entry<String, Boolean> result = client.getKeyAndValue(boolean.class, "fakeId2");
         assertEquals("key2", result.getKey());
         assertFalse(result.getValue());
+
+        Map.Entry<String, Boolean> result2 = client.getKeyAndValue(boolean.class, "percentageId2");
+        assertEquals("key1", result2.getKey());
+        assertFalse(result2.getValue());
+
+        Map.Entry<String, Boolean> result3 = client.getKeyAndValue(boolean.class, "rolloutId1");
+        assertEquals("key1", result3.getKey());
+        assertTrue(result3.getValue());
+
+        Map.Entry<String, Boolean> result4 = client.getKeyAndValue(boolean.class, "targetPercentageId2");
+        assertEquals("key3", result4.getKey());
+        assertFalse(result4.getValue());
     }
 
     @Test
@@ -107,6 +124,13 @@ class VariationIdTests {
     void getKeyAndValueNotFound() {
         server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
         Map.Entry<String, Boolean> result = client.getKeyAndValue(boolean.class, "nonexisting");
+        assertNull(result);
+    }
+
+    @Test
+    void getKeyAndValueIncorrectTargetingRule() {
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON_INCORRECT));
+        Map.Entry<String, Boolean> result = client.getKeyAndValue(boolean.class, "targetPercentageId2");
         assertNull(result);
     }
 }
