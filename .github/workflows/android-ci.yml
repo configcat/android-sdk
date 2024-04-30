@@ -69,12 +69,9 @@ jobs:
       
     - name: Check with Gradle
       run: ./gradlew check
-      
-    - name: Upload coverage report
-      run: bash <(curl -s https://codecov.io/bash)
 
     - name: Execute sonar scan
-      run: ./gradlew sonarqube -Dbuild.number=$GITHUB_RUN_NUMBER
+      run: ./gradlew sonar -Dbuild.number=$GITHUB_RUN_NUMBER
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
