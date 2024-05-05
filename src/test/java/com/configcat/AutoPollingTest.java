@@ -223,6 +223,29 @@ class AutoPollingTest {
     }
 
     @Test
+    void testPollsWhenCacheExpired() throws Exception {
+        this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test1")));
+
+        ConfigCache cache = new SingleValueCache(Helpers.cacheValueFromConfigJsonAndTime(String.format(TEST_JSON, "test"), System.currentTimeMillis() - 5000));
+
+        PollingMode pollingMode = PollingModes.autoPoll(1);
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient(),
+                logger,
+                "",
+                this.server.url("/").toString(),
+                false,
+                pollingMode.getPollingIdentifier());
+        ConfigService configService = new ConfigService("", pollingMode, cache, logger, fetcher, new ConfigCatHooks(), false);
+
+        configService.getSettings().get();
+
+        assertEquals("test1", configService.getSettings().get().settings().get("fakeKey").getSettingsValue().getStringValue());
+        assertEquals(1, this.server.getRequestCount());
+
+        configService.close();
+    }
+
+    @Test
     void testNonExpiredCacheCallsReady() throws Exception {
         ConfigCache cache = new SingleValueCache(Helpers.cacheValueFromConfigJson(String.format(TEST_JSON, "test")));
 
