@@ -103,7 +103,12 @@ class ConfigService implements Closeable {
                             ? new SettingResult(entryResult.value().getConfig().getEntries(), entryResult.value().getFetchTime())
                             : SettingResult.EMPTY);
         } else {
-            return fetchIfOlder(Constants.DISTANT_PAST, initialized.get()) // If we are initialized, we prefer the cached results
+            long threshold = Constants.DISTANT_PAST;
+            if (!initialized.get() && mode instanceof AutoPollingMode) {
+                AutoPollingMode autoPollingMode = (AutoPollingMode) mode;
+                threshold = System.currentTimeMillis() - (autoPollingMode.getAutoPollRateInSeconds() * 1000L);
+            }
+            return fetchIfOlder(threshold, initialized.get()) // If we are initialized, we prefer the cached results
                     .thenApply(entryResult -> !entryResult.value().isEmpty()
                             ? new SettingResult(entryResult.value().getConfig().getEntries(), entryResult.value().getFetchTime())
                             : SettingResult.EMPTY);
