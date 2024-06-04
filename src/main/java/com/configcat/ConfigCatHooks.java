@@ -5,12 +5,14 @@ import java9.util.function.Consumer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class ConfigCatHooks {
+    private final AtomicReference<ClientCacheState> clientCacheState = new AtomicReference<>(null);
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock(true);
     private final List<Consumer<Map<String, Setting>>> onConfigChanged = new ArrayList<>();
-    private final List<Runnable> onClientReady = new ArrayList<>();
+    private final List<Consumer<ClientCacheState>> onClientReady = new ArrayList<>();
     private final List<Consumer<EvaluationDetails<Object>>> onFlagEvaluated = new ArrayList<>();
     private final List<Consumer<String>> onError = new ArrayList<>();
 
@@ -23,10 +25,14 @@ public class ConfigCatHooks {
      *
      * @param callback the method to call when the event fires.
      */
-    public void addOnClientReady(Runnable callback) {
+    public void addOnClientReady(Consumer<ClientCacheState> callback) {
         lock.writeLock().lock();
         try {
-            this.onClientReady.add(callback);
+            if(clientCacheState.get() != null) {
+                callback.accept(clientCacheState.get());
+            } else {
+                this.onClientReady.add(callback);
+            }
         } finally {
             lock.writeLock().unlock();
         }
@@ -76,11 +82,12 @@ public class ConfigCatHooks {
         }
     }
 
-    void invokeOnClientReady() {
+    void invokeOnClientReady(ClientCacheState clientCacheState) {
         lock.readLock().lock();
         try {
-            for (Runnable func : this.onClientReady) {
-                func.run();
+            this.clientCacheState.set(clientCacheState);
+            for (Consumer<ClientCacheState> func : this.onClientReady) {
+                func.accept(clientCacheState);
             }
         } finally {
             lock.readLock().unlock();

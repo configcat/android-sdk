@@ -255,4 +255,11 @@ public interface ConfigurationProvider extends Closeable {
      * @return True if the client is closed.
      */
     boolean isClosed();
+
+    /**
+     * Awaits for SDK initialization.
+     *
+     * @return the future which executes the wait for ready and return with the client state.
+     */
+    CompletableFuture<ClientCacheState> waitForReadyAsync();
 }

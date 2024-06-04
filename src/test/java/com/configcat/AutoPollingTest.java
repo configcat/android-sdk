@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -249,9 +250,9 @@ class AutoPollingTest {
     void testNonExpiredCacheCallsReady() throws Exception {
         ConfigCache cache = new SingleValueCache(Helpers.cacheValueFromConfigJson(String.format(TEST_JSON, "test")));
 
-        AtomicBoolean ready = new AtomicBoolean(false);
+        AtomicReference<ClientCacheState> ready = new AtomicReference(null);
         ConfigCatHooks hooks = new ConfigCatHooks();
-        hooks.addOnClientReady(() -> ready.set(true));
+        hooks.addOnClientReady(clientReadyState -> ready.set(clientReadyState));
         PollingMode pollingMode = PollingModes.autoPoll(2);
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient(),
                 logger,
@@ -263,7 +264,9 @@ class AutoPollingTest {
 
         assertEquals(0, this.server.getRequestCount());
 
-        Helpers.waitFor(ready::get);
+        Helpers.waitForClientCacheState(2000, ready::get);
+
+        assertEquals(ClientCacheState.HAS_UP_TO_DATE_FLAG_DATA, ready.get());
 
         policy.close();
     }
