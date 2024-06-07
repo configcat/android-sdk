@@ -1,5 +1,6 @@
 package com.configcat;
 
+import java9.util.concurrent.CompletableFuture;
 import okhttp3.OkHttpClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -530,16 +531,18 @@ class ConfigCatClientTest {
 
         server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
 
-        AtomicBoolean ready = new AtomicBoolean(false);
+        AtomicReference<ClientCacheState> ready = new AtomicReference(null);
         ConfigCatClient cl = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
             options.pollingMode(PollingModes.autoPoll());
             options.baseUrl(server.url("/").toString());
             options.offline(true);
-            options.hooks().addOnClientReady(() -> ready.set(true));
+            options.hooks().addOnClientReady(clientReadyState -> ready.set(clientReadyState));
         });
 
         assertEquals(0, server.getRequestCount());
-        Helpers.waitFor(ready::get);
+        Helpers.waitForClientCacheState(2000, ready::get);
+
+        assertEquals(ClientCacheState.NO_FLAG_DATA, ready.get());
 
         server.shutdown();
         cl.close();
@@ -614,14 +617,14 @@ class ConfigCatClientTest {
         server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
 
         AtomicBoolean changed = new AtomicBoolean(false);
-        AtomicBoolean ready = new AtomicBoolean(false);
+        AtomicReference<ClientCacheState> ready = new AtomicReference(null);
         AtomicReference<String> error = new AtomicReference<>("");
 
         ConfigCatClient cl = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
             options.pollingMode(PollingModes.manualPoll());
             options.baseUrl(server.url("/").toString());
             options.hooks().addOnConfigChanged(map -> changed.set(true));
-            options.hooks().addOnClientReady(() -> ready.set(true));
+            options.hooks().addOnClientReady(clientReadyState -> ready.set(clientReadyState));
             options.hooks().addOnError(error::set);
         });
 
@@ -629,7 +632,7 @@ class ConfigCatClientTest {
         cl.forceRefresh();
 
         assertTrue(changed.get());
-        assertTrue(ready.get());
+        assertEquals(ClientCacheState.NO_FLAG_DATA, ready.get());
         assertEquals("Unexpected HTTP response was received while trying to fetch config JSON: 500 Server Error", error.get());
 
         server.shutdown();
@@ -674,7 +677,7 @@ class ConfigCatClientTest {
         server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
 
         AtomicBoolean changed = new AtomicBoolean(false);
-        AtomicBoolean ready = new AtomicBoolean(false);
+        AtomicReference<ClientCacheState> ready = new AtomicReference(null);
         AtomicReference<String> error = new AtomicReference<>("");
 
         ConfigCatClient cl = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
@@ -683,17 +686,49 @@ class ConfigCatClientTest {
         });
 
         cl.getHooks().addOnConfigChanged(map -> changed.set(true));
-        cl.getHooks().addOnClientReady(() -> ready.set(true));
+        cl.getHooks().addOnClientReady(clientReadyState -> ready.set(clientReadyState));
         cl.getHooks().addOnError(error::set);
 
         cl.forceRefresh();
         cl.forceRefresh();
 
         assertTrue(changed.get());
-        assertTrue(ready.get());
+        assertEquals(ClientCacheState.HAS_UP_TO_DATE_FLAG_DATA, ready.get());
         assertEquals("Unexpected HTTP response was received while trying to fetch config JSON: 500 Server Error", error.get());
 
         server.shutdown();
+        cl.close();
+    }
+
+    @Test
+    void testReadyHookManualPollWithCache() throws IOException {
+
+        AtomicReference<ClientCacheState> ready = new AtomicReference(null);
+        ConfigCache cache = new SingleValueCache(Helpers.cacheValueFromConfigJson(String.format(TEST_JSON, "test")));
+
+        ConfigCatClient cl = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
+            options.pollingMode(PollingModes.manualPoll());
+            options.cache(cache);
+            options.hooks().addOnClientReady(clientReadyState -> ready.set(clientReadyState));
+        });
+
+        assertEquals(ClientCacheState.HAS_CACHED_FLAG_DATA_ONLY, ready.get());
+
+        cl.close();
+    }
+
+    @Test
+    void testReadyHookLocalOnly() throws IOException {
+        AtomicReference<ClientCacheState> ready = new AtomicReference(null);
+
+        ConfigCatClient cl = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
+            options.pollingMode(PollingModes.manualPoll());
+            options.flagOverrides(OverrideDataSource.map(Collections.EMPTY_MAP), OverrideBehaviour.LOCAL_ONLY);
+            options.hooks().addOnClientReady(clientReadyState -> ready.set(clientReadyState));
+        });
+
+        assertEquals(ClientCacheState.HAS_LOCAL_OVERRIDE_FLAG_DATA_ONLY, ready.get());
+
         cl.close();
     }
 
@@ -964,5 +999,26 @@ class ConfigCatClientTest {
 
         ConfigCatClient.closeAll();
         scanner.close();
+    }
+
+    @Test
+    void testWaitForReady() throws IOException, InterruptedException, ExecutionException {
+        MockWebServer server = new MockWebServer();
+        server.start();
+
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
+
+        ConfigCatClient cl = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
+            options.pollingMode(PollingModes.autoPoll(2));
+            options.baseUrl(server.url("/").toString());
+        });
+
+        CompletableFuture<ClientCacheState> clientReadyStateCompletableFuture = cl.waitForReadyAsync();
+        if(clientReadyStateCompletableFuture.isDone()) {
+            assertEquals(clientReadyStateCompletableFuture.get(), ClientCacheState.HAS_UP_TO_DATE_FLAG_DATA);
+        }
+
+        server.shutdown();
+        cl.close();
     }
 }

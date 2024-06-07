@@ -55,6 +55,8 @@ public final class ConfigCatClient implements ConfigurationProvider {
                     options.pollingMode.getPollingIdentifier());
 
             this.configService = new ConfigService(sdkKey, options.pollingMode, options.cache, logger, fetcher, options.hooks, options.offline);
+        } else {
+            this.hooks.invokeOnClientReady(ClientCacheState.HAS_LOCAL_OVERRIDE_FLAG_DATA_ONLY);
         }
     }
 
@@ -594,8 +596,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
      * @return the ConfigCatClient instance.
      */
     public static ConfigCatClient get(String sdkKey, Consumer<Options> optionsCallback) {
-        if (sdkKey == null || sdkKey.isEmpty())
-            throw new IllegalArgumentException("SDK Key cannot be null or empty.");
+
 
         Options clientOptions = new Options();
 
@@ -605,8 +606,17 @@ public final class ConfigCatClient implements ConfigurationProvider {
             clientOptions = options;
         }
 
-        if (!OverrideBehaviour.LOCAL_ONLY.equals(clientOptions.overrideBehaviour) && !isValidKey(sdkKey, clientOptions.isBaseURLCustom()))
+        if (sdkKey == null || sdkKey.isEmpty()) {
+            clientOptions.hooks.invokeOnClientReady(ClientCacheState.NO_FLAG_DATA);
+            throw new IllegalArgumentException("SDK Key cannot be null or empty.");
+        }
+
+
+        if (!OverrideBehaviour.LOCAL_ONLY.equals(clientOptions.overrideBehaviour) && !isValidKey(sdkKey, clientOptions.isBaseURLCustom())) {
+            clientOptions.hooks.invokeOnClientReady(ClientCacheState.NO_FLAG_DATA);
             throw new IllegalArgumentException("SDK Key '" + sdkKey + "' is invalid.");
+        }
+
 
         synchronized (INSTANCES) {
             ConfigCatClient client = INSTANCES.get(sdkKey);
@@ -647,6 +657,13 @@ public final class ConfigCatClient implements ConfigurationProvider {
             }
             INSTANCES.clear();
         }
+    }
+
+    @Override
+    public CompletableFuture<ClientCacheState> waitForReadyAsync() {
+        CompletableFuture<ClientCacheState> completableFuture = new CompletableFuture<>();
+        getHooks().addOnClientReady((completableFuture::complete));
+        return completableFuture;
     }
 
     /**

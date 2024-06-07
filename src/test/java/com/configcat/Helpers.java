@@ -44,6 +44,17 @@ final class Helpers {
         }
     }
 
+    static void waitForClientCacheState(long timeout, Supplier<ClientCacheState> predicate) throws InterruptedException {
+        long end = System.currentTimeMillis() + timeout;
+        while (predicate.get() == null) {
+            Thread.sleep(200);
+            if (System.currentTimeMillis() > end) {
+                throw new RuntimeException("Test timed out.");
+            }
+        }
+    }
+
+
     public static String readFile(String filePath) throws IOException {
 
         try (InputStream stream = Helpers.class.getClassLoader().getResourceAsStream(filePath)) {

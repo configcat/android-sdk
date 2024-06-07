@@ -37,6 +37,10 @@ public class Entry {
         return EMPTY.equals(this);
     }
 
+    public boolean isExpired(long threshold) {
+        return fetchTime <= threshold ;
+    }
+
     public static final Entry EMPTY = new Entry(Config.EMPTY, "", "", Constants.DISTANT_PAST);
 
     public String serialize() {
