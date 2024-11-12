@@ -8,7 +8,6 @@
 
 ConfigCat SDK for Android provides easy integration for your application to [ConfigCat](https://configcat.com).
 
-
 ## Getting started
 
 ### 1. Install the package
