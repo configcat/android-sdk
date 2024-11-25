@@ -30,7 +30,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
     private ConfigService configService;
 
     private ConfigCatClient(String sdkKey, Options options) throws IllegalArgumentException {
-        this.logger = new ConfigCatLogger(LoggerFactory.getLogger(ConfigCatClient.class), options.logLevel, options.hooks);
+        this.logger = new ConfigCatLogger(LoggerFactory.getLogger(ConfigCatClient.class), options.logLevel, options.hooks, options.logFilter);
         this.clientLogLevel = options.logLevel;
 
         this.sdkKey = sdkKey;
@@ -680,6 +680,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         private OverrideBehaviour overrideBehaviour;
         private User defaultUser;
         private boolean offline;
+        private LogFilterFunction logFilter;
 
         private final ConfigCatHooks hooks = new ConfigCatHooks();
 
@@ -785,6 +786,13 @@ public final class ConfigCatClient implements ConfigurationProvider {
          */
         public ConfigCatHooks hooks() {
             return this.hooks;
+        }
+
+        /**
+         * Set the client's log filter callback function. When logFilterFunction returns false, the ConfigCatLogger skips the log event.
+         */
+        public void logFilter(LogFilterFunction logFilter) {
+            this.logFilter = logFilter;
         }
 
         private boolean isBaseURLCustom() {
