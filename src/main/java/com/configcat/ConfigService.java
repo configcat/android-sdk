@@ -82,7 +82,7 @@ class ConfigService implements Closeable {
                 try {
                     if (initialized.compareAndSet(false, true)) {
                         hooks.invokeOnClientReady(determineCacheState());
-                        String message = ConfigCatLogMessages.getAutoPollMaxInitWaitTimeReached(autoPollingMode.getMaxInitWaitTimeSeconds());
+                        FormattableLogMessage message = ConfigCatLogMessages.getAutoPollMaxInitWaitTimeReached(autoPollingMode.getMaxInitWaitTimeSeconds());
                         logger.warn(4200, message);
                         completeRunningTask(Result.error(message, cachedEntry));
                     }

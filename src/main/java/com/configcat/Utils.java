@@ -40,9 +40,9 @@ final class Constants {
 
 final class Result<T> {
     private final T value;
-    private final String error;
+    private final Object error;
 
-    private Result(T value, String error) {
+    private Result(T value, Object error) {
         this.value = value;
         this.error = error;
     }
@@ -51,11 +51,11 @@ final class Result<T> {
         return this.value;
     }
 
-    String error() {
+    Object error() {
         return this.error;
     }
 
-    static <T> Result<T> error(String error, T value) {
+    static <T> Result<T> error(Object error, T value) {
         return new Result<>(value, error);
     }
 

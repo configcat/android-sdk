@@ -36,27 +36,27 @@ class ConfigCatLogger {
         this.filterFunction = null;
     }
 
-    public void warn(int eventId, String message) {
+    public void warn(int eventId, Object message) {
         if (filter(eventId,  LogLevel.WARNING, message, null)) {
             this.logger.warn("[{}] {}", eventId, message);
         }
     }
 
-    public void error(int eventId, String message, Exception exception) {
+    public void error(int eventId, Object message, Exception exception) {
         if (this.hooks != null) this.hooks.invokeOnError(message);
         if (filter(eventId,  LogLevel.ERROR, message, exception)) {
             this.logger.error("[{}] {}", eventId, message, exception);
         }
     }
 
-    public void error(int eventId, String message) {
+    public void error(int eventId, Object message) {
         if (this.hooks != null) this.hooks.invokeOnError(message);
         if (filter(eventId,  LogLevel.ERROR, message, null)) {
             this.logger.error("[{}] {}", eventId, message);
         }
     }
 
-    public void info(int eventId, String message) {
+    public void info(int eventId, Object message) {
         if (filter(eventId,  LogLevel.INFO, message, null)) {
             this.logger.info("[{}] {}", eventId, message);
         }
