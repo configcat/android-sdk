@@ -2,7 +2,6 @@ package com.configcat;
 
 import java.util.Iterator;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 class FormattableLogMessageWithKeySet extends FormattableLogMessage {
 
