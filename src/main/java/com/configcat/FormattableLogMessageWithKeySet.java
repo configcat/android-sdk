@@ -14,12 +14,12 @@ class FormattableLogMessageWithKeySet extends FormattableLogMessage {
         Object keySetObject = args[args.length - 1];
         if(keySetObject instanceof Set) {
             Set<String> keySet = (Set<String>) keySetObject;
-            args[args.length - 1] = convertKeysSetToFormatedString(keySet);
+            args[args.length - 1] = convertKeySetToFormattedString(keySet);
         }
         return String.format(message, args);
     }
 
-    private static String convertKeysSetToFormatedString(final Set<String> availableKeys) {
+    private static String convertKeySetToFormattedString(final Set<String> availableKeys) {
         StringBuilder sb = new StringBuilder();
         Iterator<String> it = availableKeys.iterator();
         if (it.hasNext()) {
