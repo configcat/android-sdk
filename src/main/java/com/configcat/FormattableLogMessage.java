@@ -2,6 +2,9 @@ package com.configcat;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+import java.util.Objects;
+
 class FormattableLogMessage {
 
     private String cachedMessage;
@@ -24,5 +27,19 @@ class FormattableLogMessage {
             cachedMessage = formatLogMessage();
         }
         return cachedMessage;
+    }
+
+
+    @Override
+    public boolean equals(Object obj) {
+        if(obj instanceof FormattableLogMessage) {
+            return toString().equals(obj.toString());
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(cachedMessage, message, Arrays.hashCode(args));
     }
 }
