@@ -30,7 +30,7 @@ final class Constants {
     static final long DISTANT_PAST = 0;
     static final String CONFIG_JSON_NAME = "config_v6.json";
     static final String SERIALIZATION_FORMAT_VERSION = "v2";
-    static final String VERSION = "10.2.3";
+    static final String VERSION = "10.3.0";
 
     static final String SDK_KEY_PROXY_PREFIX = "configcat-proxy/";
     static final String SDK_KEY_PREFIX = "configcat-sdk-1";
@@ -40,9 +40,9 @@ final class Constants {
 
 final class Result<T> {
     private final T value;
-    private final String error;
+    private final Object error;
 
-    private Result(T value, String error) {
+    private Result(T value, Object error) {
         this.value = value;
         this.error = error;
     }
@@ -51,11 +51,11 @@ final class Result<T> {
         return this.value;
     }
 
-    String error() {
+    Object error() {
         return this.error;
     }
 
-    static <T> Result<T> error(String error, T value) {
+    static <T> Result<T> error(Object error, T value) {
         return new Result<>(value, error);
     }
 

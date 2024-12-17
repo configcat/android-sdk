@@ -30,7 +30,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
     private ConfigService configService;
 
     private ConfigCatClient(String sdkKey, Options options) throws IllegalArgumentException {
-        this.logger = new ConfigCatLogger(LoggerFactory.getLogger(ConfigCatClient.class), options.logLevel, options.hooks);
+        this.logger = new ConfigCatLogger(LoggerFactory.getLogger(ConfigCatClient.class), options.logLevel, options.hooks, options.logFilter);
         this.clientLogLevel = options.logLevel;
 
         this.sdkKey = sdkKey;
@@ -449,7 +449,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
             return this.evaluate(classOfT, checkSettingResult.value(), key, userObject, settingResult.fetchTime(), settingResult.settings()).getValue();
         } catch (Exception e) {
-            String error = ConfigCatLogMessages.getSettingEvaluationFailedForOtherReason(key, "defaultValue", defaultValue);
+            FormattableLogMessage error = ConfigCatLogMessages.getSettingEvaluationFailedForOtherReason(key, "defaultValue", defaultValue);
             this.hooks.invokeOnFlagEvaluated(EvaluationDetails.fromError(key, defaultValue, error + " " + e.getMessage(), userObject));
             this.logger.error(2001, error, e);
             return defaultValue;
@@ -562,7 +562,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
     private <T> Result<Setting> checkSettingAvailable(SettingResult settingResult, String key, T defaultValue) {
         if (settingResult.isEmpty()) {
-            String errorMessage = ConfigCatLogMessages.getConfigJsonIsNotPresentedWithDefaultValue(key, "defaultValue", defaultValue);
+            FormattableLogMessage errorMessage = ConfigCatLogMessages.getConfigJsonIsNotPresentedWithDefaultValue(key, "defaultValue", defaultValue);
             this.logger.error(1000, errorMessage);
             return Result.error(errorMessage, null);
         }
@@ -570,7 +570,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         Map<String, Setting> settings = settingResult.settings();
         Setting setting = settings.get(key);
         if (setting == null) {
-            String errorMessage = ConfigCatLogMessages.getSettingEvaluationFailedDueToMissingKey(key, "defaultValue", defaultValue, settings.keySet());
+            FormattableLogMessage errorMessage = ConfigCatLogMessages.getSettingEvaluationFailedDueToMissingKey(key, "defaultValue", defaultValue, settings.keySet());
             this.logger.error(1001, errorMessage);
             return Result.error(errorMessage, null);
         }
@@ -680,6 +680,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         private OverrideBehaviour overrideBehaviour;
         private User defaultUser;
         private boolean offline;
+        private LogFilterFunction logFilter;
 
         private final ConfigCatHooks hooks = new ConfigCatHooks();
 
@@ -785,6 +786,13 @@ public final class ConfigCatClient implements ConfigurationProvider {
          */
         public ConfigCatHooks hooks() {
             return this.hooks;
+        }
+
+        /**
+         * Set the client's log filter callback function. When logFilterFunction returns false, the ConfigCatLogger skips the log event.
+         */
+        public void logFilter(LogFilterFunction logFilter) {
+            this.logFilter = logFilter;
         }
 
         private boolean isBaseURLCustom() {
