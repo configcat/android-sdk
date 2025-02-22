@@ -42,7 +42,7 @@ class ConfigCatLogger {
         }
     }
 
-    public void error(int eventId, Object message, Exception exception) {
+    public void error(int eventId, Object message, Throwable exception) {
         if (this.hooks != null) this.hooks.invokeOnError(message);
         if (filter(eventId,  LogLevel.ERROR, message, exception)) {
             this.logger.error("[{}] {}", eventId, message, exception);
@@ -68,7 +68,7 @@ class ConfigCatLogger {
         }
     }
 
-    private boolean filter(int eventId, LogLevel logLevel, Object message, Exception exception) {
+    private boolean filter(int eventId, LogLevel logLevel, Object message, Throwable exception) {
         return this.logLevel.ordinal() <= logLevel.ordinal() && (this.filterFunction == null || this.filterFunction.apply(logLevel, eventId, message, exception));
     }
 }
