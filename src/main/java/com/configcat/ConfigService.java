@@ -1,8 +1,6 @@
 package com.configcat;
 
 import java9.util.concurrent.CompletableFuture;
-import org.apache.commons.codec.binary.Hex;
-import org.apache.commons.codec.digest.DigestUtils;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -63,7 +61,7 @@ class ConfigService implements Closeable {
                          ConfigFetcher fetcher,
                          ConfigCatHooks hooks,
                          boolean offline) {
-        this.cacheKey = new String(Hex.encodeHex(DigestUtils.sha1(String.format(CACHE_BASE, sdkKey))));
+        this.cacheKey = Utils.sha1(String.format(CACHE_BASE, sdkKey));
         this.mode = mode;
         this.cache = cache;
         this.logger = logger;
@@ -237,7 +235,7 @@ class ConfigService implements Closeable {
             String configToCache = entry.serialize();
             cachedEntryString = configToCache;
             cache.write(cacheKey, configToCache);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             logger.error(2201, ConfigCatLogMessages.CONFIG_SERVICE_CACHE_WRITE_ERROR, e);
         }
     }
@@ -251,7 +249,7 @@ class ConfigService implements Closeable {
             cachedEntryString = cachedConfigJson;
             Entry deserialized = Entry.fromString(cachedConfigJson);
             return deserialized == null || deserialized.getConfig() == null ? Entry.EMPTY : deserialized;
-        } catch (Exception e) {
+        } catch (Throwable e) {
             this.logger.error(2200, ConfigCatLogMessages.CONFIG_SERVICE_CACHE_READ_ERROR, e);
             return Entry.EMPTY;
         }
