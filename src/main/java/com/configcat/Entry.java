@@ -73,7 +73,7 @@ public class Entry {
         try {
             Config config = Utils.deserializeConfig(configJson);
             return new Entry(config, eTag, configJson, fetchTimeUnixMillis);
-        } catch (Throwable e) {
+        } catch (Exception e) {
             throw new IllegalArgumentException("Invalid config JSON content: " + configJson);
         }
     }

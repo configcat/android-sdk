@@ -78,7 +78,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
             this.logger.error(0, "Thread interrupted.", e);
             Thread.currentThread().interrupt();
             return defaultValue;
-        } catch (Throwable e) {
+        } catch (Exception e) {
             this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithDefaultValue("getValue", key, "defaultValue", defaultValue.toString()), e);
             return defaultValue;
         }
@@ -125,7 +125,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
             this.logger.error(0, error, e);
             Thread.currentThread().interrupt();
             return EvaluationDetails.fromError(key, defaultValue, error + ": " + e.getMessage(), user);
-        } catch (Throwable e) {
+        } catch (Exception e) {
             this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithDefaultValue("getValueDetails", key, "defaultValue", defaultValue), e);
             return EvaluationDetails.fromError(key, defaultValue, e.getMessage(), user);
         }
@@ -169,7 +169,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
             this.logger.error(0, "Thread interrupted.", e);
             Thread.currentThread().interrupt();
             return new HashMap<>();
-        } catch (Throwable e) {
+        } catch (Exception e) {
             this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithEmptyValue("getAllValues", "empty map"), e);
             return new HashMap<>();
         }
@@ -201,7 +201,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                         }
 
                         return result;
-                    } catch (Throwable e) {
+                    } catch (Exception e) {
                         this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithEmptyValue("getAllValuesAsync", "empty map"), e);
                         return new HashMap<>();
                     }
@@ -221,7 +221,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
             this.logger.error(0, "Thread interrupted.", e);
             Thread.currentThread().interrupt();
             return new ArrayList<>();
-        } catch (Throwable e) {
+        } catch (Exception e) {
             this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithEmptyValue("getAllValueDetails", "empty list"), e);
             return new ArrayList<>();
         }
@@ -252,7 +252,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                         }
 
                         return result;
-                    } catch (Throwable e) {
+                    } catch (Exception e) {
                         this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithEmptyValue("getAllValueDetailsAsync", "empty list"), e);
                         return new ArrayList<>();
                     }
@@ -270,7 +270,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
             this.logger.error(0, "Thread interrupted.", e);
             Thread.currentThread().interrupt();
             return null;
-        } catch (Throwable e) {
+        } catch (Exception e) {
             this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithEmptyValue("getKeyAndValue", "null"), e);
             return null;
         }
@@ -293,7 +293,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
             Thread.currentThread().interrupt();
             this.logger.error(0, "Thread interrupted.", e);
             return new ArrayList<>();
-        } catch (Throwable e) {
+        } catch (Exception e) {
             this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithEmptyValue("getAllKeys", "empty array"), e);
             return new ArrayList<>();
         }
@@ -308,7 +308,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                             return new ArrayList<>();
                         }
                         return settingsResult.settings().keySet();
-                    } catch (Throwable e) {
+                    } catch (Exception e) {
                         this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithEmptyValue("getAllKeysAsync", "empty array"), e);
                         return new ArrayList<>();
                     }
@@ -322,7 +322,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         } catch (InterruptedException e) {
             logger.error(0, "Thread interrupted.", e);
             Thread.currentThread().interrupt();
-        } catch (Throwable e) {
+        } catch (Exception e) {
             this.logger.error(1003, ConfigCatLogMessages.getForceRefreshError("forceRefresh"), e);
         }
         return new RefreshResult(false, "An error occurred during the refresh.");
@@ -447,7 +447,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                 return defaultValue;
             }
             return this.evaluate(classOfT, checkSettingResult.value(), key, userObject, settingResult.fetchTime(), settingResult.settings()).getValue();
-        } catch (Throwable e) {
+        } catch (Exception e) {
             FormattableLogMessage error = ConfigCatLogMessages.getSettingEvaluationFailedForOtherReason(key, "defaultValue", defaultValue);
             this.hooks.invokeOnFlagEvaluated(EvaluationDetails.fromError(key, defaultValue, error + " " + e.getMessage(), userObject));
             this.logger.error(2001, error, e);
@@ -497,7 +497,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
             }
             this.logger.error(2011, ConfigCatLogMessages.getSettingForVariationIdIsNotPresent(variationId));
             return null;
-        } catch (Throwable e) {
+        } catch (Exception e) {
             this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithEmptyValue("getKeyAndValueFromSettingsMap", "null"), e);
             return null;
         }

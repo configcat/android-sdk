@@ -141,7 +141,7 @@ class ConfigFetcher implements Closeable {
                     }
                 }
 
-            } catch (Throwable exception) {
+            } catch (Exception exception) {
                 this.logger.error(1103, ConfigCatLogMessages.FETCH_FAILED_DUE_TO_UNEXPECTED_ERROR, exception);
                 return CompletableFuture.completedFuture(fetchResponse);
             }
@@ -203,7 +203,7 @@ class ConfigFetcher implements Closeable {
                     FormattableLogMessage message = ConfigCatLogMessages.getFetchFailedDueToRequestTimeout(httpClient.connectTimeoutMillis(), httpClient.readTimeoutMillis(), httpClient.writeTimeoutMillis());
                     logger.error(1102, message, e);
                     future.complete(FetchResponse.failed(message, false, null));
-                } catch (Throwable e) {
+                } catch (Exception e) {
                     String message = ConfigCatLogMessages.FETCH_FAILED_DUE_TO_UNEXPECTED_ERROR;
                     logger.error(1103, message, e);
                     future.complete(FetchResponse.failed(message + " " + e.getMessage(), false, null));
@@ -242,7 +242,7 @@ class ConfigFetcher implements Closeable {
     private Result<Config> deserializeConfig(String json, String cfRayId) {
         try {
             return Result.success(Utils.deserializeConfig(json));
-        } catch (Throwable e) {
+        } catch (Exception e) {
             FormattableLogMessage message = ConfigCatLogMessages.getFetchReceived200WithInvalidBodyError(cfRayId);
             this.logger.error(1105, message, e);
             return Result.error(message, null);
