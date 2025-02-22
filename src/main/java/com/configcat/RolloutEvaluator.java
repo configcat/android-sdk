@@ -28,8 +28,6 @@ class RolloutEvaluator {
     public static final String CANNOT_EVALUATE_THE_USER_INVALID = " attribute is invalid (";
     public static final String COMPARISON_VALUE_IS_MISSING_OR_INVALID = "Comparison value is missing or invalid.";
 
-    private static final char[] HEX_ARRAY = "0123456789abcdef".toCharArray();
-
     private final ConfigCatLogger logger;
 
     public RolloutEvaluator(ConfigCatLogger logger) {
