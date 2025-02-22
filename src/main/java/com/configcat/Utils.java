@@ -5,10 +5,6 @@ import com.google.gson.GsonBuilder;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-
 final class Utils {
     private Utils() { /* prevent from instantiation*/ }
 
