@@ -446,9 +446,8 @@ public final class ConfigCatClient implements ConfigurationProvider {
                 this.hooks.invokeOnFlagEvaluated(EvaluationDetails.fromError(key, defaultValue, checkSettingResult.error(), user));
                 return defaultValue;
             }
-
             return this.evaluate(classOfT, checkSettingResult.value(), key, userObject, settingResult.fetchTime(), settingResult.settings()).getValue();
-        } catch (Exception e) {
+        } catch (Exception | NoSuchMethodError e) {
             FormattableLogMessage error = ConfigCatLogMessages.getSettingEvaluationFailedForOtherReason(key, "defaultValue", defaultValue);
             this.hooks.invokeOnFlagEvaluated(EvaluationDetails.fromError(key, defaultValue, error + " " + e.getMessage(), userObject));
             this.logger.error(2001, error, e);

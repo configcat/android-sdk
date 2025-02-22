@@ -1,11 +1,8 @@
 package com.configcat;
 
 import de.skuzzle.semantic.Version;
-import org.apache.commons.codec.digest.DigestUtils;
 
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
 class EvaluationResult {
@@ -30,8 +27,6 @@ class RolloutEvaluator {
     public static final String COMPARISON_OPERATOR_IS_INVALID = "Comparison operator is invalid.";
     public static final String CANNOT_EVALUATE_THE_USER_INVALID = " attribute is invalid (";
     public static final String COMPARISON_VALUE_IS_MISSING_OR_INVALID = "Comparison value is missing or invalid.";
-
-    private static final char[] HEX_ARRAY = "0123456789abcdef".toCharArray();
 
     private final ConfigCatLogger logger;
 
@@ -524,7 +519,7 @@ class RolloutEvaluator {
 
 
     private static String getSaltedUserValue(String userValue, String configJsonSalt, String contextSalt) {
-        return sha256(userValue + configJsonSalt + contextSalt);
+        return Utils.sha256(userValue + configJsonSalt + contextSalt);
     }
 
     private static String getSaltedUserValueSlice(byte[] userValueSliceUTF8, String configJsonSalt, String contextSalt) {
@@ -535,34 +530,7 @@ class RolloutEvaluator {
         System.arraycopy(userValueSliceUTF8, 0, concatByteArrays, 0, userValueSliceUTF8.length);
         System.arraycopy(configSaltByteArray, 0, concatByteArrays, userValueSliceUTF8.length, configSaltByteArray.length);
         System.arraycopy(contextSaltByteArray, 0, concatByteArrays, userValueSliceUTF8.length + configSaltByteArray.length, contextSaltByteArray.length);
-        return  sha256(concatByteArrays);
-    }
-
-    private static String bytesToHex(byte[] bytes) {
-        char[] hexChars = new char[bytes.length * 2];
-        int v;
-        for (int j = 0; j < bytes.length; j++) {
-            v = bytes[j] & 0xFF;
-            hexChars[j * 2] = HEX_ARRAY[v >>> 4];
-            hexChars[j * 2 + 1] = HEX_ARRAY[v & 0x0F];
-        }
-        return new String(hexChars);
-    }
-
-    private static String sha256(String text){
-        byte[] textBytes = text.getBytes(StandardCharsets.UTF_8);
-        return sha256(textBytes);
-    }
-
-    private static String sha256(byte[] byteArray){
-        MessageDigest digest = null;
-        try {
-            digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(byteArray);
-            return bytesToHex(hash);
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        }
+        return Utils.sha256(concatByteArrays);
     }
 
     private boolean evaluateSegmentCondition(SegmentCondition segmentCondition, EvaluationContext context, String configSalt, Segment[] segments, EvaluateLogger evaluateLogger) {
@@ -712,7 +680,7 @@ class RolloutEvaluator {
         evaluateLogger.logPercentageOptionEvaluation(percentageOptionAttributeName);
         String hashCandidate = context.getKey() + percentageOptionAttributeValue;
         int scale = 100;
-        String hexHash = DigestUtils.sha1Hex(hashCandidate.getBytes(StandardCharsets.UTF_8)).substring(0, 7);
+        String hexHash = Utils.sha1(hashCandidate.getBytes(StandardCharsets.UTF_8)).substring(0, 7);
         int longHash = Integer.parseInt(hexHash, 16);
         int scaled = longHash % scale;
         evaluateLogger.logPercentageOptionEvaluationHash(percentageOptionAttributeName, scaled);

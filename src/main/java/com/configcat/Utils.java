@@ -2,6 +2,8 @@ package com.configcat;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.codec.digest.DigestUtils;
 
 final class Utils {
     private Utils() { /* prevent from instantiation*/ }
@@ -21,6 +23,22 @@ final class Utils {
         }
         return config;
     }
+
+    public static String sha256(byte[] byteArray) {
+        return new String(Hex.encodeHex(DigestUtils.sha256(byteArray)));
+    }
+
+    public static String sha256(String text) {
+        return new String(Hex.encodeHex(DigestUtils.sha256(text)));
+    }
+
+    public static String sha1(String text) {
+        return new String(Hex.encodeHex(DigestUtils.sha1(text)));
+    }
+
+    public static String sha1(byte[] byteArray) {
+        return new String(Hex.encodeHex(DigestUtils.sha1(byteArray)));
+    }
 }
 
 final class Constants {
@@ -30,7 +48,7 @@ final class Constants {
     static final long DISTANT_PAST = 0;
     static final String CONFIG_JSON_NAME = "config_v6.json";
     static final String SERIALIZATION_FORMAT_VERSION = "v2";
-    static final String VERSION = "10.3.0";
+    static final String VERSION = "10.3.1";
 
     static final String SDK_KEY_PROXY_PREFIX = "configcat-proxy/";
     static final String SDK_KEY_PREFIX = "configcat-sdk-1";
