@@ -24,12 +24,6 @@ final class Helpers {
         return entry.serialize();
     }
 
-    static String cacheValueFromConfigJsonWithEtag(String json, String etag) {
-        Config config = Utils.gson.fromJson(json, Config.class);
-        Entry entry = new Entry(config, etag, json, System.currentTimeMillis());
-        return entry.serialize();
-    }
-
     static void waitFor(Supplier<Boolean> predicate) throws InterruptedException {
         waitFor(2000, predicate);
     }
@@ -54,10 +48,8 @@ final class Helpers {
         }
     }
 
-
-    public static String readFile(String filePath) throws IOException {
-
-        try (InputStream stream = Helpers.class.getClassLoader().getResourceAsStream(filePath)) {
+    public static String readFileFromClassPath(String fileName) throws IOException {
+        try (InputStream stream = Helpers.class.getClassLoader().getResourceAsStream(fileName)) {
             if (stream == null) {
                 throw new IOException();
             }
@@ -69,6 +61,5 @@ final class Helpers {
             }
             return new String(outputStream.toByteArray(), StandardCharsets.UTF_8);
         }
-
     }
 }

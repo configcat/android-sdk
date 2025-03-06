@@ -49,7 +49,7 @@ class EvaluationTest {
     })
     void testEvaluation(String testDescriptorName) throws IOException {
 
-        String testDescriptorContent = Helpers.readFile(EVALUATION_FOLDER + testDescriptorName + JSON_EXTENSION);
+        String testDescriptorContent = Helpers.readFileFromClassPath(EVALUATION_FOLDER + testDescriptorName + JSON_EXTENSION);
         TestSet testSet = GSON.fromJson(testDescriptorContent, TestSet.class);
         String sdkKey = testSet.getSdkKey();
         if (sdkKey == null || sdkKey.isEmpty()) {
@@ -64,7 +64,7 @@ class EvaluationTest {
             server.start();
             //override baseUrl in case of mockup
             baseUrl = server.url("/").toString();
-            String overrideContent = Helpers.readFile(EVALUATION_FOLDER + testDescriptorName + "/" + jsonOverride);
+            String overrideContent = Helpers.readFileFromClassPath(EVALUATION_FOLDER + testDescriptorName + "/" + jsonOverride);
             server.enqueue(new MockResponse().setResponseCode(200).setBody(overrideContent));
         } else {
             baseUrl = testSet.getBaseUrl();
@@ -113,7 +113,7 @@ class EvaluationTest {
             if (!returnValue.equals(result)) {
                 errors.add(String.format("Return value mismatch for test: %s Test Key: %s Expected: %s, Result: %s \n", testDescriptorName, settingKey, returnValue, result));
             }
-            String expectedLog = Helpers.readFile(EVALUATION_FOLDER + testDescriptorName + "/" + test.getExpectedLog());
+            String expectedLog = Helpers.readFileFromClassPath(EVALUATION_FOLDER + testDescriptorName + "/" + test.getExpectedLog());
             expectedLog = expectedLog.replaceAll("\r\n", "\n");
 
             StringBuilder logResultBuilder = new StringBuilder();

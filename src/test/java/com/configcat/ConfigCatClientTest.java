@@ -45,7 +45,6 @@ class ConfigCatClientTest {
 
     @Test
     void testSDKKeyValidation() throws IOException {
-
         //TEST VALID
         ConfigCatClient client = ConfigCatClient.get("sdk-key-90123456789012/1234567890123456789012");
         assertNotNull(client);
@@ -531,12 +530,12 @@ class ConfigCatClientTest {
 
         server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
 
-        AtomicReference<ClientCacheState> ready = new AtomicReference(null);
+        AtomicReference<ClientCacheState> ready = new AtomicReference<>(null);
         ConfigCatClient cl = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
             options.pollingMode(PollingModes.autoPoll());
             options.baseUrl(server.url("/").toString());
             options.offline(true);
-            options.hooks().addOnClientReady(clientReadyState -> ready.set(clientReadyState));
+            options.hooks().addOnClientReady(ready::set);
         });
 
         assertEquals(0, server.getRequestCount());
@@ -617,14 +616,14 @@ class ConfigCatClientTest {
         server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
 
         AtomicBoolean changed = new AtomicBoolean(false);
-        AtomicReference<ClientCacheState> ready = new AtomicReference(null);
+        AtomicReference<ClientCacheState> ready = new AtomicReference<>(null);
         AtomicReference<String> error = new AtomicReference<>("");
 
         ConfigCatClient cl = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
             options.pollingMode(PollingModes.manualPoll());
             options.baseUrl(server.url("/").toString());
             options.hooks().addOnConfigChanged(map -> changed.set(true));
-            options.hooks().addOnClientReady(clientReadyState -> ready.set(clientReadyState));
+            options.hooks().addOnClientReady(ready::set);
             options.hooks().addOnError(error::set);
         });
 
@@ -677,17 +676,16 @@ class ConfigCatClientTest {
         server.enqueue(new MockResponse().setResponseCode(500).setBody(""));
 
         AtomicBoolean changed = new AtomicBoolean(false);
-        AtomicReference<ClientCacheState> ready = new AtomicReference(null);
+        AtomicReference<ClientCacheState> ready = new AtomicReference<>(null);
         AtomicReference<String> error = new AtomicReference<>("");
 
         ConfigCatClient cl = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
             options.pollingMode(PollingModes.autoPoll());
             options.baseUrl(server.url("/").toString());
+            options.hooks().addOnConfigChanged(map -> changed.set(true));
+            options.hooks().addOnClientReady(ready::set);
+            options.hooks().addOnError(error::set);
         });
-
-        cl.getHooks().addOnConfigChanged(map -> changed.set(true));
-        cl.getHooks().addOnClientReady(clientReadyState -> ready.set(clientReadyState));
-        cl.getHooks().addOnError(error::set);
 
         cl.forceRefresh();
         cl.forceRefresh();
@@ -702,14 +700,13 @@ class ConfigCatClientTest {
 
     @Test
     void testReadyHookManualPollWithCache() throws IOException {
-
-        AtomicReference<ClientCacheState> ready = new AtomicReference(null);
+        AtomicReference<ClientCacheState> ready = new AtomicReference<>(null);
         ConfigCache cache = new SingleValueCache(Helpers.cacheValueFromConfigJson(String.format(TEST_JSON, "test")));
 
         ConfigCatClient cl = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
             options.pollingMode(PollingModes.manualPoll());
             options.cache(cache);
-            options.hooks().addOnClientReady(clientReadyState -> ready.set(clientReadyState));
+            options.hooks().addOnClientReady(ready::set);
         });
 
         assertEquals(ClientCacheState.HAS_CACHED_FLAG_DATA_ONLY, ready.get());
@@ -719,12 +716,12 @@ class ConfigCatClientTest {
 
     @Test
     void testReadyHookLocalOnly() throws IOException {
-        AtomicReference<ClientCacheState> ready = new AtomicReference(null);
+        AtomicReference<ClientCacheState> ready = new AtomicReference<>(null);
 
         ConfigCatClient cl = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
             options.pollingMode(PollingModes.manualPoll());
             options.flagOverrides(OverrideDataSource.map(Collections.EMPTY_MAP), OverrideBehaviour.LOCAL_ONLY);
-            options.hooks().addOnClientReady(clientReadyState -> ready.set(clientReadyState));
+            options.hooks().addOnClientReady(ready::set);
         });
 
         assertEquals(ClientCacheState.HAS_LOCAL_OVERRIDE_FLAG_DATA_ONLY, ready.get());
@@ -796,7 +793,6 @@ class ConfigCatClientTest {
 
         client2.close();
         assertTrue(client3.isClosed());
-
     }
 
     @Test
@@ -973,7 +969,6 @@ class ConfigCatClientTest {
 
     @Test
     void testSpecialCharactersWorks() throws IOException {
-
         ClassLoader classLoader = getClass().getClassLoader();
 
         Scanner scanner = new Scanner(new File(Objects.requireNonNull(classLoader.getResource("specialCharacters.txt")).getFile()), "UTF-8");
@@ -1015,7 +1010,7 @@ class ConfigCatClientTest {
 
         CompletableFuture<ClientCacheState> clientReadyStateCompletableFuture = cl.waitForReadyAsync();
         if(clientReadyStateCompletableFuture.isDone()) {
-            assertEquals(clientReadyStateCompletableFuture.get(), ClientCacheState.HAS_UP_TO_DATE_FLAG_DATA);
+            assertEquals(ClientCacheState.HAS_UP_TO_DATE_FLAG_DATA, clientReadyStateCompletableFuture.get());
         }
 
         server.shutdown();

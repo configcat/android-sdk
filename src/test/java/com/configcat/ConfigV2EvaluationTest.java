@@ -4,9 +4,6 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
-import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
-import org.junit.Assert;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -20,7 +17,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class ConfigV2EvaluationTest {
 
@@ -141,33 +138,25 @@ public class ConfigV2EvaluationTest {
 
         EvaluationDetails<String> result = client.getValueDetails(String.class, "stringMatchedTargetingRuleAndOrPercentageOption", user, null);
 
-        Assert.assertEquals(expectedValue, result.getValue());
-        Assert.assertEquals(expectedTargetingRule, result.getMatchedTargetingRule() != null);
-        Assert.assertEquals(expectedPercentageOption, result.getMatchedPercentageOption() != null);
+        assertEquals(expectedValue, result.getValue());
+        assertEquals(expectedTargetingRule, result.getMatchedTargetingRule() != null);
+        assertEquals(expectedPercentageOption, result.getMatchedPercentageOption() != null);
 
-        ConfigCatClient.closeAll();
+        client.close();
     }
 
     @ParameterizedTest
     @MethodSource("testDataForCircularDependencyTest")
     public void prerequisiteFlagCircularDependencyTest(String key, String dependencyCycle) throws IOException {
-
-        String baseUrl;
-        MockWebServer server = new MockWebServer();
-        server.start();
-        baseUrl = server.url("/").toString();
-        String overrideContent = Helpers.readFile("test_circulardependency.json");
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(overrideContent));
-
-
+        OverrideDataSource ds = new ClassPathResourceOverrideDataSource("test_circulardependency.json");
         ConfigCatClient client = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
-            options.baseUrl(baseUrl);
+            options.flagOverrides(ds, OverrideBehaviour.LOCAL_ONLY);
         });
 
         EvaluationDetails<String> result = client.getValueDetails(String.class, key, null, null);
-        Assert.assertEquals("java.lang.IllegalArgumentException: Circular dependency detected between the following depending flags: " + dependencyCycle + ".", result.getError());
+        assertEquals("java.lang.IllegalArgumentException: Circular dependency detected between the following depending flags: " + dependencyCycle + ".", result.getError());
 
-        ConfigCatClient.closeAll();
+        client.close();
     }
 
     @ParameterizedTest
@@ -195,27 +184,27 @@ public class ConfigV2EvaluationTest {
 
         String value = client.getValue(String.class, key, null, null);
 
-        Assert.assertEquals(expectedValue, value);
+        assertEquals(expectedValue, value);
 
         if (expectedValue == null) {
             List<ILoggingEvent> logsList = listAppender.list;
 
             List<ILoggingEvent> errorLogs = logsList.stream().filter(iLoggingEvent -> iLoggingEvent.getLevel().equals(Level.ERROR)).collect(Collectors.toList());
-            Assert.assertEquals(1, errorLogs.size());
+            assertEquals(1, errorLogs.size());
             String errorMessage = errorLogs.get(0).getFormattedMessage();
             String causeExceptionMessage = errorLogs.get(0).getThrowableProxy().getMessage();
 
-            Assert.assertTrue(errorMessage.contains("[2001]"));
+            assertTrue(errorMessage.contains("[2001]"));
 
             if (prerequisiteFlagValue == null) {
-                Assert.assertTrue(causeExceptionMessage.contains("Setting value is null"));
+                assertTrue(causeExceptionMessage.contains("Setting value is null"));
             } else {
-                Assert.assertTrue(causeExceptionMessage.contains("Type mismatch between comparison value"));
+                assertTrue(causeExceptionMessage.contains("Type mismatch between comparison value"));
             }
 
         }
 
-        ConfigCatClient.closeAll();
+        client.close();
     }
 
     @ParameterizedTest
@@ -239,21 +228,17 @@ public class ConfigV2EvaluationTest {
         });
         client.forceRefresh();
         String value = client.getValue(String.class, key, user, null);
-        Assert.assertEquals(expectedValue, value);
-        ConfigCatClient.closeAll();
+        assertEquals(expectedValue, value);
+        client.close();
     }
 
     @ParameterizedTest
     @MethodSource("testDataComparisonAttributeConversionToCanonicalStringRepresentationTest")
     public void comparisonAttributeConversionToCanonicalStringRepresentationTest(String key, Object userAttribute, String expectedValue) throws IOException, ParseException {
-        MockWebServer server = new MockWebServer();
-        server.start();
 
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(Helpers.readFile("comparison_attribute_conversion.json")));
-
+        OverrideDataSource ds = new ClassPathResourceOverrideDataSource("comparison_attribute_conversion.json");
         ConfigCatClient client = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
-            options.pollingMode(PollingModes.lazyLoad(2));
-            options.baseUrl(server.url("/").toString());
+            options.flagOverrides(ds, OverrideBehaviour.LOCAL_ONLY);
         });
 
         if (userAttribute instanceof String) {
@@ -284,8 +269,8 @@ public class ConfigV2EvaluationTest {
 
         String value = client.getValue(String.class, key, user, "default");
 
-        Assert.assertEquals(expectedValue, value);
+        assertEquals(expectedValue, value);
 
-        ConfigCatClient.closeAll();
+        client.close();
     }
 }

@@ -1,10 +1,5 @@
 package com.configcat;
 
-import okhttp3.OkHttpClient;
-import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -38,27 +33,6 @@ public class EvaluatorTrimTest {
      * trimming. To test the client the comparator values contains pre and post whitespaces.
      */
     private final static String TRIM_COMPARATOR_VALUES_JSON = "trim_comparator_values.json";
-
-    private ConfigCatClient client;
-    private MockWebServer server;
-
-    @BeforeEach
-    void setUp() throws IOException {
-        this.server = new MockWebServer();
-        this.server.start();
-
-        this.client = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
-            options.httpClient(new OkHttpClient.Builder().build());
-            options.pollingMode(PollingModes.lazyLoad(2));
-            options.baseUrl(this.server.url("/").toString());
-        });
-    }
-
-    @AfterEach
-    void tearDown() throws IOException {
-        ConfigCatClient.closeAll();
-        this.server.shutdown();
-    }
 
 
     private User createTestUser(String identifier, String country, String version, String number, String date) {
@@ -110,10 +84,16 @@ public class EvaluatorTrimTest {
     @ParameterizedTest
     @MethodSource("testComparatorValueTrimsData")
     void testComparatorValueTrims(String key, String expectedValue) throws IOException {
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(Helpers.readFile(TRIM_COMPARATOR_VALUES_JSON)));
+        OverrideDataSource ds = new ClassPathResourceOverrideDataSource(TRIM_COMPARATOR_VALUES_JSON);
+        ConfigCatClient client = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
+            options.flagOverrides(ds, OverrideBehaviour.LOCAL_ONLY);
+        });
+
         User user = createTestUser(TEST_IDENTIFIER, TEST_COUNTRY, TEST_VERSION, TEST_NUMBER, TEST_DATE);
-        String result = this.client.getValue(String.class, key, user, "default");
+        String result = client.getValue(String.class, key, user, "default");
         assertEquals(expectedValue, result);
+
+        client.close();
     }
 
     private static Stream<Arguments> testUserValueTrimsData() {
@@ -163,9 +143,15 @@ public class EvaluatorTrimTest {
     @ParameterizedTest
     @MethodSource("testUserValueTrimsData")
     void testUserValueTrims(String key, String expectedValue) throws IOException {
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(Helpers.readFile(TRIM_USER_VALUES_JSON)));
+        OverrideDataSource ds = new ClassPathResourceOverrideDataSource(TRIM_USER_VALUES_JSON);
+        ConfigCatClient client = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
+            options.flagOverrides(ds, OverrideBehaviour.LOCAL_ONLY);
+        });
+
         User user = createTestUser(addWhiteSpaces(TEST_IDENTIFIER), TEST_COUNTRY_WITH_WHITESPACES, addWhiteSpaces(TEST_VERSION), addWhiteSpaces(TEST_NUMBER), addWhiteSpaces(TEST_DATE));
-        String result = this.client.getValue(String.class, key, user, "default");
+        String result = client.getValue(String.class, key, user, "default");
         assertEquals(expectedValue, result);
+
+        client.close();
     }
 }
