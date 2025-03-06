@@ -226,7 +226,7 @@ class ConfigService implements Closeable {
     private void startPoll(AutoPollingMode mode) {
         long ageThreshold = (mode.getAutoPollRateInSeconds() * 1000L) - 500;
         pollScheduler = Executors.newSingleThreadScheduledExecutor();
-        pollScheduler.scheduleAtFixedRate(() -> this.fetchIfOlder(System.currentTimeMillis() - ageThreshold, false),
+        pollScheduler.scheduleWithFixedDelay(() -> this.fetchIfOlder(System.currentTimeMillis() - ageThreshold, false),
                 0, mode.getAutoPollRateInSeconds(), TimeUnit.SECONDS);
     }
 
