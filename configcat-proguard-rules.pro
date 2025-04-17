@@ -15,3 +15,4 @@
 -keep class com.configcat.UserCondition { *; }
 -keep class com.configcat.SegmentCondition { *; }
 -keep class com.configcat.PrerequisiteFlagCondition { *; }
+-keep class com.configcat.PercentageOption { *; }
