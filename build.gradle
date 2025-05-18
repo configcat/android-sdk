@@ -1,3 +1,4 @@
+import com.vanniktech.maven.publish.AndroidSingleVariantLibrary
 import com.vanniktech.maven.publish.SonatypeHost
 
 buildscript {
@@ -19,12 +20,7 @@ plugins {
 apply plugin: "com.android.library"
 
 android {
-    publishing {
-        singleVariant('release') {
-            withSourcesJar()
-            withJavadocJar()
-        }
-    }
+    namespace "com.configcat"
     compileOptions {
         // Sets Java compatibility to Java 8
         sourceCompatibility JavaVersion.VERSION_1_8
@@ -83,28 +79,6 @@ dependencies {
     testRuntimeOnly(libs.junit.jupiter.engine)
 }
 
-task javadoc(type: Javadoc) {
-    source android.sourceSets.main.java.srcDirs
-    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
-    include("**/*.java")
-    afterEvaluate {
-        classpath += files(android.libraryVariants.collect { variant ->
-            variant.javaCompileProvider.get().classpath.files
-        })
-    }
-}
-
-tasks.register('sourcesJar', Jar) {
-    classifier "sources"
-    from android.sourceSets.main.java.srcDirs
-}
-
-tasks.register('javadocJar', Jar) {
-    dependsOn javadoc
-    "javadoc"
-    from javadoc.destinationDir
-}
-
 sonarqube {
     properties {
         property "sonar.projectKey", "configcat_android-sdk"
@@ -118,15 +92,13 @@ sonarqube {
 
 tasks.withType(Test) { useJUnitPlatform() }
 
-tasks.register('jacocoTestReport', JacocoReport) {
-    dependsOn['testDebugUnitTest']
+task jacocoTestReport(type:JacocoReport){
+    dependsOn 'testDebugUnitTest'
     reports {
-        csv.enabled false
-        html.enabled false
-        xml {
-            enabled true
-            destination file("${buildDir}/reports/jacoco/report.xml")
-        }
+        html.required.set(false)
+        csv.required.set(false)
+        xml.required.set(true)
+        xml.destination file("${buildDir}/reports/jacoco/report.xml")
     }
 
     def classes = fileTree(dir: "${buildDir}/intermediates/javac/debug/classes", excludes: excludes)
@@ -139,51 +111,47 @@ tasks.register('jacocoTestReport', JacocoReport) {
 
 check.dependsOn jacocoTestReport
 
-artifacts {
-    archives sourcesJar, javadocJar
-}
+mavenPublishing {
+    publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
 
-afterEvaluate {
-    mavenPublishing {
-        publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
+    def signingInMemoryKey = findProperty("ORG_GRADLE_PROJECT_signingInMemoryKey")
+    def signingInMemoryKeyPassword = findProperty("ORG_GRADLE_PROJECT_signingInMemoryKeyPassword")
+    if (signingInMemoryKey && signingInMemoryKeyPassword) {
+        signAllPublications()
+    }
 
-        def signingInMemoryKey = findProperty("ORG_GRADLE_PROJECT_signingInMemoryKey")
-        def signingInMemoryKeyPassword = findProperty("ORG_GRADLE_PROJECT_signingInMemoryKeyPassword")
-        if (signingInMemoryKey && signingInMemoryKeyPassword) {
-            signAllPublications()
+    configure(new AndroidSingleVariantLibrary("release", true, true))
+
+    coordinates(project.group as String, project.name as String, project.version as String)
+
+    pom {
+        name = 'ConfigCat Android SDK'
+        url = 'https://github.com/configcat/android-sdk'
+        description = 'Android SDK for ConfigCat, a feature flag, feature toggle, and configuration management service. That lets you launch new features and change your software configuration remotely without actually (re)deploying code. ConfigCat even helps you do controlled roll-outs like canary releases and blue-green deployments.'
+
+        scm {
+            url = "https://github.com/configcat/android-sdk"
+            developerConnection = "scm:git:ssh:git@github.com:configcat/android-sdk.git"
+            connection = "scm:git:git://github.com/configcat/android-sdk.git"
         }
 
-        coordinates(project.group as String, project.name, project.version as String)
-
-        pom {
-            name = 'ConfigCat Android SDK'
-            url = 'https://github.com/configcat/android-sdk'
-            description = 'Android SDK for ConfigCat, a feature flag, feature toggle, and configuration management service. That lets you launch new features and change your software configuration remotely without actually (re)deploying code. ConfigCat even helps you do controlled roll-outs like canary releases and blue-green deployments.'
-
-            scm {
-                url = "https://github.com/configcat/android-sdk"
-                developerConnection = "scm:git:ssh:git@github.com:configcat/android-sdk.git"
-                connection = "scm:git:git://github.com/configcat/android-sdk.git"
+        licenses {
+            license {
+                name = "MIT License"
+                url = "https://raw.githubusercontent.com/configcat/android-sdk/master/LICENSE"
             }
+        }
 
-            licenses {
-                license {
-                    name = "MIT License"
-                    url = "https://raw.githubusercontent.com/configcat/android-sdk/master/LICENSE"
-                }
-            }
+        organization {
+            url = "https://configcat.com"
+            name = "ConfigCat"
+        }
 
-            organization {
-                url = "https://configcat.com"
+        developers {
+            developer {
+                id = "configcat"
+                email = "developer@configcat.com"
                 name = "ConfigCat"
-            }
-
-            developers {
-                developer {
-                    id = "configcat"
-                    email = "developer@configcat.com"
-                    name = "ConfigCat"
-                }
             }
         }
     }
