@@ -14,7 +14,7 @@ buildscript {
 plugins {
     alias(libs.plugins.sonarqube)
     id "jacoco"
-    alias(libs.plugins.mavenPublish)
+    alias(libs.plugins.maven.publish)
 }
 
 apply plugin: "com.android.library"
@@ -22,7 +22,6 @@ apply plugin: "com.android.library"
 android {
     namespace "com.configcat"
     compileOptions {
-        // Sets Java compatibility to Java 8
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
@@ -86,25 +85,27 @@ sonarqube {
         property "sonar.projectVersion", "${version}-${buildNumber}"
         property "sonar.organization", "configcat"
         property "sonar.host.url", "https://sonarcloud.io"
-        property "sonar.coverage.jacoco.xmlReportPaths", "${buildDir}/reports/jacoco/report.xml"
+        property "sonar.coverage.jacoco.xmlReportPaths", layout.buildDirectory.file("reports/jacoco/report.xml").get()
     }
 }
 
-tasks.withType(Test) { useJUnitPlatform() }
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
+}
 
-task jacocoTestReport(type:JacocoReport){
-    dependsOn 'testDebugUnitTest'
+tasks.register("jacocoTestReport", JacocoReport) {
+    dependsOn "test"
     reports {
         html.required.set(false)
         csv.required.set(false)
         xml.required.set(true)
-        xml.destination file("${buildDir}/reports/jacoco/report.xml")
+        xml.destination layout.buildDirectory.file("reports/jacoco/report.xml").get().asFile
     }
 
-    def classes = fileTree(dir: "${buildDir}/intermediates/javac/debug/classes", excludes: excludes)
+    def classes = fileTree(dir: layout.buildDirectory.dir("intermediates/javac/debug/classes").get(), excludes: excludes)
     sourceDirectories.setFrom(files("${project.projectDir}/src/main/java"))
     classDirectories.setFrom(files([classes]))
-    executionData.setFrom(fileTree(dir: "$buildDir", includes: [
+    executionData.setFrom(fileTree(dir: layout.buildDirectory.get(), includes: [
             "/outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec",
     ]))
 }
@@ -114,8 +115,8 @@ check.dependsOn jacocoTestReport
 mavenPublishing {
     publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
 
-    def signingInMemoryKey = findProperty("ORG_GRADLE_PROJECT_signingInMemoryKey")
-    def signingInMemoryKeyPassword = findProperty("ORG_GRADLE_PROJECT_signingInMemoryKeyPassword")
+    def signingInMemoryKey = findProperty("signingInMemoryKey")
+    def signingInMemoryKeyPassword = findProperty("signingInMemoryKeyPassword")
     if (signingInMemoryKey && signingInMemoryKeyPassword) {
         signAllPublications()
     }

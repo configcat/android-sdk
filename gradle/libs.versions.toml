@@ -1,6 +1,6 @@
 [versions]
 sonarqube = "5.0.0.4638"
-mavenPublish = "0.32.0"
+maven-publish = "0.32.0"
 okhttp = "4.12.0"
 okio = "3.4.0" # indirect dependency to solve security vulnerability in 3.2.0
 slf4j-api = "1.7.36"
@@ -8,8 +8,8 @@ gson = "2.9.0"
 commons-codec = "1.15"
 semantic-version = "2.1.1"
 junit-jupiter = "5.10.0"
-logback = "1.3.11"
-mockwebserver = "4.11.0"
+logback = "1.5.13"
+mockwebserver = "4.12.0"
 mockito = "4.8.0"
 android-retrofuture = "1.7.4"
 android-gradle = "8.0.0"
@@ -34,5 +34,5 @@ android-gradle = { module = "com.android.tools.build:gradle", version.ref = "and
 
 [plugins]
 sonarqube = { id = "org.sonarqube", version.ref = "sonarqube" }
-mavenPublish = { id = "com.vanniktech.maven.publish", version.ref = "mavenPublish" }
+maven-publish = { id = "com.vanniktech.maven.publish", version.ref = "maven-publish" }
 
