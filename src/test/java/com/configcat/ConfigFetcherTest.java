@@ -259,7 +259,7 @@ class ConfigFetcherTest {
         assertTrue(response.isFailed());
         assertTrue(response.error().toString().contains("(Ray ID: 12345)"));
 
-        verify(mockLogger, times(1)).error(anyString(), eq(1105), eq(ConfigCatLogMessages.getFetchReceived200WithInvalidBodyError("12345")), any(Exception.class));
+        verify(mockLogger, times(1)).error(anyString(), eq(1105), eq(ConfigCatLogMessages.getFetchReceived200WithInvalidBodyError("12345")), any(), any(Exception.class));
 
         fetcher.close();
     }
