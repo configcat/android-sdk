@@ -45,7 +45,8 @@ class ConfigCatLogger {
     public void error(int eventId, Object message, Throwable exception) {
         if (this.hooks != null) this.hooks.invokeOnError(message);
         if (filter(eventId,  LogLevel.ERROR, message, exception)) {
-            this.logger.error("[{}] {}", eventId, message, exception);
+            String exceptionMessage = exception == null || exception.getMessage() == null ? "" : exception.getMessage();
+            this.logger.error("[{}] {} {}", eventId, message, exceptionMessage, exception);
         }
     }
 

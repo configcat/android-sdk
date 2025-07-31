@@ -11,8 +11,16 @@ final class Utils {
     static final Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 
     public static Config deserializeConfig(String json) {
+        if (json == null || json.isEmpty()) {
+            throw new IllegalArgumentException("Config JSON content cannot be null or empty.");
+        }
         Config config = Utils.gson.fromJson(json, Config.class);
-        String salt = config.getPreferences().getSalt();
+
+        if (config == null) {
+            throw new IllegalArgumentException("Invalid config JSON content: " + json);
+        }
+
+        String salt = config.getPreferences() != null ? config.getPreferences().getSalt() : null;
         Segment[] segments = config.getSegments();
         if (segments == null) {
             segments = new Segment[]{};
@@ -48,7 +56,7 @@ final class Constants {
     static final long DISTANT_PAST = 0;
     static final String CONFIG_JSON_NAME = "config_v6.json";
     static final String SERIALIZATION_FORMAT_VERSION = "v2";
-    static final String VERSION = "10.4.2";
+    static final String VERSION = "10.4.3";
 
     static final String SDK_KEY_PROXY_PREFIX = "configcat-proxy/";
     static final String SDK_KEY_PREFIX = "configcat-sdk-1";

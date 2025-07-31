@@ -8,12 +8,16 @@ import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -140,6 +144,32 @@ class ConfigFetcherTest {
         fetcher.close();
     }
 
+    private static Stream<Arguments> emptyFetchTestData() {
+        return Stream.of(
+                Arguments.of(""),
+                Arguments.of("null")
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("emptyFetchTestData")
+    void fetchEmpty(String body) throws Exception {
+        this.server.enqueue(new MockResponse().setResponseCode(200).setBody(body));
+
+        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(),
+                logger,
+                "",
+                this.server.url("/").toString(),
+                false,
+                PollingModes.manualPoll().getPollingIdentifier());
+
+        FetchResponse response = fetcher.fetchAsync(null).get();
+        assertFalse(response.isFetched());
+        assertEquals("Fetching config JSON was successful but the HTTP response content was invalid.", response.error().toString());
+
+        fetcher.close();
+    }
+
     @Test
     void testIntegration() throws IOException, ExecutionException, InterruptedException {
         ConfigFetcher fetch = new ConfigFetcher(new OkHttpClient.Builder()
@@ -229,7 +259,7 @@ class ConfigFetcherTest {
         assertTrue(response.isFailed());
         assertTrue(response.error().toString().contains("(Ray ID: 12345)"));
 
-        verify(mockLogger, times(1)).error(anyString(), eq(1105), eq(ConfigCatLogMessages.getFetchReceived200WithInvalidBodyError("12345")), any(Exception.class));
+        verify(mockLogger, times(1)).error(anyString(), eq(1105), eq(ConfigCatLogMessages.getFetchReceived200WithInvalidBodyError("12345")), any(), any(Exception.class));
 
         fetcher.close();
     }
