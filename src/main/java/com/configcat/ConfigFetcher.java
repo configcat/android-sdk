@@ -174,8 +174,8 @@ class ConfigFetcher implements Closeable {
             public void onResponse(@NotNull Call call, @NotNull Response response) {
                 try (ResponseBody body = response.body()) {
                     String cfRayId = response.header("CF-RAY");
-                    if (response.isSuccessful() && body != null) {
-                        String content = body.string();
+                    if (response.code() == 200) {
+                        String content = body != null ? body.string() : null;
                         String eTag = response.header("ETag");
                         Result<Config> result = deserializeConfig(content, cfRayId);
                         if (result.error() != null) {
@@ -192,7 +192,8 @@ class ConfigFetcher implements Closeable {
                         }
                         future.complete(FetchResponse.notModified(cfRayId));
                     } else if (response.code() == 403 || response.code() == 404) {
-                        FormattableLogMessage message = ConfigCatLogMessages.getFetchFailedDueToInvalidSDKKey(cfRayId);                        logger.error(1100, message);
+                        FormattableLogMessage message = ConfigCatLogMessages.getFetchFailedDueToInvalidSDKKey(cfRayId);
+                        logger.error(1100, message);
                         future.complete(FetchResponse.failed(message, true, cfRayId));
                     } else {
                         FormattableLogMessage message = ConfigCatLogMessages.getFetchFailedDueToUnexpectedHttpResponse(response.code(), response.message(), cfRayId);
