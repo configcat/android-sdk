@@ -153,7 +153,7 @@ class ConfigFetcherTest {
 
     @ParameterizedTest
     @MethodSource("emptyFetchTestData")
-    public void fetchEmpty(String body) throws Exception {
+    void fetchEmpty(String body) throws Exception {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(body));
 
         ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(),
