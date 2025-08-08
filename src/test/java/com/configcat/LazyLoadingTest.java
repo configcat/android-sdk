@@ -28,7 +28,7 @@ class LazyLoadingTest {
 
         PollingMode mode = PollingModes
                 .lazyLoad(5);
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(), logger, "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
         this.policy = new ConfigService("", mode, new NullConfigCache(), logger, fetcher, new ConfigCatHooks(), false);
     }
 
@@ -57,7 +57,7 @@ class LazyLoadingTest {
     void getCacheFails() throws InterruptedException, ExecutionException {
         PollingMode mode = PollingModes
                 .lazyLoad(5);
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(), logger, "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
         ConfigService lPolicy = new ConfigService("", mode, new NullConfigCache(), logger, fetcher, new ConfigCatHooks(), false);
 
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
@@ -96,7 +96,7 @@ class LazyLoadingTest {
 
         PollingMode mode = PollingModes
                 .lazyLoad(1);
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(), logger, "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
         ConfigService service = new ConfigService("", mode, cache, logger, fetcher, new ConfigCatHooks(), false);
 
         assertFalse(service.getSettings().get().settings().isEmpty());
@@ -120,7 +120,7 @@ class LazyLoadingTest {
 
         PollingMode mode = PollingModes
                 .lazyLoad(1);
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(), logger, "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
         ConfigService service = new ConfigService("", mode, cache, logger, fetcher, new ConfigCatHooks(), false);
 
         assertFalse(service.getSettings().get().settings().isEmpty());
@@ -142,7 +142,7 @@ class LazyLoadingTest {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
 
         PollingMode pollingMode = PollingModes.lazyLoad(1);
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient(),
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(),
                 logger,
                 "",
                 this.server.url("/").toString(),
@@ -176,7 +176,7 @@ class LazyLoadingTest {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
 
         PollingMode pollingMode = PollingModes.lazyLoad(1);
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient(),
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(),
                 logger,
                 "",
                 this.server.url("/").toString(),

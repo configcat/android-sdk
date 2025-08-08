@@ -26,7 +26,7 @@ class ManualPollingTest {
         this.server.start();
 
         PollingMode mode = PollingModes.manualPoll();
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(), logger, "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
         this.policy = new ConfigService("", mode, new NullConfigCache(), logger, fetcher, new ConfigCatHooks(), false);
     }
 
@@ -53,7 +53,7 @@ class ManualPollingTest {
     @Test
     void getCacheFails() throws InterruptedException, ExecutionException, IOException {
         PollingMode mode = PollingModes.manualPoll();
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(), logger, "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
         ConfigService lPolicy = new ConfigService("", mode, new NullConfigCache(), logger, fetcher, new ConfigCatHooks(), false);
 
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
@@ -91,7 +91,7 @@ class ManualPollingTest {
 
         InMemoryCache cache = new InMemoryCache();
         PollingMode mode = PollingModes.manualPoll();
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(), logger, "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
         ConfigService service = new ConfigService("", mode, cache, logger, fetcher, new ConfigCatHooks(), false);
 
         service.refresh().get();
@@ -119,7 +119,7 @@ class ManualPollingTest {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
 
         PollingMode pollingMode = PollingModes.manualPoll();
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient(),
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(),
                 logger,
                 "",
                 this.server.url("/").toString(),
@@ -152,7 +152,7 @@ class ManualPollingTest {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
 
         PollingMode pollingMode = PollingModes.manualPoll();
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient(),
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(),
                 logger,
                 "",
                 this.server.url("/").toString(),

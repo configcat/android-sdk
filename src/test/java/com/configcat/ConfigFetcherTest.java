@@ -45,7 +45,7 @@ class ConfigFetcherTest {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON).setHeader("ETag", "fakeETag"));
         this.server.enqueue(new MockResponse().setResponseCode(304));
 
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger,
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(), logger,
                 "", this.server.url("/").toString(), false, PollingModes.manualPoll().getPollingIdentifier());
 
         FetchResponse fResult = fetcher.fetchAsync(null).get();
@@ -68,10 +68,7 @@ class ConfigFetcherTest {
 
     @Test
     void fetchException() throws IOException, ExecutionException, InterruptedException {
-
-        ConfigFetcher fetch = new ConfigFetcher(new OkHttpClient.Builder()
-                .readTimeout(1, TimeUnit.SECONDS)
-                .build(),
+        ConfigFetcher fetch = new ConfigFetcher(new ConfigCatClient.HttpOptions().readTimeoutMillis(1000),
                 logger,
                 "",
                 this.server.url("/").toString(),
@@ -98,7 +95,7 @@ class ConfigFetcherTest {
 
         ConfigCache cache = mock(ConfigCache.class);
         when(cache.read(anyString())).thenReturn(gson.toJson(entry));
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger,
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(), logger,
                 "", this.server.url("/").toString(), false, PollingModes.manualPoll().getPollingIdentifier());
 
         ConfigService policy = new ConfigService("", PollingModes.autoPoll(2), cache, logger, fetcher, new ConfigCatHooks(), false);
@@ -115,7 +112,7 @@ class ConfigFetcherTest {
 
         ConfigCache cache = mock(ConfigCache.class);
         when(cache.read(anyString())).thenReturn(TEST_JSON);
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger,
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(), logger,
                 "", this.server.url("/").toString(), false, PollingModes.manualPoll().getPollingIdentifier());
 
         ConfigService policy = new ConfigService("", PollingModes.autoPoll(2), cache, logger, fetcher, new ConfigCatHooks(), false);
@@ -134,7 +131,7 @@ class ConfigFetcherTest {
         doThrow(new Exception()).when(cache).read(anyString());
         doThrow(new Exception()).when(cache).write(anyString(), anyString());
 
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger,
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(), logger,
                 "", this.server.url("/").toString(), false, PollingModes.manualPoll().getPollingIdentifier());
 
         FetchResponse response = fetcher.fetchAsync(null).get();
@@ -156,7 +153,7 @@ class ConfigFetcherTest {
     void fetchEmpty(String body) throws Exception {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(body));
 
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(),
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(),
                 logger,
                 "",
                 this.server.url("/").toString(),
@@ -172,9 +169,7 @@ class ConfigFetcherTest {
 
     @Test
     void testIntegration() throws IOException, ExecutionException, InterruptedException {
-        ConfigFetcher fetch = new ConfigFetcher(new OkHttpClient.Builder()
-                .readTimeout(1, TimeUnit.SECONDS)
-                .build(),
+        ConfigFetcher fetch = new ConfigFetcher(new ConfigCatClient.HttpOptions().readTimeoutMillis(1000),
                 logger,
                 "PKDVCLf-Hq-h-kCzMp-L7Q/PaDVCFk9EpmD6sLpGLltTA",
                 "https://cdn-global.configcat.com",
@@ -196,7 +191,7 @@ class ConfigFetcherTest {
 
         ConfigCatLogger localLogger = new ConfigCatLogger(mockLogger, LogLevel.DEBUG, null, null);
 
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(),
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(),
                 localLogger,
                 "",
                 this.server.url("/").toString(),
@@ -221,7 +216,7 @@ class ConfigFetcherTest {
 
         ConfigCatLogger localLogger = new ConfigCatLogger(mockLogger, LogLevel.DEBUG, null, null);
 
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(),
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(),
                 localLogger,
                 "",
                 this.server.url("/").toString(),
@@ -246,7 +241,7 @@ class ConfigFetcherTest {
 
         ConfigCatLogger localLogger = new ConfigCatLogger(mockLogger, LogLevel.DEBUG, null, null);
 
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(),
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(),
                 localLogger,
                 "",
                 this.server.url("/").toString(),

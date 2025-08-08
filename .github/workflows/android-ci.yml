@@ -4,7 +4,7 @@ on:
   schedule:
     - cron: '0 0 * * *'
   push:
-    branches: [ master ]
+    branches: [ '*' ]
     tags: [ 'v[0-9]+.[0-9]+.[0-9]+' ]
   pull_request:
     branches: [ master ]
@@ -80,7 +80,7 @@ jobs:
       
   deploy-snapshot:
     needs: [ coverage-scan, test ]
-    if: ${{ github.ref == 'refs/heads/master' }}
+    if: ${{ github.ref == 'refs/heads/replace-okhttp' }}
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4

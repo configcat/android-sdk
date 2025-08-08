@@ -92,7 +92,7 @@ class ConfigCatClientTest {
 
     @Test
     void getValueWithDefaultConfigTimeout() throws IOException {
-        ConfigCatClient cl = ConfigCatClient.get(Helpers.SDK_KEY, options -> options.httpClient(new OkHttpClient.Builder().readTimeout(2, TimeUnit.SECONDS).build()));
+        ConfigCatClient cl = ConfigCatClient.get(Helpers.SDK_KEY, options -> options.httpOptions().readTimeoutMillis(2000));
 
         // makes a call to a real url which would fail, default expected
         boolean config = cl.getValue(Boolean.class, "key", true);
@@ -183,7 +183,7 @@ class ConfigCatClientTest {
         server.start();
 
         ConfigCatClient cl = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
-            options.httpClient(new OkHttpClient.Builder().readTimeout(1, TimeUnit.SECONDS).build());
+            options.httpOptions().readTimeoutMillis(1000);
             options.pollingMode(PollingModes.manualPoll());
             options.baseUrl(server.url("/").toString());
         });
@@ -249,7 +249,7 @@ class ConfigCatClientTest {
         server.start();
 
         ConfigCatClient cl = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
-            options.httpClient(new OkHttpClient.Builder().readTimeout(1, TimeUnit.SECONDS).build());
+            options.httpOptions().readTimeoutMillis(1000);
             options.pollingMode(PollingModes.manualPoll());
             options.baseUrl(server.url("/").toString());
         });
@@ -275,7 +275,7 @@ class ConfigCatClientTest {
         server.start();
 
         ConfigCatClient cl = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
-            options.httpClient(new OkHttpClient.Builder().readTimeout(1, TimeUnit.SECONDS).build());
+            options.httpOptions().readTimeoutMillis(1000);
             options.pollingMode(PollingModes.manualPoll());
             options.baseUrl(server.url("/").toString());
         });

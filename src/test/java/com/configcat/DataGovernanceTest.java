@@ -245,6 +245,6 @@ class DataGovernanceTest {
     }
 
     private ConfigFetcher createFetcher(String url, boolean isCustomUrl) {
-        return new ConfigFetcher(new OkHttpClient.Builder().build(), logger, "", url, isCustomUrl, "m");
+        return new ConfigFetcher(new ConfigCatClient.HttpOptions(), logger, "", url, isCustomUrl, "m");
     }
 }

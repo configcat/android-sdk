@@ -2,7 +2,6 @@ package com.configcat;
 
 import java9.util.concurrent.CompletableFuture;
 import java9.util.function.Consumer;
-import okhttp3.OkHttpClient;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
@@ -41,9 +40,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         this.rolloutEvaluator = new RolloutEvaluator(this.logger);
 
         if (this.overrideBehaviour != OverrideBehaviour.LOCAL_ONLY) {
-            ConfigFetcher fetcher = new ConfigFetcher(options.httpClient == null
-                    ? new OkHttpClient()
-                    : options.httpClient,
+            ConfigFetcher fetcher = new ConfigFetcher(options.httpOptions,
                     this.logger,
                     sdkKey,
                     !options.isBaseURLCustom()
@@ -669,7 +666,6 @@ public final class ConfigCatClient implements ConfigurationProvider {
      * Configuration options for a {@link ConfigCatClient} instance.
      */
     public static class Options {
-        private OkHttpClient httpClient;
         private ConfigCache cache = new NullConfigCache();
         private String baseUrl;
         private PollingMode pollingMode = PollingModes.autoPoll(60);
@@ -681,15 +677,14 @@ public final class ConfigCatClient implements ConfigurationProvider {
         private boolean offline;
         private LogFilterFunction logFilter;
 
+        private final HttpOptions httpOptions = new HttpOptions();
         private final ConfigCatHooks hooks = new ConfigCatHooks();
 
         /**
-         * Sets the underlying http client which will be used to fetch the latest configuration.
-         *
-         * @param httpClient the http client.
+         * HTTP related options for {@link ConfigCatClient}.
          */
-        public void httpClient(OkHttpClient httpClient) {
-            this.httpClient = httpClient;
+        public final HttpOptions httpOptions() {
+            return this.httpOptions;
         }
 
         /**
@@ -799,4 +794,54 @@ public final class ConfigCatClient implements ConfigurationProvider {
         }
     }
 
+    /**
+     * HTTP configuration options for a {@link ConfigCatClient} instance.
+     */
+    public static class HttpOptions {
+        private int connectTimeoutMillis = 20000;
+        private int readTimeoutMillis = 20000;
+        private String proxyUrl;
+
+        /**
+         * Sets HTTP connect timeout in milliseconds.
+         *
+         * @param connectTimeoutMillis the connect timeout in milliseconds.
+         */
+        public HttpOptions connectTimeoutMillis(int connectTimeoutMillis) {
+            this.connectTimeoutMillis = connectTimeoutMillis;
+            return this;
+        }
+
+        /**
+         * Sets the HTTP read timeout in milliseconds.
+         *
+         * @param readTimeoutMillis the read timeout in milliseconds.
+         */
+        public HttpOptions readTimeoutMillis(int readTimeoutMillis) {
+            this.readTimeoutMillis = readTimeoutMillis;
+            return this;
+        }
+
+        /**
+         * Sets the HTTP proxy url.
+         *
+         * @param proxyUrl the HTTP proxy url.
+         */
+        public HttpOptions proxyUrl(String proxyUrl) {
+            this.proxyUrl = proxyUrl;
+            return this;
+        }
+
+        int getConnectTimeoutMillis() {
+            return connectTimeoutMillis;
+        }
+
+        int getReadTimeoutMillis() {
+            return readTimeoutMillis;
+        }
+
+        String getProxyUrl() {
+            return proxyUrl;
+        }
+    }
 }

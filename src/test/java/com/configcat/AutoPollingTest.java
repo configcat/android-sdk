@@ -45,7 +45,7 @@ class AutoPollingTest {
 
         ConfigCache cache = new NullConfigCache();
         PollingMode pollingMode = PollingModes.autoPoll(2);
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(),
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(),
                 logger,
                 "",
                 this.server.url("/").toString(),
@@ -71,7 +71,7 @@ class AutoPollingTest {
 
         ConfigCache cache = new NullConfigCache();
         PollingMode pollingMode = PollingModes.autoPoll(2);
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(),
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(),
                 logger,
                 "",
                 this.server.url("/").toString(),
@@ -94,7 +94,7 @@ class AutoPollingTest {
 
         ConfigCache cache = new NullConfigCache();
         PollingMode pollingMode = PollingModes.autoPoll(2);
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(),
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(),
                 logger,
                 "",
                 this.server.url("/").toString(),
@@ -135,7 +135,7 @@ class AutoPollingTest {
 
         ConfigCache cache = new NullConfigCache();
         PollingMode pollingMode = PollingModes.autoPoll(2);
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(),
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(),
                 logger,
                 "",
                 this.server.url("/").toString(),
@@ -165,7 +165,7 @@ class AutoPollingTest {
         doThrow(new Exception()).when(cache).write(anyString(), anyString());
 
         PollingMode pollingMode = PollingModes.autoPoll(2);
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(),
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(),
                 logger,
                 "",
                 this.server.url("/").toString(),
@@ -183,7 +183,7 @@ class AutoPollingTest {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")).setBodyDelay(2, TimeUnit.SECONDS));
 
         PollingMode pollingMode = PollingModes.autoPoll(60, 1);
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient(),
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(),
                 logger,
                 "",
                 this.server.url("/").toString(),
@@ -206,7 +206,7 @@ class AutoPollingTest {
         ConfigCache cache = new SingleValueCache(Helpers.cacheValueFromConfigJson(String.format(TEST_JSON, "test")));
 
         PollingMode pollingMode = PollingModes.autoPoll(2);
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient(),
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(),
                 logger,
                 "",
                 this.server.url("/").toString(),
@@ -230,7 +230,7 @@ class AutoPollingTest {
         ConfigCache cache = new SingleValueCache(Helpers.cacheValueFromConfigJsonAndTime(String.format(TEST_JSON, "test"), System.currentTimeMillis() - 5000));
 
         PollingMode pollingMode = PollingModes.autoPoll(1);
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient(),
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(),
                 logger,
                 "",
                 this.server.url("/").toString(),
@@ -254,7 +254,7 @@ class AutoPollingTest {
         ConfigCatHooks hooks = new ConfigCatHooks();
         hooks.addOnClientReady(clientReadyState -> ready.set(clientReadyState));
         PollingMode pollingMode = PollingModes.autoPoll(2);
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient(),
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(),
                 logger,
                 "",
                 this.server.url("/").toString(),
@@ -277,7 +277,7 @@ class AutoPollingTest {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
 
         PollingMode pollingMode = PollingModes.autoPoll(1);
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient(),
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(),
                 logger,
                 "",
                 this.server.url("/").toString(),
@@ -308,7 +308,7 @@ class AutoPollingTest {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
 
         PollingMode pollingMode = PollingModes.autoPoll(1);
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient(),
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(),
                 logger,
                 "",
                 this.server.url("/").toString(),
@@ -337,7 +337,7 @@ class AutoPollingTest {
         ConfigCache cache = new SingleValueCache(Helpers.cacheValueFromConfigJson(String.format(TEST_JSON, "test")));
 
         PollingMode pollingMode = PollingModes.autoPoll(60, 1);
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient(),
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(),
                 logger,
                 "",
                 this.server.url("/").toString(),
@@ -360,7 +360,7 @@ class AutoPollingTest {
         ConfigCache cache = new SingleValueCache(Helpers.cacheValueFromConfigJsonAndTime(String.format(TEST_JSON, "test"), Constants.DISTANT_PAST));
 
         PollingMode pollingMode = PollingModes.autoPoll(60, 1);
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient(),
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(),
                 logger,
                 "",
                 this.server.url("/").toString(),
