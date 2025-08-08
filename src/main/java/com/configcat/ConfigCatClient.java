@@ -5,6 +5,7 @@ import java9.util.function.Consumer;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.Proxy;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -798,9 +799,9 @@ public final class ConfigCatClient implements ConfigurationProvider {
      * HTTP configuration options for a {@link ConfigCatClient} instance.
      */
     public static class HttpOptions {
-        private int connectTimeoutMillis = 20000;
-        private int readTimeoutMillis = 20000;
-        private String proxyUrl;
+        private int connectTimeoutMillis = 10000;
+        private int readTimeoutMillis = 10000;
+        private Proxy proxy;
 
         /**
          * Sets HTTP connect timeout in milliseconds.
@@ -823,12 +824,12 @@ public final class ConfigCatClient implements ConfigurationProvider {
         }
 
         /**
-         * Sets the HTTP proxy url.
+         * Sets the HTTP proxy.
          *
-         * @param proxyUrl the HTTP proxy url.
+         * @param proxy the HTTP proxy.
          */
-        public HttpOptions proxyUrl(String proxyUrl) {
-            this.proxyUrl = proxyUrl;
+        public HttpOptions proxy(Proxy proxy) {
+            this.proxy = proxy;
             return this;
         }
 
@@ -840,8 +841,8 @@ public final class ConfigCatClient implements ConfigurationProvider {
             return readTimeoutMillis;
         }
 
-        String getProxyUrl() {
-            return proxyUrl;
+        Proxy getProxy() {
+            return proxy;
         }
     }
 }

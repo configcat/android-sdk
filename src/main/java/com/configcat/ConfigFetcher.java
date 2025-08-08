@@ -121,7 +121,7 @@ class ConfigFetcher implements Closeable {
                 }
 
                 String newUrl = config.getPreferences().getBaseUrl();
-                if (newUrl.equals(this.url)) {
+                if (newUrl == null || newUrl.equals(this.url)) {
                     return CompletableFuture.completedFuture(fetchResponse);
                 }
 
@@ -168,14 +168,16 @@ class ConfigFetcher implements Closeable {
 
         try {
             URL fetchUrl = new URL(requestUrl);
-            urlConnection = (HttpURLConnection) fetchUrl.openConnection();
+            if (httpOptions.getProxy() != null) {
+                urlConnection = (HttpURLConnection) fetchUrl.openConnection(httpOptions.getProxy());
+            } else {
+                urlConnection = (HttpURLConnection) fetchUrl.openConnection();
+            }
             urlConnection.setConnectTimeout(httpOptions.getConnectTimeoutMillis());
             urlConnection.setReadTimeout(httpOptions.getReadTimeoutMillis());
             urlConnection.setUseCaches(false);
             urlConnection.setInstanceFollowRedirects(false);
-            urlConnection.setRequestMethod("GET");
             urlConnection.setRequestProperty("X-ConfigCat-UserAgent", "ConfigCat-Droid/" + this.mode + "-" + Constants.VERSION);
-            urlConnection.setDoOutput(true);
 
             if (previousETag != null && !previousETag.isEmpty())
                 urlConnection.setRequestProperty("If-None-Match", previousETag);
