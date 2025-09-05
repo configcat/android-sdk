@@ -52,7 +52,8 @@ public final class ConfigCatClient implements ConfigurationProvider {
                     options.isBaseURLCustom(),
                     options.pollingMode.getPollingIdentifier());
 
-            this.configService = new ConfigService(sdkKey, options.pollingMode, options.cache, logger, fetcher, options.hooks, options.offline);
+            StateMonitor monitor = options.context != null ? new AppStateMonitor(options.context, logger) : null;
+            this.configService = new ConfigService(sdkKey, monitor, options.pollingMode, options.cache, logger, fetcher, options.hooks, options.offline);
         } else {
             this.hooks.invokeOnClientReady(ClientCacheState.HAS_LOCAL_OVERRIDE_FLAG_DATA_ONLY);
         }
@@ -667,6 +668,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
      * Configuration options for a {@link ConfigCatClient} instance.
      */
     public static class Options {
+        private android.content.Context context;
         private ConfigCache cache = new NullConfigCache();
         private String baseUrl;
         private PollingMode pollingMode = PollingModes.autoPoll(60);
@@ -788,6 +790,15 @@ public final class ConfigCatClient implements ConfigurationProvider {
          */
         public void logFilter(LogFilterFunction logFilter) {
             this.logFilter = logFilter;
+        }
+
+        /**
+         * Sets the Android context used by the SDK.
+         *
+         * @param context the Android {@link android.content.Context} instance to be used.
+         */
+        public void context(android.content.Context context) {
+            this.context = context;
         }
 
         private boolean isBaseURLCustom() {

@@ -98,7 +98,7 @@ class ConfigFetcherTest {
         ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(), logger,
                 "", this.server.url("/").toString(), false, PollingModes.manualPoll().getPollingIdentifier());
 
-        ConfigService policy = new ConfigService("", PollingModes.autoPoll(2), cache, logger, fetcher, new ConfigCatHooks(), false);
+        ConfigService policy = new ConfigService("", null, PollingModes.autoPoll(2), cache, logger, fetcher, new ConfigCatHooks(), false);
         assertEquals("fakeValue", policy.getSettings().get().settings().get("fakeKey").getSettingsValue().getStringValue());
 
         verify(cache, never()).write(anyString(), eq(TEST_JSON));
@@ -115,7 +115,7 @@ class ConfigFetcherTest {
         ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(), logger,
                 "", this.server.url("/").toString(), false, PollingModes.manualPoll().getPollingIdentifier());
 
-        ConfigService policy = new ConfigService("", PollingModes.autoPoll(2), cache, logger, fetcher, new ConfigCatHooks(), false);
+        ConfigService policy = new ConfigService("", null, PollingModes.autoPoll(2), cache, logger, fetcher, new ConfigCatHooks(), false);
         assertEquals("fakeValue", policy.getSettings().get().settings().get("fakeKey").getSettingsValue().getStringValue());
 
         verify(cache, never()).write(anyString(), eq(TEST_JSON));
