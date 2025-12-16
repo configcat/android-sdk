@@ -13,7 +13,6 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -31,7 +30,6 @@ class AppStateMonitor extends BroadcastReceiver implements Application.ActivityL
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock(true);
     private final List<Consumer<Boolean>> stateChangeListeners = new ArrayList<>();
     private final AtomicBoolean inForeground = new AtomicBoolean(true);
-    private final AtomicBoolean hasNetwork = new AtomicBoolean(true);
 
     public AppStateMonitor(Context context, ConfigCatLogger logger) {
         this.context = context;
@@ -55,11 +53,12 @@ class AppStateMonitor extends BroadcastReceiver implements Application.ActivityL
     }
 
     private void notifyListeners() {
-        logger.debug(String.format("App state has been changed, in foreground: %s, has network: %s", inForeground.get(), hasNetwork.get()));
+        boolean hasNetwork = this.isNetworkAvailable();
+        logger.debug(String.format("App state has been changed, in foreground: %s, has network: %s", inForeground.get(), hasNetwork));
         lock.readLock().lock();
         try {
             for (Consumer<Boolean> listener : this.stateChangeListeners) {
-                listener.accept(inForeground.get() && hasNetwork.get());
+                listener.accept(inForeground.get() && hasNetwork);
             }
         } finally {
             lock.readLock().unlock();
@@ -109,15 +108,10 @@ class AppStateMonitor extends BroadcastReceiver implements Application.ActivityL
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        if (!Objects.equals(intent.getAction(), CONNECTIVITY_CHANGE)) {
+        if (!CONNECTIVITY_CHANGE.equals(intent.getAction())) {
             return;
         }
-        boolean isConnected = isNetworkAvailable();
-        if (isConnected && hasNetwork.compareAndSet(false, true)) {
-            notifyListeners();
-        } else if (!isConnected && hasNetwork.compareAndSet(true, false)) {
-            notifyListeners();
-        }
+        notifyListeners();
     }
 
     @Override
