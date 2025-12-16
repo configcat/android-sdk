@@ -134,7 +134,9 @@ class AppStateMonitor extends BroadcastReceiver implements Application.ActivityL
     }
 
     @Override
-    public void onLowMemory() {}
+    public void onLowMemory() {
+        // ignore
+    }
 
     @SuppressWarnings("deprecation")
     public boolean isNetworkAvailable() {

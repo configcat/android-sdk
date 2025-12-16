@@ -1,7 +1,6 @@
 package com.configcat;
 
 import java9.util.concurrent.CompletableFuture;
-import okhttp3.OkHttpClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.Test;
