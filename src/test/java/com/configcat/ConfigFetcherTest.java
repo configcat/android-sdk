@@ -258,4 +258,45 @@ class ConfigFetcherTest {
 
         fetcher.close();
     }
+
+    @Test
+    public void ensureStateMonitorWorks() throws IOException {
+        this.server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(), logger,
+                "", this.server.url("/").toString(), false, PollingModes.manualPoll().getPollingIdentifier());
+
+        TestStateMonitor monitor = new TestStateMonitor();
+        ConfigService service = new ConfigService("", monitor, PollingModes.autoPoll(), new NullConfigCache(), logger, fetcher, new ConfigCatHooks(), false);
+
+        assertFalse(service.isOffline());
+
+        monitor.setState(false);
+        monitor.notifyListeners();
+
+        assertTrue(service.isOffline());
+
+        monitor.setState(true);
+        monitor.notifyListeners();
+
+        assertFalse(service.isOffline());
+
+        service.setOffline();
+        assertTrue(service.isOffline());
+
+        monitor.setState(false);
+        monitor.notifyListeners();
+
+        assertTrue(service.isOffline());
+
+        monitor.setState(true);
+        monitor.notifyListeners();
+
+        assertTrue(service.isOffline());
+
+        service.setOnline();
+
+        assertFalse(service.isOffline());
+
+        service.close();
+    }
 }

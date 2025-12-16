@@ -793,11 +793,11 @@ public final class ConfigCatClient implements ConfigurationProvider {
         }
 
         /**
-         * Sets the Android context used by the SDK.
+         * Indicates that the SDK should react to application state changes.
          *
-         * @param context the Android {@link android.content.Context} instance to be used.
+         * @param context the Android {@link android.content.Context} instance.
          */
-        public void context(android.content.Context context) {
+        public void watchAppStateChanges(android.content.Context context) {
             this.context = context;
         }
 

@@ -44,8 +44,9 @@ class ConfigService implements Closeable {
     private Entry cachedEntry = Entry.EMPTY;
     private CompletableFuture<Result<Entry>> runningTask;
     private final AtomicBoolean initialized = new AtomicBoolean(false);
-    private final AtomicBoolean offline;
+    private final AtomicBoolean userIndicatedOffline;
     private final AtomicBoolean inForegroundAndHasNetwork;
+    private final AtomicBoolean offline;
     private final AtomicBoolean closed = new AtomicBoolean(false);
     private final String cacheKey;
     private final StateMonitor stateMonitor;
@@ -63,7 +64,7 @@ class ConfigService implements Closeable {
                          ConfigCatLogger logger,
                          ConfigFetcher fetcher,
                          ConfigCatHooks hooks,
-                         boolean offline) {
+                         boolean userIndicatedOffline) {
         this.cacheKey = Utils.sha1(String.format(CACHE_BASE, sdkKey));
         this.stateMonitor = stateMonitor;
         this.mode = mode;
@@ -71,22 +72,18 @@ class ConfigService implements Closeable {
         this.logger = logger;
         this.fetcher = fetcher;
         this.hooks = hooks;
-        this.offline = new AtomicBoolean(offline);
-
+        this.userIndicatedOffline = new AtomicBoolean(userIndicatedOffline);
         this.inForegroundAndHasNetwork = new AtomicBoolean(stateMonitor == null || stateMonitor.isNetworkAvailable());
+        this.offline = new AtomicBoolean(isOffline());
 
         if (stateMonitor != null) {
             stateMonitor.addStateChangeListener(state -> {
-                this.inForegroundAndHasNetwork.set(state);
-                if (!state) {
-                    setOffline();
-                } else {
-                    setOnline();
-                }
+                inForegroundAndHasNetwork.set(state);
+                switchStateIfNeeded();
             });
         }
 
-        if (mode instanceof AutoPollingMode && !offline) {
+        if (mode instanceof AutoPollingMode && !userIndicatedOffline) {
             AutoPollingMode autoPollingMode = (AutoPollingMode) mode;
 
             startPoll(autoPollingMode);
@@ -133,7 +130,7 @@ class ConfigService implements Closeable {
     }
 
     public CompletableFuture<RefreshResult> refresh() {
-        if (offline.get()) {
+        if (isOffline()) {
             String offlineWarning = ConfigCatLogMessages.CONFIG_SERVICE_CANNOT_INITIATE_HTTP_CALLS_WARN;
             logger.warn(3200, offlineWarning);
             return CompletableFuture.completedFuture(new RefreshResult(false, offlineWarning));
@@ -144,20 +141,30 @@ class ConfigService implements Closeable {
     }
 
     public void setOnline() {
-        if (!offline.compareAndSet(true, false)) return;
-        if (mode instanceof AutoPollingMode) {
-            startPoll((AutoPollingMode) mode);
-        }
-        logger.info(5200, ConfigCatLogMessages.getConfigServiceStatusChanged("ONLINE"));
+        if (!userIndicatedOffline.compareAndSet(true, false)) return;
+        switchStateIfNeeded();
     }
 
     public void setOffline() {
-        if (!offline.compareAndSet(false, true)) return;
-        logger.info(5200, ConfigCatLogMessages.getConfigServiceStatusChanged("OFFLINE"));
+        if (!userIndicatedOffline.compareAndSet(false, true)) return;
+        switchStateIfNeeded();
     }
 
     public boolean isOffline() {
-        return offline.get();
+        return userIndicatedOffline.get() || !inForegroundAndHasNetwork.get();
+    }
+
+    private void switchStateIfNeeded() {
+        boolean isOffline = isOffline();
+        if (isOffline && offline.compareAndSet(false, true)) {
+            logger.info(5200, ConfigCatLogMessages.getConfigServiceStatusChanged("OFFLINE"));
+        }
+        if (!isOffline && offline.compareAndSet(true, false)) {
+            if (mode instanceof AutoPollingMode) {
+                startPoll((AutoPollingMode) mode);
+            }
+            logger.info(5200, ConfigCatLogMessages.getConfigServiceStatusChanged("ONLINE"));
+        }
     }
 
     private CompletableFuture<Result<Entry>> fetchIfOlder(long threshold, boolean preferCached) {
@@ -175,7 +182,7 @@ class ConfigService implements Closeable {
                 return CompletableFuture.completedFuture(Result.success(cachedEntry));
             }
             // If we are in offline mode or the caller prefers cached values, do not initiate fetch.
-            if (offline.get() || !inForegroundAndHasNetwork.get() || preferCached) {
+            if (isOffline() || preferCached) {
                 return CompletableFuture.completedFuture(Result.success(cachedEntry));
             }
 
