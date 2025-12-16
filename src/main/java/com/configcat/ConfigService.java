@@ -83,7 +83,7 @@ class ConfigService implements Closeable {
             });
         }
 
-        if (mode instanceof AutoPollingMode && !userIndicatedOffline) {
+        if (mode instanceof AutoPollingMode) {
             AutoPollingMode autoPollingMode = (AutoPollingMode) mode;
 
             startPoll(autoPollingMode);
