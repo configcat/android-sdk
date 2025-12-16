@@ -2,7 +2,7 @@ name: Android CI
 
 on:
   push:
-    branches: [ '*' ]
+    branches: [ master ]
     tags: [ 'v[0-9]+.[0-9]+.[0-9]+' ]
     
   workflow_dispatch:
@@ -76,7 +76,7 @@ jobs:
       
   deploy-snapshot:
     needs: [ coverage-scan, test ]
-    if: ${{ github.ref == 'refs/heads/replace-okhttp' }}
+    if: ${{ github.ref == 'refs/heads/master' }}
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
