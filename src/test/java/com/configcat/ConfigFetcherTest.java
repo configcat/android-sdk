@@ -184,7 +184,7 @@ class ConfigFetcherTest {
     }
 
     @Test
-    public void fetchedFail403ContainsCFRAY() throws Exception {
+    void fetchedFail403ContainsCFRAY() throws Exception {
         this.server.enqueue(new MockResponse().setResponseCode(403).setBody(TEST_JSON).setHeader("ETag", "fakeETag").setHeader("CF-RAY", "12345"));
 
         Logger mockLogger = mock(Logger.class);
@@ -209,7 +209,7 @@ class ConfigFetcherTest {
     }
 
     @Test
-    public void fetchedNotModified304ContainsCFRAY() throws Exception {
+    void fetchedNotModified304ContainsCFRAY() throws Exception {
         this.server.enqueue(new MockResponse().setResponseCode(304).setHeader("CF-RAY", "12345"));
 
         Logger mockLogger = mock(Logger.class);
@@ -234,7 +234,7 @@ class ConfigFetcherTest {
     }
 
     @Test
-    public void fetchedReceivedInvalidBodyContainsCFRAY() throws Exception {
+    void fetchedReceivedInvalidBodyContainsCFRAY() throws Exception {
         this.server.enqueue(new MockResponse().setResponseCode(200).setHeader("CF-RAY", "12345").setBody("test"));
 
         Logger mockLogger = mock(Logger.class);
@@ -260,7 +260,7 @@ class ConfigFetcherTest {
     }
 
     @Test
-    public void ensureStateMonitorWorks() throws IOException {
+    void ensureStateMonitorWorks() throws IOException {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
         ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(), logger,
                 "", this.server.url("/").toString(), false, PollingModes.manualPoll().getPollingIdentifier());

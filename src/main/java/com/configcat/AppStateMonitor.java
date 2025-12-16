@@ -87,16 +87,24 @@ class AppStateMonitor extends BroadcastReceiver implements Application.ActivityL
     }
 
     @Override
-    public void onActivityPaused(Activity activity) {}
+    public void onActivityPaused(Activity activity) {
+        // ignore
+    }
 
     @Override
-    public void onActivityStopped(Activity activity) {}
+    public void onActivityStopped(Activity activity) {
+        // ignore
+    }
 
     @Override
-    public void onActivitySaveInstanceState(Activity activity, Bundle bundle) {}
+    public void onActivitySaveInstanceState(Activity activity, Bundle bundle) {
+        // ignore
+    }
 
     @Override
-    public void onActivityDestroyed(Activity activity) {}
+    public void onActivityDestroyed(Activity activity) {
+        // ignore
+    }
 
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -110,15 +118,16 @@ class AppStateMonitor extends BroadcastReceiver implements Application.ActivityL
 
     @Override
     public void onTrimMemory(int i) {
-        if (i == ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN) { // We're in the background
-            if (inForeground.compareAndSet(true, false)) {
-                notifyListeners();
-            }
+        // We're in the background
+        if (i == ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN && inForeground.compareAndSet(true, false)) {
+            notifyListeners();
         }
     }
 
     @Override
-    public void onConfigurationChanged(Configuration configuration) {}
+    public void onConfigurationChanged(Configuration configuration) {
+        // ignore
+    }
 
     @Override
     public void onLowMemory() {}
