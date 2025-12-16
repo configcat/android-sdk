@@ -183,6 +183,7 @@ class ConfigService implements Closeable {
             }
             // If we are in offline mode or the caller prefers cached values, do not initiate fetch.
             if (isOffline() || preferCached) {
+                setInitialized();
                 return CompletableFuture.completedFuture(Result.success(cachedEntry));
             }
 

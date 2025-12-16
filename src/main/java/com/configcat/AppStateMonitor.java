@@ -13,6 +13,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -108,6 +109,9 @@ class AppStateMonitor extends BroadcastReceiver implements Application.ActivityL
 
     @Override
     public void onReceive(Context context, Intent intent) {
+        if (!Objects.equals(intent.getAction(), CONNECTIVITY_CHANGE)) {
+            return;
+        }
         boolean isConnected = isNetworkAvailable();
         if (isConnected && hasNetwork.compareAndSet(false, true)) {
             notifyListeners();
@@ -132,6 +136,7 @@ class AppStateMonitor extends BroadcastReceiver implements Application.ActivityL
     @Override
     public void onLowMemory() {}
 
+    @SuppressWarnings("deprecation")
     public boolean isNetworkAvailable() {
         ConnectivityManager conn =
                 (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
