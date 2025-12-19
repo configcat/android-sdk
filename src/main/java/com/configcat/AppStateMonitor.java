@@ -134,10 +134,15 @@ class AppStateMonitor extends BroadcastReceiver implements Application.ActivityL
 
     @SuppressWarnings("deprecation")
     public boolean isNetworkAvailable() {
-        ConnectivityManager conn =
-                (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo networkInfo = conn.getActiveNetworkInfo();
-        return networkInfo != null && networkInfo.isConnected();
+        try {
+            ConnectivityManager conn =
+                    (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+            NetworkInfo networkInfo = conn.getActiveNetworkInfo();
+            return networkInfo != null && networkInfo.isConnected();
+        } catch (SecurityException e) {
+            // Fall back to assuming a network is available
+            return true;
+        }
     }
 
     @Override
@@ -148,7 +153,11 @@ class AppStateMonitor extends BroadcastReceiver implements Application.ActivityL
         } finally {
             lock.writeLock().unlock();
         }
-        application.unregisterReceiver(this);
+        try {
+            application.unregisterReceiver(this);
+        } catch (IllegalArgumentException e) {
+            // ignore, the receiver was not registered
+        }
         application.unregisterActivityLifecycleCallbacks(this);
         application.unregisterComponentCallbacks(this);
     }
