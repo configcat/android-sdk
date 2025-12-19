@@ -44,9 +44,12 @@ class ConfigService implements Closeable {
     private Entry cachedEntry = Entry.EMPTY;
     private CompletableFuture<Result<Entry>> runningTask;
     private final AtomicBoolean initialized = new AtomicBoolean(false);
+    private final AtomicBoolean userIndicatedOffline;
+    private final AtomicBoolean inForegroundAndHasNetwork;
     private final AtomicBoolean offline;
     private final AtomicBoolean closed = new AtomicBoolean(false);
     private final String cacheKey;
+    private final StateMonitor stateMonitor;
     private final PollingMode mode;
     private final ConfigCache cache;
     private final ConfigCatLogger logger;
@@ -55,21 +58,32 @@ class ConfigService implements Closeable {
     private final ReentrantLock lock = new ReentrantLock(true);
 
     public ConfigService(String sdkKey,
+                         StateMonitor stateMonitor,
                          PollingMode mode,
                          ConfigCache cache,
                          ConfigCatLogger logger,
                          ConfigFetcher fetcher,
                          ConfigCatHooks hooks,
-                         boolean offline) {
+                         boolean userIndicatedOffline) {
         this.cacheKey = Utils.sha1(String.format(CACHE_BASE, sdkKey));
+        this.stateMonitor = stateMonitor;
         this.mode = mode;
         this.cache = cache;
         this.logger = logger;
         this.fetcher = fetcher;
         this.hooks = hooks;
-        this.offline = new AtomicBoolean(offline);
+        this.userIndicatedOffline = new AtomicBoolean(userIndicatedOffline);
+        this.inForegroundAndHasNetwork = new AtomicBoolean(stateMonitor == null || stateMonitor.isNetworkAvailable());
+        this.offline = new AtomicBoolean(isOffline());
 
-        if (mode instanceof AutoPollingMode && !offline) {
+        if (stateMonitor != null) {
+            stateMonitor.addStateChangeListener(state -> {
+                inForegroundAndHasNetwork.set(state);
+                switchStateIfNeeded();
+            });
+        }
+
+        if (mode instanceof AutoPollingMode) {
             AutoPollingMode autoPollingMode = (AutoPollingMode) mode;
 
             startPoll(autoPollingMode);
@@ -116,7 +130,7 @@ class ConfigService implements Closeable {
     }
 
     public CompletableFuture<RefreshResult> refresh() {
-        if (offline.get()) {
+        if (isOffline()) {
             String offlineWarning = ConfigCatLogMessages.CONFIG_SERVICE_CANNOT_INITIATE_HTTP_CALLS_WARN;
             logger.warn(3200, offlineWarning);
             return CompletableFuture.completedFuture(new RefreshResult(false, offlineWarning));
@@ -127,32 +141,30 @@ class ConfigService implements Closeable {
     }
 
     public void setOnline() {
-        lock.lock();
-        try {
-            if (!offline.compareAndSet(true, false)) return;
+        if (!userIndicatedOffline.compareAndSet(true, false)) return;
+        switchStateIfNeeded();
+    }
+
+    public void setOffline() {
+        if (!userIndicatedOffline.compareAndSet(false, true)) return;
+        switchStateIfNeeded();
+    }
+
+    public boolean isOffline() {
+        return userIndicatedOffline.get() || !inForegroundAndHasNetwork.get();
+    }
+
+    private void switchStateIfNeeded() {
+        boolean isOffline = isOffline();
+        if (isOffline && offline.compareAndSet(false, true)) {
+            logger.info(5200, ConfigCatLogMessages.getConfigServiceStatusChanged("OFFLINE"));
+        }
+        if (!isOffline && offline.compareAndSet(true, false)) {
             if (mode instanceof AutoPollingMode) {
                 startPoll((AutoPollingMode) mode);
             }
             logger.info(5200, ConfigCatLogMessages.getConfigServiceStatusChanged("ONLINE"));
-        } finally {
-            lock.unlock();
         }
-    }
-
-    public void setOffline() {
-        lock.lock();
-        try {
-            if (!offline.compareAndSet(false, true)) return;
-            if (pollScheduler != null) pollScheduler.shutdown();
-            if (initScheduler != null) initScheduler.shutdown();
-            logger.info(5200, ConfigCatLogMessages.getConfigServiceStatusChanged("OFFLINE"));
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    public boolean isOffline() {
-        return offline.get();
     }
 
     private CompletableFuture<Result<Entry>> fetchIfOlder(long threshold, boolean preferCached) {
@@ -170,7 +182,8 @@ class ConfigService implements Closeable {
                 return CompletableFuture.completedFuture(Result.success(cachedEntry));
             }
             // If we are in offline mode or the caller prefers cached values, do not initiate fetch.
-            if (offline.get() || preferCached) {
+            if (isOffline() || preferCached) {
+                setInitialized();
                 return CompletableFuture.completedFuture(Result.success(cachedEntry));
             }
 
@@ -224,10 +237,16 @@ class ConfigService implements Closeable {
     }
 
     private void startPoll(AutoPollingMode mode) {
-        long ageThreshold = (mode.getAutoPollRateInSeconds() * 1000L) - 500;
-        pollScheduler = Executors.newSingleThreadScheduledExecutor();
-        pollScheduler.scheduleWithFixedDelay(() -> this.fetchIfOlder(System.currentTimeMillis() - ageThreshold, false),
-                0, mode.getAutoPollRateInSeconds(), TimeUnit.SECONDS);
+        lock.lock();
+        try {
+            long ageThreshold = (mode.getAutoPollRateInSeconds() * 1000L) - 500;
+            if (pollScheduler != null) pollScheduler.shutdown();
+            pollScheduler = Executors.newSingleThreadScheduledExecutor();
+            pollScheduler.scheduleWithFixedDelay(() -> this.fetchIfOlder(System.currentTimeMillis() - ageThreshold, false),
+                    0, mode.getAutoPollRateInSeconds(), TimeUnit.SECONDS);
+        } finally {
+            lock.unlock();
+        }
     }
 
     private void writeCache(Entry entry) {
@@ -280,6 +299,7 @@ class ConfigService implements Closeable {
         }
         if (pollScheduler != null) pollScheduler.shutdown();
         if (initScheduler != null) initScheduler.shutdown();
+        if (stateMonitor != null) stateMonitor.close();
         fetcher.close();
     }
 }

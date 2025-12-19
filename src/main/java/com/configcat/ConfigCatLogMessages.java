@@ -167,11 +167,10 @@ final class ConfigCatLogMessages {
      *
      * @param connectTimeoutMillis Connect timeout in milliseconds.
      * @param readTimeoutMillis    Read timeout in milliseconds.
-     * @param writeTimeoutMillis   Write timeout in milliseconds.
      * @return The formattable log message.
      */
-    public static FormattableLogMessage getFetchFailedDueToRequestTimeout(final Integer connectTimeoutMillis, final Integer readTimeoutMillis, final Integer writeTimeoutMillis) {
-        return new FormattableLogMessage("Request timed out while trying to fetch config JSON. Timeout values: [connect: %dms, read: %dms, write: %dms]", connectTimeoutMillis, readTimeoutMillis, writeTimeoutMillis);
+    public static FormattableLogMessage getFetchFailedDueToRequestTimeout(final Integer connectTimeoutMillis, final Integer readTimeoutMillis) {
+        return new FormattableLogMessage("Request timed out while trying to fetch config JSON. Timeout values: [connect: %dms, read: %dms]", connectTimeoutMillis, readTimeoutMillis);
     }
 
     /**

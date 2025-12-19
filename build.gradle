@@ -63,8 +63,6 @@ repositories {
 
 dependencies {
     api(libs.android.retrofuture)
-    api(libs.okhttp)
-    api(libs.okio)
     api(libs.slf4j.api)
     api(libs.gson)
     api(libs.commons.codec)
