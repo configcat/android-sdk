@@ -20,6 +20,10 @@ class MainActivity : AppCompatActivity() {
             // Use ConfigCat's shared preferences cache.
             options.cache(SharedPreferencesCache(this@MainActivity))
 
+            // With this option, the SDK automatically switches between offline and online modes based on
+            // whether the application is in the foreground or background and on network availability.
+            options.watchAppStateChanges(this@MainActivity)
+
             // Info level logging helps to inspect the feature flag evaluation process.
             // Use the default Warning level to avoid too detailed logging in your application.
             options.logLevel(LogLevel.DEBUG)

@@ -1,6 +1,5 @@
 package com.configcat;
 
-import okhttp3.OkHttpClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.AfterEach;
@@ -26,8 +25,8 @@ class ManualPollingTest {
         this.server.start();
 
         PollingMode mode = PollingModes.manualPoll();
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
-        this.policy = new ConfigService("", mode, new NullConfigCache(), logger, fetcher, new ConfigCatHooks(), false);
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(), logger, "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
+        this.policy = new ConfigService("", null, mode, new NullConfigCache(), logger, fetcher, new ConfigCatHooks(), false);
     }
 
     @AfterEach
@@ -53,8 +52,8 @@ class ManualPollingTest {
     @Test
     void getCacheFails() throws InterruptedException, ExecutionException, IOException {
         PollingMode mode = PollingModes.manualPoll();
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
-        ConfigService lPolicy = new ConfigService("", mode, new NullConfigCache(), logger, fetcher, new ConfigCatHooks(), false);
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(), logger, "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
+        ConfigService lPolicy = new ConfigService("", null, mode, new NullConfigCache(), logger, fetcher, new ConfigCatHooks(), false);
 
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test2")).setBodyDelay(2, TimeUnit.SECONDS));
@@ -91,8 +90,8 @@ class ManualPollingTest {
 
         InMemoryCache cache = new InMemoryCache();
         PollingMode mode = PollingModes.manualPoll();
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger, "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
-        ConfigService service = new ConfigService("", mode, cache, logger, fetcher, new ConfigCatHooks(), false);
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(), logger, "", this.server.url("/").toString(), false, mode.getPollingIdentifier());
+        ConfigService service = new ConfigService("", null, mode, cache, logger, fetcher, new ConfigCatHooks(), false);
 
         service.refresh().get();
         assertEquals("test", service.getSettings().get().settings().get("fakeKey").getSettingsValue().getStringValue());
@@ -119,13 +118,13 @@ class ManualPollingTest {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
 
         PollingMode pollingMode = PollingModes.manualPoll();
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient(),
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(),
                 logger,
                 "",
                 this.server.url("/").toString(),
                 false,
                 pollingMode.getPollingIdentifier());
-        ConfigService service = new ConfigService("", pollingMode, new NullConfigCache(), logger, fetcher, new ConfigCatHooks(), false);
+        ConfigService service = new ConfigService("", null, pollingMode, new NullConfigCache(), logger, fetcher, new ConfigCatHooks(), false);
 
         assertFalse(service.isOffline());
         assertTrue(service.refresh().get().isSuccess());
@@ -152,13 +151,13 @@ class ManualPollingTest {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
 
         PollingMode pollingMode = PollingModes.manualPoll();
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient(),
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(),
                 logger,
                 "",
                 this.server.url("/").toString(),
                 false,
                 pollingMode.getPollingIdentifier());
-        ConfigService service = new ConfigService("", pollingMode, new NullConfigCache(), logger, fetcher, new ConfigCatHooks(), true);
+        ConfigService service = new ConfigService("", null, pollingMode, new NullConfigCache(), logger, fetcher, new ConfigCatHooks(), true);
 
         assertTrue(service.isOffline());
         assertFalse(service.refresh().get().isSuccess());

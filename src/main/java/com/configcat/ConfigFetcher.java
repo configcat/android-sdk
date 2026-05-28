@@ -1,12 +1,15 @@
 package com.configcat;
 
 import java9.util.concurrent.CompletableFuture;
-import okhttp3.*;
-import org.jetbrains.annotations.NotNull;
 
-import java.io.Closeable;
-import java.io.IOException;
+import java.io.*;
+import java.net.HttpURLConnection;
 import java.net.SocketTimeoutException;
+import java.net.URL;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 class FetchResponse {
@@ -70,9 +73,10 @@ class FetchResponse {
 }
 
 class ConfigFetcher implements Closeable {
+    private final ConfigCatClient.HttpOptions httpOptions;
     private final AtomicBoolean closed = new AtomicBoolean(false);
+    private final ExecutorService executorService;
     private final ConfigCatLogger logger;
-    private final OkHttpClient httpClient;
     private final String mode;
     private final String sdkKey;
     private final boolean urlIsCustom;
@@ -85,7 +89,7 @@ class ConfigFetcher implements Closeable {
         FORCE_REDIRECT
     }
 
-    ConfigFetcher(OkHttpClient httpClient,
+    ConfigFetcher(ConfigCatClient.HttpOptions httpOptions,
                   ConfigCatLogger logger,
                   String sdkKey,
                   String url,
@@ -95,8 +99,9 @@ class ConfigFetcher implements Closeable {
         this.sdkKey = sdkKey;
         this.urlIsCustom = urlIsCustom;
         this.url = url;
-        this.httpClient = httpClient;
         this.mode = pollingIdentifier;
+        this.httpOptions = httpOptions;
+        this.executorService = Executors.newCachedThreadPool();
     }
 
     public CompletableFuture<FetchResponse> fetchAsync(String eTag) {
@@ -116,7 +121,7 @@ class ConfigFetcher implements Closeable {
                 }
 
                 String newUrl = config.getPreferences().getBaseUrl();
-                if (newUrl.equals(this.url)) {
+                if (newUrl == null || newUrl.equals(this.url)) {
                     return CompletableFuture.completedFuture(fetchResponse);
                 }
 
@@ -152,66 +157,75 @@ class ConfigFetcher implements Closeable {
     }
 
     private CompletableFuture<FetchResponse> getResponseAsync(String eTag) {
-        Request request = this.getRequest(eTag);
         CompletableFuture<FetchResponse> future = new CompletableFuture<>();
-        this.httpClient.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                String generalMessage = ConfigCatLogMessages.FETCH_FAILED_DUE_TO_UNEXPECTED_ERROR;
-                if (!closed.get()) {
-                    if (e instanceof SocketTimeoutException) {
-                        FormattableLogMessage message = ConfigCatLogMessages.getFetchFailedDueToRequestTimeout(httpClient.connectTimeoutMillis(), httpClient.readTimeoutMillis(), httpClient.writeTimeoutMillis());
-                        logger.error(1102, message, e);
-                        future.complete(FetchResponse.failed(message, false, null));
-                        return;
-                    }
-                    logger.error(1103, generalMessage, e);
+        this.executorService.execute(() -> this.callHTTP(eTag, future));
+        return future;
+    }
+
+    private void callHTTP(String previousETag, CompletableFuture<FetchResponse> result) {
+        String requestUrl = this.url + "/configuration-files/" + this.sdkKey + "/" + Constants.CONFIG_JSON_NAME;
+        HttpURLConnection urlConnection = null;
+
+        try {
+            URL fetchUrl = new URL(requestUrl);
+            if (httpOptions.getProxy() != null) {
+                urlConnection = (HttpURLConnection) fetchUrl.openConnection(httpOptions.getProxy());
+            } else {
+                urlConnection = (HttpURLConnection) fetchUrl.openConnection();
+            }
+            urlConnection.setConnectTimeout(httpOptions.getConnectTimeoutMillis());
+            urlConnection.setReadTimeout(httpOptions.getReadTimeoutMillis());
+            urlConnection.setUseCaches(false);
+            urlConnection.setInstanceFollowRedirects(false);
+            urlConnection.setRequestProperty("X-ConfigCat-UserAgent", "ConfigCat-Droid/" + this.mode + "-" + Constants.VERSION);
+
+            if (previousETag != null && !previousETag.isEmpty())
+                urlConnection.setRequestProperty("If-None-Match", previousETag);
+
+            int responseCode = urlConnection.getResponseCode();
+            Map<String, List<String>> responseHeaders = urlConnection.getHeaderFields();
+
+            String cfRayId = readHeaderValue(responseHeaders, "CF-RAY");
+            if (responseCode == 200) {
+                String content = readBody(urlConnection.getInputStream());
+                String eTag = readHeaderValue(responseHeaders,"ETag");
+                Result<Config> configResult = deserializeConfig(content, cfRayId);
+                if (configResult.error() != null) {
+                    result.complete(FetchResponse.failed(configResult.error(), false, cfRayId));
+                    return;
                 }
-                future.complete(FetchResponse.failed(generalMessage, false, null));
+                logger.debug("Fetch was successful: new config fetched.");
+                result.complete(FetchResponse.fetched(new Entry(configResult.value(), eTag, content, System.currentTimeMillis()), cfRayId));
+            } else if (responseCode == 304) {
+                if(cfRayId != null) {
+                    logger.debug(String.format("Fetch was successful: config not modified. %s", ConfigCatLogMessages.getCFRayIdPostFix(cfRayId)));
+                } else {
+                    logger.debug("Fetch was successful: config not modified.");
+                }
+                result.complete(FetchResponse.notModified(cfRayId));
+            } else if (responseCode == 403 || responseCode == 404) {
+                FormattableLogMessage message = ConfigCatLogMessages.getFetchFailedDueToInvalidSDKKey(cfRayId);
+                logger.error(1100, message);
+                result.complete(FetchResponse.failed(message, true, cfRayId));
+            } else {
+                FormattableLogMessage message = ConfigCatLogMessages.getFetchFailedDueToUnexpectedHttpResponse(responseCode, urlConnection.getResponseMessage(), cfRayId);
+                logger.error(1101, message);
+                result.complete(FetchResponse.failed(message, false, cfRayId));
             }
 
-            @Override
-            public void onResponse(@NotNull Call call, @NotNull Response response) {
-                try (ResponseBody body = response.body()) {
-                    String cfRayId = response.header("CF-RAY");
-                    if (response.code() == 200) {
-                        String content = body != null ? body.string() : null;
-                        String eTag = response.header("ETag");
-                        Result<Config> result = deserializeConfig(content, cfRayId);
-                        if (result.error() != null) {
-                            future.complete(FetchResponse.failed(result.error(), false, cfRayId));
-                            return;
-                        }
-                        logger.debug("Fetch was successful: new config fetched.");
-                        future.complete(FetchResponse.fetched(new Entry(result.value(), eTag, content, System.currentTimeMillis()), cfRayId));
-                    } else if (response.code() == 304) {
-                        if(cfRayId != null) {
-                            logger.debug(String.format("Fetch was successful: config not modified. %s", ConfigCatLogMessages.getCFRayIdPostFix(cfRayId)));
-                        } else {
-                            logger.debug("Fetch was successful: config not modified.");
-                        }
-                        future.complete(FetchResponse.notModified(cfRayId));
-                    } else if (response.code() == 403 || response.code() == 404) {
-                        FormattableLogMessage message = ConfigCatLogMessages.getFetchFailedDueToInvalidSDKKey(cfRayId);
-                        logger.error(1100, message);
-                        future.complete(FetchResponse.failed(message, true, cfRayId));
-                    } else {
-                        FormattableLogMessage message = ConfigCatLogMessages.getFetchFailedDueToUnexpectedHttpResponse(response.code(), response.message(), cfRayId);
-                        logger.error(1101, message);
-                        future.complete(FetchResponse.failed(message, false, cfRayId));
-                    }
-                } catch (SocketTimeoutException e) {
-                    FormattableLogMessage message = ConfigCatLogMessages.getFetchFailedDueToRequestTimeout(httpClient.connectTimeoutMillis(), httpClient.readTimeoutMillis(), httpClient.writeTimeoutMillis());
-                    logger.error(1102, message, e);
-                    future.complete(FetchResponse.failed(message, false, null));
-                } catch (Exception e) {
-                    String message = ConfigCatLogMessages.FETCH_FAILED_DUE_TO_UNEXPECTED_ERROR;
-                    logger.error(1103, message, e);
-                    future.complete(FetchResponse.failed(message + " " + e.getMessage(), false, null));
-                }
+        } catch (SocketTimeoutException e) {
+            FormattableLogMessage message = ConfigCatLogMessages.getFetchFailedDueToRequestTimeout(httpOptions.getConnectTimeoutMillis(), httpOptions.getReadTimeoutMillis());
+            logger.error(1102, message, e);
+            result.complete(FetchResponse.failed(message, false, null));
+        } catch (Exception e) {
+            String message = ConfigCatLogMessages.FETCH_FAILED_DUE_TO_UNEXPECTED_ERROR;
+            logger.error(1103, message, e);
+            result.complete(FetchResponse.failed(message + " " + e.getMessage(), false, null));
+        } finally {
+            if (urlConnection != null) {
+                urlConnection.disconnect();
             }
-        });
-        return future;
+        }
     }
 
     @Override
@@ -219,25 +233,37 @@ class ConfigFetcher implements Closeable {
         if (!this.closed.compareAndSet(false, true)) {
             return;
         }
-
-        if (this.httpClient != null) {
-            this.httpClient.dispatcher().executorService().shutdownNow();
-            this.httpClient.connectionPool().evictAll();
-            Cache cache = this.httpClient.cache();
-            if (cache != null)
-                cache.close();
+        if (this.executorService != null) {
+            this.executorService.shutdownNow();
         }
     }
 
-    private Request getRequest(String eTag) {
-        String requestUrl = this.url + "/configuration-files/" + this.sdkKey + "/" + Constants.CONFIG_JSON_NAME;
-        Request.Builder builder = new Request.Builder()
-                .addHeader("X-ConfigCat-UserAgent", "ConfigCat-Droid/" + this.mode + "-" + Constants.VERSION);
+    private String readHeaderValue(Map<String, List<String>> responseHeaders, String headerName) {
+        if (responseHeaders == null || responseHeaders.isEmpty()) {
+            return null;
+        }
+        for (Map.Entry<String, List<String>> entry : responseHeaders.entrySet()) {
+            if (entry.getKey() != null && entry.getKey().equalsIgnoreCase(headerName)) {
+                if (entry.getValue() != null && !entry.getValue().isEmpty()) {
+                    return entry.getValue().get(0);
+                }
+            }
+        }
+        return null;
+    }
 
-        if (eTag != null && !eTag.isEmpty())
-            builder.addHeader("If-None-Match", eTag);
-
-        return builder.url(requestUrl).build();
+    private String readBody(InputStream inputStream) throws IOException {
+        if (inputStream == null) {
+            return null;
+        }
+        StringBuilder body = new StringBuilder();
+        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+        String line;
+        while ((line = reader.readLine()) != null) {
+            body.append(line);
+        }
+        reader.close();
+        return body.toString();
     }
 
     private Result<Config> deserializeConfig(String json, String cfRayId) {

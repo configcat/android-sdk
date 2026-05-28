@@ -1,6 +1,5 @@
 package com.configcat;
 
-import okhttp3.OkHttpClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.AfterEach;
@@ -11,7 +10,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -45,13 +43,13 @@ class AutoPollingTest {
 
         ConfigCache cache = new NullConfigCache();
         PollingMode pollingMode = PollingModes.autoPoll(2);
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(),
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(),
                 logger,
                 "",
                 this.server.url("/").toString(),
                 false,
                 pollingMode.getPollingIdentifier());
-        ConfigService policy = new ConfigService("", pollingMode, cache, logger, fetcher, new ConfigCatHooks(), false);
+        ConfigService policy = new ConfigService("", null, pollingMode, cache, logger, fetcher, new ConfigCatHooks(), false);
 
         //first call
         assertEquals("test", policy.getSettings().get().settings().get("fakeKey").getSettingsValue().getStringValue());
@@ -71,13 +69,13 @@ class AutoPollingTest {
 
         ConfigCache cache = new NullConfigCache();
         PollingMode pollingMode = PollingModes.autoPoll(2);
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(),
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(),
                 logger,
                 "",
                 this.server.url("/").toString(),
                 false,
                 pollingMode.getPollingIdentifier());
-        ConfigService policy = new ConfigService("", pollingMode, cache, logger, fetcher, new ConfigCatHooks(), false);
+        ConfigService policy = new ConfigService("", null, pollingMode, cache, logger, fetcher, new ConfigCatHooks(), false);
 
         //first call
         assertTrue(policy.getSettings().get().settings().isEmpty());
@@ -94,13 +92,13 @@ class AutoPollingTest {
 
         ConfigCache cache = new NullConfigCache();
         PollingMode pollingMode = PollingModes.autoPoll(2);
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(),
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(),
                 logger,
                 "",
                 this.server.url("/").toString(),
                 false,
                 pollingMode.getPollingIdentifier());
-        ConfigService policy = new ConfigService("", pollingMode, cache, logger, fetcher, new ConfigCatHooks(), false);
+        ConfigService policy = new ConfigService("", null, pollingMode, cache, logger, fetcher, new ConfigCatHooks(), false);
 
         //first calls
         assertEquals("test", policy.getSettings().get().settings().get("fakeKey").getSettingsValue().getStringValue());
@@ -135,13 +133,13 @@ class AutoPollingTest {
 
         ConfigCache cache = new NullConfigCache();
         PollingMode pollingMode = PollingModes.autoPoll(2);
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(),
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(),
                 logger,
                 "",
                 this.server.url("/").toString(),
                 false,
                 pollingMode.getPollingIdentifier());
-        ConfigService policy = new ConfigService("", pollingMode, cache, logger, fetcher, new ConfigCatHooks(), false);
+        ConfigService policy = new ConfigService("", null, pollingMode, cache, logger, fetcher, new ConfigCatHooks(), false);
 
         //first call
         assertEquals("test", policy.getSettings().get().settings().get("fakeKey").getSettingsValue().getStringValue());
@@ -165,13 +163,13 @@ class AutoPollingTest {
         doThrow(new Exception()).when(cache).write(anyString(), anyString());
 
         PollingMode pollingMode = PollingModes.autoPoll(2);
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(),
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(),
                 logger,
                 "",
                 this.server.url("/").toString(),
                 false,
                 pollingMode.getPollingIdentifier());
-        ConfigService policy = new ConfigService("", pollingMode, cache, logger, fetcher, new ConfigCatHooks(), false);
+        ConfigService policy = new ConfigService("", null, pollingMode, cache, logger, fetcher, new ConfigCatHooks(), false);
 
         assertEquals("test", policy.getSettings().get().settings().get("fakeKey").getSettingsValue().getStringValue());
 
@@ -183,13 +181,13 @@ class AutoPollingTest {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")).setBodyDelay(2, TimeUnit.SECONDS));
 
         PollingMode pollingMode = PollingModes.autoPoll(60, 1);
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient(),
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(),
                 logger,
                 "",
                 this.server.url("/").toString(),
                 false,
                 pollingMode.getPollingIdentifier());
-        ConfigService policy = new ConfigService("", pollingMode, new NullConfigCache(), logger, fetcher, new ConfigCatHooks(), false);
+        ConfigService policy = new ConfigService("", null, pollingMode, new NullConfigCache(), logger, fetcher, new ConfigCatHooks(), false);
 
         long start = System.currentTimeMillis();
         assertTrue(policy.getSettings().get().settings().isEmpty());
@@ -206,13 +204,13 @@ class AutoPollingTest {
         ConfigCache cache = new SingleValueCache(Helpers.cacheValueFromConfigJson(String.format(TEST_JSON, "test")));
 
         PollingMode pollingMode = PollingModes.autoPoll(2);
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient(),
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(),
                 logger,
                 "",
                 this.server.url("/").toString(),
                 false,
                 pollingMode.getPollingIdentifier());
-        ConfigService policy = new ConfigService("", pollingMode, cache, logger, fetcher, new ConfigCatHooks(), false);
+        ConfigService policy = new ConfigService("", null, pollingMode, cache, logger, fetcher, new ConfigCatHooks(), false);
 
         policy.getSettings().get();
 
@@ -230,13 +228,13 @@ class AutoPollingTest {
         ConfigCache cache = new SingleValueCache(Helpers.cacheValueFromConfigJsonAndTime(String.format(TEST_JSON, "test"), System.currentTimeMillis() - 5000));
 
         PollingMode pollingMode = PollingModes.autoPoll(1);
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient(),
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(),
                 logger,
                 "",
                 this.server.url("/").toString(),
                 false,
                 pollingMode.getPollingIdentifier());
-        ConfigService configService = new ConfigService("", pollingMode, cache, logger, fetcher, new ConfigCatHooks(), false);
+        ConfigService configService = new ConfigService("", null, pollingMode, cache, logger, fetcher, new ConfigCatHooks(), false);
 
         configService.getSettings().get();
 
@@ -254,13 +252,13 @@ class AutoPollingTest {
         ConfigCatHooks hooks = new ConfigCatHooks();
         hooks.addOnClientReady(clientReadyState -> ready.set(clientReadyState));
         PollingMode pollingMode = PollingModes.autoPoll(2);
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient(),
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(),
                 logger,
                 "",
                 this.server.url("/").toString(),
                 false,
                 pollingMode.getPollingIdentifier());
-        ConfigService policy = new ConfigService("", pollingMode, cache, logger, fetcher, hooks, false);
+        ConfigService policy = new ConfigService("", null, pollingMode, cache, logger, fetcher, hooks, false);
 
         assertEquals(0, this.server.getRequestCount());
 
@@ -277,13 +275,13 @@ class AutoPollingTest {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
 
         PollingMode pollingMode = PollingModes.autoPoll(1);
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient(),
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(),
                 logger,
                 "",
                 this.server.url("/").toString(),
                 false,
                 pollingMode.getPollingIdentifier());
-        ConfigService policy = new ConfigService("", pollingMode, new NullConfigCache(), logger, fetcher, new ConfigCatHooks(), false);
+        ConfigService policy = new ConfigService("", null, pollingMode, new NullConfigCache(), logger, fetcher, new ConfigCatHooks(), false);
 
         Thread.sleep(1500);
 
@@ -308,13 +306,13 @@ class AutoPollingTest {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(String.format(TEST_JSON, "test")));
 
         PollingMode pollingMode = PollingModes.autoPoll(1);
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient(),
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(),
                 logger,
                 "",
                 this.server.url("/").toString(),
                 false,
                 pollingMode.getPollingIdentifier());
-        ConfigService policy = new ConfigService("", pollingMode, new NullConfigCache(), logger, fetcher, new ConfigCatHooks(), true);
+        ConfigService policy = new ConfigService("", null, pollingMode, new NullConfigCache(), logger, fetcher, new ConfigCatHooks(), true);
 
         assertTrue(policy.isOffline());
         assertEquals(0, this.server.getRequestCount());
@@ -337,13 +335,13 @@ class AutoPollingTest {
         ConfigCache cache = new SingleValueCache(Helpers.cacheValueFromConfigJson(String.format(TEST_JSON, "test")));
 
         PollingMode pollingMode = PollingModes.autoPoll(60, 1);
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient(),
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(),
                 logger,
                 "",
                 this.server.url("/").toString(),
                 false,
                 pollingMode.getPollingIdentifier());
-        ConfigService policy = new ConfigService("", pollingMode, cache, logger, fetcher, new ConfigCatHooks(), false);
+        ConfigService policy = new ConfigService("", null, pollingMode, cache, logger, fetcher, new ConfigCatHooks(), false);
 
         long start = System.currentTimeMillis();
         assertFalse(policy.getSettings().get().settings().isEmpty());
@@ -360,13 +358,13 @@ class AutoPollingTest {
         ConfigCache cache = new SingleValueCache(Helpers.cacheValueFromConfigJsonAndTime(String.format(TEST_JSON, "test"), Constants.DISTANT_PAST));
 
         PollingMode pollingMode = PollingModes.autoPoll(60, 1);
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient(),
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(),
                 logger,
                 "",
                 this.server.url("/").toString(),
                 false,
                 pollingMode.getPollingIdentifier());
-        ConfigService policy = new ConfigService("", pollingMode, cache, logger, fetcher, new ConfigCatHooks(), false);
+        ConfigService policy = new ConfigService("", null, pollingMode, cache, logger, fetcher, new ConfigCatHooks(), false);
 
         long start = System.currentTimeMillis();
         assertEquals("test", policy.getSettings().get().settings().get("fakeKey").getSettingsValue().getStringValue());

@@ -1,7 +1,5 @@
 package com.configcat;
 
-import org.jetbrains.annotations.NotNull;
-
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -20,7 +18,6 @@ class FormattableLogMessage {
         return String.format(message, args);
     }
 
-    @NotNull
     @Override
     public String toString() {
         if(cachedMessage == null) {

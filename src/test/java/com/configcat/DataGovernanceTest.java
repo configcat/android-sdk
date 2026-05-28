@@ -1,6 +1,5 @@
 package com.configcat;
 
-import okhttp3.OkHttpClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.Test;
@@ -245,6 +244,6 @@ class DataGovernanceTest {
     }
 
     private ConfigFetcher createFetcher(String url, boolean isCustomUrl) {
-        return new ConfigFetcher(new OkHttpClient.Builder().build(), logger, "", url, isCustomUrl, "m");
+        return new ConfigFetcher(new ConfigCatClient.HttpOptions(), logger, "", url, isCustomUrl, "m");
     }
 }

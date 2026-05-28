@@ -1,6 +1,5 @@
 package com.configcat;
 
-import okhttp3.OkHttpClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.AfterEach;
@@ -192,7 +191,8 @@ class ConfigCatClientIntegrationTest {
 
     @Test
     void getConfigurationJsonStringWithDefaultConfigTimeout() {
-        ConfigCatClient cl = ConfigCatClient.get("configcat-sdk-1/TEST_KEY1-123456789012/1234567890123456789012", options -> options.httpClient(new OkHttpClient.Builder().readTimeout(2, TimeUnit.SECONDS).build()));
+        ConfigCatClient cl = ConfigCatClient.get("configcat-sdk-1/TEST_KEY1-123456789012/1234567890123456789012",
+                options -> options.httpOptions().readTimeoutMillis(2000));
 
         // makes a call to a real url which would fail, null expected
         String config = cl.getValue(String.class, "test", null);

@@ -2,7 +2,6 @@ package com.configcat;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import okhttp3.OkHttpClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.AfterEach;
@@ -45,7 +44,7 @@ class ConfigFetcherTest {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON).setHeader("ETag", "fakeETag"));
         this.server.enqueue(new MockResponse().setResponseCode(304));
 
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger,
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(), logger,
                 "", this.server.url("/").toString(), false, PollingModes.manualPoll().getPollingIdentifier());
 
         FetchResponse fResult = fetcher.fetchAsync(null).get();
@@ -68,10 +67,7 @@ class ConfigFetcherTest {
 
     @Test
     void fetchException() throws IOException, ExecutionException, InterruptedException {
-
-        ConfigFetcher fetch = new ConfigFetcher(new OkHttpClient.Builder()
-                .readTimeout(1, TimeUnit.SECONDS)
-                .build(),
+        ConfigFetcher fetch = new ConfigFetcher(new ConfigCatClient.HttpOptions().readTimeoutMillis(1000),
                 logger,
                 "",
                 this.server.url("/").toString(),
@@ -98,10 +94,10 @@ class ConfigFetcherTest {
 
         ConfigCache cache = mock(ConfigCache.class);
         when(cache.read(anyString())).thenReturn(gson.toJson(entry));
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger,
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(), logger,
                 "", this.server.url("/").toString(), false, PollingModes.manualPoll().getPollingIdentifier());
 
-        ConfigService policy = new ConfigService("", PollingModes.autoPoll(2), cache, logger, fetcher, new ConfigCatHooks(), false);
+        ConfigService policy = new ConfigService("", null, PollingModes.autoPoll(2), cache, logger, fetcher, new ConfigCatHooks(), false);
         assertEquals("fakeValue", policy.getSettings().get().settings().get("fakeKey").getSettingsValue().getStringValue());
 
         verify(cache, never()).write(anyString(), eq(TEST_JSON));
@@ -115,10 +111,10 @@ class ConfigFetcherTest {
 
         ConfigCache cache = mock(ConfigCache.class);
         when(cache.read(anyString())).thenReturn(TEST_JSON);
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger,
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(), logger,
                 "", this.server.url("/").toString(), false, PollingModes.manualPoll().getPollingIdentifier());
 
-        ConfigService policy = new ConfigService("", PollingModes.autoPoll(2), cache, logger, fetcher, new ConfigCatHooks(), false);
+        ConfigService policy = new ConfigService("", null, PollingModes.autoPoll(2), cache, logger, fetcher, new ConfigCatHooks(), false);
         assertEquals("fakeValue", policy.getSettings().get().settings().get("fakeKey").getSettingsValue().getStringValue());
 
         verify(cache, never()).write(anyString(), eq(TEST_JSON));
@@ -134,7 +130,7 @@ class ConfigFetcherTest {
         doThrow(new Exception()).when(cache).read(anyString());
         doThrow(new Exception()).when(cache).write(anyString(), anyString());
 
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(), logger,
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(), logger,
                 "", this.server.url("/").toString(), false, PollingModes.manualPoll().getPollingIdentifier());
 
         FetchResponse response = fetcher.fetchAsync(null).get();
@@ -156,7 +152,7 @@ class ConfigFetcherTest {
     void fetchEmpty(String body) throws Exception {
         this.server.enqueue(new MockResponse().setResponseCode(200).setBody(body));
 
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(),
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(),
                 logger,
                 "",
                 this.server.url("/").toString(),
@@ -172,9 +168,7 @@ class ConfigFetcherTest {
 
     @Test
     void testIntegration() throws IOException, ExecutionException, InterruptedException {
-        ConfigFetcher fetch = new ConfigFetcher(new OkHttpClient.Builder()
-                .readTimeout(1, TimeUnit.SECONDS)
-                .build(),
+        ConfigFetcher fetch = new ConfigFetcher(new ConfigCatClient.HttpOptions().readTimeoutMillis(1000),
                 logger,
                 "PKDVCLf-Hq-h-kCzMp-L7Q/PaDVCFk9EpmD6sLpGLltTA",
                 "https://cdn-global.configcat.com",
@@ -189,14 +183,14 @@ class ConfigFetcherTest {
     }
 
     @Test
-    public void fetchedFail403ContainsCFRAY() throws Exception {
+    void fetchedFail403ContainsCFRAY() throws Exception {
         this.server.enqueue(new MockResponse().setResponseCode(403).setBody(TEST_JSON).setHeader("ETag", "fakeETag").setHeader("CF-RAY", "12345"));
 
         Logger mockLogger = mock(Logger.class);
 
         ConfigCatLogger localLogger = new ConfigCatLogger(mockLogger, LogLevel.DEBUG, null, null);
 
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(),
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(),
                 localLogger,
                 "",
                 this.server.url("/").toString(),
@@ -214,14 +208,14 @@ class ConfigFetcherTest {
     }
 
     @Test
-    public void fetchedNotModified304ContainsCFRAY() throws Exception {
+    void fetchedNotModified304ContainsCFRAY() throws Exception {
         this.server.enqueue(new MockResponse().setResponseCode(304).setHeader("CF-RAY", "12345"));
 
         Logger mockLogger = mock(Logger.class);
 
         ConfigCatLogger localLogger = new ConfigCatLogger(mockLogger, LogLevel.DEBUG, null, null);
 
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(),
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(),
                 localLogger,
                 "",
                 this.server.url("/").toString(),
@@ -239,14 +233,14 @@ class ConfigFetcherTest {
     }
 
     @Test
-    public void fetchedReceivedInvalidBodyContainsCFRAY() throws Exception {
+    void fetchedReceivedInvalidBodyContainsCFRAY() throws Exception {
         this.server.enqueue(new MockResponse().setResponseCode(200).setHeader("CF-RAY", "12345").setBody("test"));
 
         Logger mockLogger = mock(Logger.class);
 
         ConfigCatLogger localLogger = new ConfigCatLogger(mockLogger, LogLevel.DEBUG, null, null);
 
-        ConfigFetcher fetcher = new ConfigFetcher(new OkHttpClient.Builder().build(),
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(),
                 localLogger,
                 "",
                 this.server.url("/").toString(),
@@ -262,5 +256,46 @@ class ConfigFetcherTest {
         verify(mockLogger, times(1)).error(anyString(), eq(1105), eq(ConfigCatLogMessages.getFetchReceived200WithInvalidBodyError("12345")), any(), any(Exception.class));
 
         fetcher.close();
+    }
+
+    @Test
+    void ensureStateMonitorWorks() throws IOException {
+        this.server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(), logger,
+                "", this.server.url("/").toString(), false, PollingModes.manualPoll().getPollingIdentifier());
+
+        TestStateMonitor monitor = new TestStateMonitor();
+        ConfigService service = new ConfigService("", monitor, PollingModes.autoPoll(), new NullConfigCache(), logger, fetcher, new ConfigCatHooks(), false);
+
+        assertFalse(service.isOffline());
+
+        monitor.setState(false);
+        monitor.notifyListeners();
+
+        assertTrue(service.isOffline());
+
+        monitor.setState(true);
+        monitor.notifyListeners();
+
+        assertFalse(service.isOffline());
+
+        service.setOffline();
+        assertTrue(service.isOffline());
+
+        monitor.setState(false);
+        monitor.notifyListeners();
+
+        assertTrue(service.isOffline());
+
+        monitor.setState(true);
+        monitor.notifyListeners();
+
+        assertTrue(service.isOffline());
+
+        service.setOnline();
+
+        assertFalse(service.isOffline());
+
+        service.close();
     }
 }
