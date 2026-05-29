@@ -147,7 +147,7 @@ class ConfigFetcher implements Closeable {
                 }
 
             } catch (Exception exception) {
-                this.logger.error(1103, ConfigCatLogMessages.FETCH_FAILED_DUE_TO_UNEXPECTED_ERROR, exception);
+                this.logger.error(1103, ConfigCatLogMessages.getFetchFailedDueToUnexpectedError(fetchResponse.cfRayId()), exception);
                 return CompletableFuture.completedFuture(fetchResponse);
             }
 
@@ -165,7 +165,8 @@ class ConfigFetcher implements Closeable {
     private void callHTTP(String previousETag, CompletableFuture<FetchResponse> result) {
         String requestUrl = this.url + "/configuration-files/" + this.sdkKey + "/" + Constants.CONFIG_JSON_NAME;
         HttpURLConnection urlConnection = null;
-
+        String cfRayId = null;
+        FetchResponse fetchResponse = null;
         try {
             URL fetchUrl = new URL(requestUrl);
             if (httpOptions.getProxy() != null) {
@@ -185,43 +186,47 @@ class ConfigFetcher implements Closeable {
             int responseCode = urlConnection.getResponseCode();
             Map<String, List<String>> responseHeaders = urlConnection.getHeaderFields();
 
-            String cfRayId = readHeaderValue(responseHeaders, "CF-RAY");
+            cfRayId = readHeaderValue(responseHeaders, "CF-RAY");
             if (responseCode == 200) {
                 String content = readBody(urlConnection.getInputStream());
                 String eTag = readHeaderValue(responseHeaders,"ETag");
                 Result<Config> configResult = deserializeConfig(content, cfRayId);
                 if (configResult.error() != null) {
-                    result.complete(FetchResponse.failed(configResult.error(), false, cfRayId));
-                    return;
+                    fetchResponse = FetchResponse.failed(configResult.error(), false, cfRayId);
+                } else {
+                    logger.debug("Fetch was successful: new config fetched.");
+                    fetchResponse =  FetchResponse.fetched(new Entry(configResult.value(), eTag, content, System.currentTimeMillis()), cfRayId);
                 }
-                logger.debug("Fetch was successful: new config fetched.");
-                result.complete(FetchResponse.fetched(new Entry(configResult.value(), eTag, content, System.currentTimeMillis()), cfRayId));
             } else if (responseCode == 304) {
                 if(cfRayId != null) {
                     logger.debug(String.format("Fetch was successful: config not modified. %s", ConfigCatLogMessages.getCFRayIdPostFix(cfRayId)));
                 } else {
                     logger.debug("Fetch was successful: config not modified.");
                 }
-                result.complete(FetchResponse.notModified(cfRayId));
+                fetchResponse = FetchResponse.notModified(cfRayId);
             } else if (responseCode == 403 || responseCode == 404) {
                 FormattableLogMessage message = ConfigCatLogMessages.getFetchFailedDueToInvalidSDKKey(cfRayId);
                 logger.error(1100, message);
-                result.complete(FetchResponse.failed(message, true, cfRayId));
+                fetchResponse = FetchResponse.failed(message, true, cfRayId);
             } else {
                 FormattableLogMessage message = ConfigCatLogMessages.getFetchFailedDueToUnexpectedHttpResponse(responseCode, urlConnection.getResponseMessage(), cfRayId);
                 logger.error(1101, message);
-                result.complete(FetchResponse.failed(message, false, cfRayId));
+                fetchResponse = FetchResponse.failed(message, false, cfRayId);
             }
 
         } catch (SocketTimeoutException e) {
-            FormattableLogMessage message = ConfigCatLogMessages.getFetchFailedDueToRequestTimeout(httpOptions.getConnectTimeoutMillis(), httpOptions.getReadTimeoutMillis());
+            FormattableLogMessage message = ConfigCatLogMessages.getFetchFailedDueToRequestTimeout(httpOptions.getConnectTimeoutMillis(), httpOptions.getReadTimeoutMillis(), cfRayId);
             logger.error(1102, message, e);
-            result.complete(FetchResponse.failed(message, false, null));
+            fetchResponse = FetchResponse.failed(message, false, cfRayId);
         } catch (Exception e) {
-            String message = ConfigCatLogMessages.FETCH_FAILED_DUE_TO_UNEXPECTED_ERROR;
+            FormattableLogMessage message = ConfigCatLogMessages.getFetchFailedDueToUnexpectedError(cfRayId);
             logger.error(1103, message, e);
-            result.complete(FetchResponse.failed(message + " " + e.getMessage(), false, null));
+            fetchResponse = FetchResponse.failed(message + " " + e.getMessage(), false, cfRayId);
         } finally {
+            if(fetchResponse == null) {
+                fetchResponse = FetchResponse.failed(ConfigCatLogMessages.getFetchFailedDueToUnexpectedError(cfRayId), false, cfRayId);
+            }
+            result.complete(fetchResponse);
             if (urlConnection != null) {
                 urlConnection.disconnect();
             }
