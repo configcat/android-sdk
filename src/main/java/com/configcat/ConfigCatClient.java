@@ -29,7 +29,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
     private ConfigService configService;
 
-    private ConfigCatClient(String sdkKey, Options options) throws IllegalArgumentException {
+    private ConfigCatClient(String sdkKey, Options options) throws IllegalArgumentException, IOException {
         this.logger = new ConfigCatLogger(LoggerFactory.getLogger(ConfigCatClient.class), options.logLevel, options.hooks, options.logFilter);
         this.clientLogLevel = options.logLevel;
 
@@ -52,8 +52,14 @@ public final class ConfigCatClient implements ConfigurationProvider {
                     options.isBaseURLCustom(),
                     options.pollingMode.getPollingIdentifier());
 
-            StateMonitor monitor = options.context != null ? new AppStateMonitor(options.context, logger) : null;
-            this.configService = new ConfigService(sdkKey, monitor, options.pollingMode, options.cache, logger, fetcher, options.hooks, options.offline);
+            try {
+                StateMonitor monitor = options.context != null ? new AppStateMonitor(options.context, logger) : null;
+                this.configService = new ConfigService(sdkKey, monitor, options.pollingMode, options.cache, logger, fetcher, options.hooks, options.offline);
+            } catch (Exception e) {
+                fetcher.close();
+                this.logger.error(0, "ConfigCatClient initialization failed.", e);
+                throw e;
+            }
         } else {
             this.hooks.invokeOnClientReady(ClientCacheState.HAS_LOCAL_OVERRIDE_FLAG_DATA_ONLY);
         }
@@ -625,7 +631,11 @@ public final class ConfigCatClient implements ConfigurationProvider {
                 return client;
             }
 
-            client = new ConfigCatClient(sdkKey, clientOptions);
+            try {
+                client = new ConfigCatClient(sdkKey, clientOptions);
+            } catch (IOException e) {
+                throw new RuntimeException("ConfigCatClient initialization failed.", e);
+            }
             INSTANCES.put(sdkKey, client);
             return client;
         }
