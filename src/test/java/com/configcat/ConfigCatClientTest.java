@@ -8,6 +8,9 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import android.content.Context;
+import org.mockito.MockedConstruction;
+
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -19,6 +22,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 class ConfigCatClientTest {
 
@@ -1015,4 +1019,55 @@ class ConfigCatClientTest {
         server.shutdown();
         cl.close();
     }
+
+    @Test
+    void fetcherClosedWhenAppStateMonitorInitFails() throws IOException {
+        Context mockContext = mock(Context.class);
+        when(mockContext.getApplicationContext()).thenThrow(new RuntimeException("AppStateMonitor init failure"));
+
+        try (MockedConstruction<ConfigFetcher> fetcherConstruction = mockConstruction(ConfigFetcher.class)) {
+            RuntimeException runtimeException = assertThrows(RuntimeException.class, () -> ConfigCatClient.get(Helpers.SDK_KEY, options -> {
+                options.pollingMode(PollingModes.manualPoll());
+                options.watchAppStateChanges(mockContext);
+            }));
+            assertEquals("AppStateMonitor init failure", runtimeException.getMessage());
+
+            assertEquals(1, fetcherConstruction.constructed().size());
+            ConfigFetcher constructedFetcher = fetcherConstruction.constructed().get(0);
+            verify(constructedFetcher).close();
+        }
+
+        ConfigCatClient.closeAll();
+    }
+
+    @Test
+    void fetcherAndMonitorClosedWhenConfigServiceInitFails() throws IOException {
+        Context mockContext = mock(Context.class);
+
+        try (MockedConstruction<ConfigFetcher> fetcherConstruction = mockConstruction(ConfigFetcher.class);
+             MockedConstruction<AppStateMonitor> monitorConstruction = mockConstruction(AppStateMonitor.class)) {
+
+            RuntimeException runtimeException = assertThrows(RuntimeException.class, () -> ConfigCatClient.get(Helpers.SDK_KEY, options -> {
+                options.pollingMode(PollingModes.manualPoll());
+                options.watchAppStateChanges(mockContext);
+                // Adding a hook listener that throws causes ConfigService constructor to fail
+                // during setInitialized() -> hooks.invokeOnClientReady()
+                options.hooks().addOnClientReady(state -> {
+                    throw new RuntimeException("ConfigService init failure");
+                });
+            }));
+            assertEquals("ConfigService init failure", runtimeException.getMessage());
+
+            assertEquals(1, fetcherConstruction.constructed().size());
+            ConfigFetcher constructedFetcher = fetcherConstruction.constructed().get(0);
+            verify(constructedFetcher).close();
+
+            assertEquals(1, monitorConstruction.constructed().size());
+            AppStateMonitor constructedMonitor = monitorConstruction.constructed().get(0);
+            verify(constructedMonitor).close();
+        }
+
+        ConfigCatClient.closeAll();
+    }
+    
 }

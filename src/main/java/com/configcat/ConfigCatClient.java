@@ -41,22 +41,24 @@ public final class ConfigCatClient implements ConfigurationProvider {
         this.rolloutEvaluator = new RolloutEvaluator(this.logger);
 
         if (this.overrideBehaviour != OverrideBehaviour.LOCAL_ONLY) {
-            ConfigFetcher fetcher = new ConfigFetcher(options.httpOptions,
-                    this.logger,
-                    sdkKey,
-                    !options.isBaseURLCustom()
-                            ? options.dataGovernance == DataGovernance.GLOBAL
-                            ? BASE_URL_GLOBAL
-                            : BASE_URL_EU
-                            : options.baseUrl,
-                    options.isBaseURLCustom(),
-                    options.pollingMode.getPollingIdentifier());
-
+            ConfigFetcher fetcher = null;
+            StateMonitor monitor = null;
             try {
-                StateMonitor monitor = options.context != null ? new AppStateMonitor(options.context, logger) : null;
+                fetcher = new ConfigFetcher(options.httpOptions,
+                        this.logger,
+                        sdkKey,
+                        !options.isBaseURLCustom()
+                                ? options.dataGovernance == DataGovernance.GLOBAL
+                                ? BASE_URL_GLOBAL
+                                : BASE_URL_EU
+                                : options.baseUrl,
+                        options.isBaseURLCustom(),
+                        options.pollingMode.getPollingIdentifier());
+                monitor = options.context != null ? new AppStateMonitor(options.context, logger) : null;
                 this.configService = new ConfigService(sdkKey, monitor, options.pollingMode, options.cache, logger, fetcher, options.hooks, options.offline);
             } catch (Exception e) {
-                fetcher.close();
+                if(fetcher != null) fetcher.close();
+                if(monitor != null) monitor.close();
                 this.logger.error(0, "ConfigCatClient initialization failed.", e);
                 throw e;
             }
