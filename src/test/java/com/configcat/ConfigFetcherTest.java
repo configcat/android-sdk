@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.mockwebserver.SocketPolicy;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,8 +20,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 class ConfigFetcherTest {
@@ -254,6 +254,64 @@ class ConfigFetcherTest {
         assertTrue(response.error().toString().contains("(Ray ID: 12345)"));
 
         verify(mockLogger, times(1)).error(anyString(), eq(1105), eq(ConfigCatLogMessages.getFetchReceived200WithInvalidBodyError("12345")), any(), any(Exception.class));
+
+        fetcher.close();
+    }
+
+    @Test
+    void fetchFailedDueToRequestTimeoutContainsCFRAY() throws Exception {
+        this.server.enqueue(new MockResponse()
+                .setResponseCode(200)
+                .setHeader("CF-RAY", "timeout-ray-123")
+                .setBody(TEST_JSON)
+                .setBodyDelay(2, TimeUnit.SECONDS));
+
+        Logger mockLogger = mock(Logger.class);
+        ConfigCatLogger localLogger = new ConfigCatLogger(mockLogger, LogLevel.DEBUG, null, null);
+
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions().readTimeoutMillis(1000),
+                localLogger,
+                "",
+                this.server.url("/").toString(),
+                false,
+                PollingModes.manualPoll().getPollingIdentifier());
+
+        FetchResponse response = fetcher.fetchAsync(null).get();
+        assertTrue(response.isFailed());
+        assertTrue(response.error().toString().contains("Request timed out while trying to fetch config JSON."));
+        assertTrue(response.error().toString().contains("(Ray ID: timeout-ray-123)"));
+
+        verify(mockLogger, times(1)).error(anyString(), eq(1102), eq(ConfigCatLogMessages.getFetchFailedDueToRequestTimeout(10000, 1000, "timeout-ray-123")), any(), any(Exception.class));
+
+        fetcher.close();
+    }
+
+    @Test
+    void fetchFailedDueToUnexpectedErrorContainsCFRAY() throws Exception {
+        // Trigger a non-timeout exception after cfRayId is read.
+        // Using chunked body with disconnect causes IOException during body read or invalid body parse,
+        // both paths propagate cfRayId from the response headers.
+        okio.Buffer body = new okio.Buffer().writeUtf8(TEST_JSON);
+        this.server.enqueue(new MockResponse()
+                .setResponseCode(200)
+                .setHeader("CF-RAY", "unexpected-ray-456")
+                .setChunkedBody(body, 5)
+                .setSocketPolicy(SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY));
+
+        Logger mockLogger = mock(Logger.class);
+        ConfigCatLogger localLogger = new ConfigCatLogger(mockLogger, LogLevel.DEBUG, null, null);
+
+        ConfigFetcher fetcher = new ConfigFetcher(new ConfigCatClient.HttpOptions(),
+                localLogger,
+                "",
+                this.server.url("/").toString(),
+                false,
+                PollingModes.manualPoll().getPollingIdentifier());
+
+        FetchResponse response = fetcher.fetchAsync(null).get();
+        assertTrue(response.isFailed());
+        assertTrue(response.error().toString().contains("Unexpected error occurred while trying to fetch config JSON."));
+        assertTrue(response.error().toString().contains("(Ray ID: unexpected-ray-456)"));
 
         fetcher.close();
     }
