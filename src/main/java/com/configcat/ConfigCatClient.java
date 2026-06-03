@@ -59,7 +59,6 @@ public final class ConfigCatClient implements ConfigurationProvider {
             } catch (Exception e) {
                 if(fetcher != null) fetcher.close();
                 if(monitor != null) monitor.close();
-                this.logger.error(0, "ConfigCatClient initialization failed.", e);
                 throw e;
             }
         } else {
