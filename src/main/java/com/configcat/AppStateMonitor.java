@@ -6,6 +6,7 @@ import android.content.*;
 import android.content.res.Configuration;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.Build;
 import android.os.Bundle;
 import java9.util.function.Consumer;
 
@@ -40,7 +41,11 @@ class AppStateMonitor extends BroadcastReceiver implements Application.ActivityL
         application.registerComponentCallbacks(this);
 
         IntentFilter filter = new IntentFilter(CONNECTIVITY_CHANGE);
-        application.registerReceiver(this, filter);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            application.registerReceiver(this, filter, Context.RECEIVER_NOT_EXPORTED);
+        } else {
+            application.registerReceiver(this, filter);
+        }
     }
 
     public void addStateChangeListener(Consumer<Boolean> listener) {
