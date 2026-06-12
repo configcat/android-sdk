@@ -67,10 +67,12 @@ final class Constants {
 final class Result<T> {
     private final T value;
     private final Object error;
+    private final EvaluationErrorCode errorCode;
 
-    private Result(T value, Object error) {
+    private Result(T value, Object error, EvaluationErrorCode errorCode) {
         this.value = value;
         this.error = error;
+        this.errorCode = errorCode;
     }
 
     T value() {
@@ -81,11 +83,20 @@ final class Result<T> {
         return this.error;
     }
 
-    static <T> Result<T> error(Object error, T value) {
-        return new Result<>(value, error);
+    EvaluationErrorCode errorCode() {return this.errorCode;}
+
+    static <T> Result<T> error(Object error, T value, EvaluationErrorCode errorCode) {
+        return new Result<>(value, error, errorCode);
     }
 
     static <T> Result<T> success(T value) {
-        return new Result<>(value, null);
+        return new Result<>(value, null, EvaluationErrorCode.NONE);
     }
 }
+
+final class EvaluationException extends IllegalArgumentException {
+    EvaluationException(String message) {
+        super(message);
+    }
+}
+

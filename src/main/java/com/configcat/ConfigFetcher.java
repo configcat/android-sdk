@@ -22,6 +22,7 @@ class FetchResponse {
     private final Status status;
     private final Entry entry;
     private final Object error;
+    private final RefreshErrorCode errorCode;
     private final boolean fetchTimeUpdatable;
     private final String cfRayId;
 
@@ -49,26 +50,29 @@ class FetchResponse {
         return this.error;
     }
 
+    public RefreshErrorCode errorCode() {return this.errorCode;}
+
     public String cfRayId() {return this.cfRayId;}
 
-    FetchResponse(Status status, Entry entry, Object error, boolean fetchTimeUpdatable, String cfRayId) {
+    FetchResponse(Status status, Entry entry, Object error, RefreshErrorCode errorCode, boolean fetchTimeUpdatable, String cfRayId) {
         this.status = status;
         this.entry = entry;
         this.error = error;
+        this.errorCode = errorCode;
         this.fetchTimeUpdatable = fetchTimeUpdatable;
         this.cfRayId = cfRayId;
     }
 
     public static FetchResponse fetched(Entry entry, String cfRayId) {
-        return new FetchResponse(Status.FETCHED, entry == null ? Entry.EMPTY : entry, null, false, cfRayId);
+        return new FetchResponse(Status.FETCHED, entry == null ? Entry.EMPTY : entry, null, RefreshErrorCode.NONE, false, cfRayId);
     }
 
     public static FetchResponse notModified(String cfRayId) {
-        return new FetchResponse(Status.NOT_MODIFIED, Entry.EMPTY, null, true, cfRayId);
+        return new FetchResponse(Status.NOT_MODIFIED, Entry.EMPTY, null, RefreshErrorCode.NONE, true, cfRayId);
     }
 
-    public static FetchResponse failed(Object error, boolean fetchTimeUpdatable, String cfRayId) {
-        return new FetchResponse(Status.FAILED, Entry.EMPTY, error, fetchTimeUpdatable, cfRayId);
+    public static FetchResponse failed(Object error, RefreshErrorCode errorCode, boolean fetchTimeUpdatable, String cfRayId) {
+        return new FetchResponse(Status.FAILED, Entry.EMPTY, error,errorCode, fetchTimeUpdatable, cfRayId);
     }
 }
 
@@ -192,7 +196,7 @@ class ConfigFetcher implements Closeable {
                 String eTag = readHeaderValue(responseHeaders,"ETag");
                 Result<Config> configResult = deserializeConfig(content, cfRayId);
                 if (configResult.error() != null) {
-                    fetchResponse = FetchResponse.failed(configResult.error(), false, cfRayId);
+                    fetchResponse = FetchResponse.failed(configResult.error(), RefreshErrorCode.INVALID_HTTP_RESPONSE_CONTENT, false, cfRayId);
                 } else {
                     logger.debug("Fetch was successful: new config fetched.");
                     fetchResponse =  FetchResponse.fetched(new Entry(configResult.value(), eTag, content, System.currentTimeMillis()), cfRayId);
@@ -207,24 +211,24 @@ class ConfigFetcher implements Closeable {
             } else if (responseCode == 403 || responseCode == 404) {
                 FormattableLogMessage message = ConfigCatLogMessages.getFetchFailedDueToInvalidSDKKey(cfRayId);
                 logger.error(1100, message);
-                fetchResponse = FetchResponse.failed(message, true, cfRayId);
+                fetchResponse = FetchResponse.failed(message, RefreshErrorCode.INVALID_SDK_KEY, true, cfRayId);
             } else {
                 FormattableLogMessage message = ConfigCatLogMessages.getFetchFailedDueToUnexpectedHttpResponse(responseCode, urlConnection.getResponseMessage(), cfRayId);
                 logger.error(1101, message);
-                fetchResponse = FetchResponse.failed(message, false, cfRayId);
+                fetchResponse = FetchResponse.failed(message, RefreshErrorCode.UNEXPECTED_HTTP_RESPONSE, false, cfRayId);
             }
 
         } catch (SocketTimeoutException e) {
             FormattableLogMessage message = ConfigCatLogMessages.getFetchFailedDueToRequestTimeout(httpOptions.getConnectTimeoutMillis(), httpOptions.getReadTimeoutMillis(), cfRayId);
             logger.error(1102, message, e);
-            fetchResponse = FetchResponse.failed(message, false, cfRayId);
+            fetchResponse = FetchResponse.failed(message, RefreshErrorCode.HTTP_REQUEST_TIMEOUT, false, cfRayId);
         } catch (Exception e) {
             FormattableLogMessage message = ConfigCatLogMessages.getFetchFailedDueToUnexpectedError(cfRayId);
             logger.error(1103, message, e);
-            fetchResponse = FetchResponse.failed(message + " " + e.getMessage(), false, cfRayId);
+            fetchResponse = FetchResponse.failed(message, RefreshErrorCode.HTTP_REQUEST_FAILURE, false, cfRayId);
         } finally {
             if(fetchResponse == null) {
-                fetchResponse = FetchResponse.failed(ConfigCatLogMessages.getFetchFailedDueToUnexpectedError(cfRayId), false, cfRayId);
+                fetchResponse = FetchResponse.failed(ConfigCatLogMessages.getFetchFailedDueToUnexpectedError(cfRayId), RefreshErrorCode.UNEXPECTED_ERROR, false, cfRayId);
             }
             result.complete(fetchResponse);
             if (urlConnection != null) {
@@ -277,7 +281,7 @@ class ConfigFetcher implements Closeable {
         } catch (Exception e) {
             FormattableLogMessage message = ConfigCatLogMessages.getFetchReceived200WithInvalidBodyError(cfRayId);
             this.logger.error(1105, message, e);
-            return Result.error(message, null);
+            return Result.error(message, null, EvaluationErrorCode.INVALID_CONFIG_MODEL);
         }
     }
 }

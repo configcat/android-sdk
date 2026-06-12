@@ -96,7 +96,7 @@ class ConfigService implements Closeable {
                         hooks.invokeOnClientReady(determineCacheState());
                         FormattableLogMessage message = ConfigCatLogMessages.getAutoPollMaxInitWaitTimeReached(autoPollingMode.getMaxInitWaitTimeSeconds());
                         logger.warn(4200, message);
-                        completeRunningTask(Result.error(message, cachedEntry));
+                        completeRunningTask(Result.error(message, cachedEntry, null)); //TODO fix me
                     }
                 } finally {
                     lock.unlock();
@@ -133,11 +133,11 @@ class ConfigService implements Closeable {
         if (isOffline()) {
             String offlineWarning = ConfigCatLogMessages.CONFIG_SERVICE_CANNOT_INITIATE_HTTP_CALLS_WARN;
             logger.warn(3200, offlineWarning);
-            return CompletableFuture.completedFuture(new RefreshResult(false, offlineWarning));
+            return CompletableFuture.completedFuture(new RefreshResult(false, offlineWarning, RefreshErrorCode.OFFLINE_CLIENT));
         }
 
         return fetchIfOlder(Constants.DISTANT_FUTURE, false)
-                .thenApply(entryResult -> new RefreshResult(entryResult.error() == null, entryResult.error()));
+                .thenApply(entryResult -> new RefreshResult(entryResult.error() == null, entryResult.error(), null)); //TODO fixme
     }
 
     public void setOnline() {
@@ -216,7 +216,7 @@ class ConfigService implements Closeable {
                     writeCache(cachedEntry);
                 }
                 completeRunningTask(response.isFailed()
-                        ? Result.error(response.error(), cachedEntry)
+                        ? Result.error(response.error(), cachedEntry, null) //TODO fixme
                         : Result.success(cachedEntry));
             }
             setInitialized();

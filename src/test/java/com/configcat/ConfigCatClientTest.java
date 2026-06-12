@@ -970,6 +970,27 @@ class ConfigCatClientTest {
         cl.close();
     }
 
+    @ParameterizedTest
+    @MethodSource("testGetValueInvalidTypesData")
+    void testGetValueDetailsInvalidTypes(String settingKey, Class callType, Object defaultValue) throws IOException {
+        MockWebServer server = new MockWebServer();
+        server.start();
+
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON_TYPES));
+
+        ConfigCatClient cl = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
+            options.pollingMode(PollingModes.lazyLoad());
+            options.baseUrl(server.url("/").toString());
+        });
+
+        EvaluationDetails result = cl.getValueDetails(callType, settingKey, defaultValue);
+        assertEquals(EvaluationErrorCode.SETTING_VALUE_TYPE_MISMATCH, result.getErrorCode());
+        assertEquals("Only String, Integer, Double or Boolean types are supported.", result.getError());
+
+        server.shutdown();
+        cl.close();
+    }
+
     @Test
     void testSpecialCharactersWorks() throws IOException {
         ClassLoader classLoader = getClass().getClassLoader();

@@ -10,6 +10,7 @@ public class EvaluationDetails<T> {
     private final User user;
     private final boolean isDefaultValue;
     private final Object error;
+    private final EvaluationErrorCode errorCode;
     private final long fetchTimeUnixMilliseconds;
     private final TargetingRule matchedTargetingRule;
     private final PercentageOption matchedPercentageOption;
@@ -20,6 +21,7 @@ public class EvaluationDetails<T> {
                              User user,
                              boolean isDefaultValue,
                              Object error,
+                             EvaluationErrorCode errorCode,
                              long fetchTimeUnixMilliseconds,
                              TargetingRule matchedTargetingRule,
                              PercentageOption matchedPercentageOption) {
@@ -28,18 +30,19 @@ public class EvaluationDetails<T> {
         this.variationId = variationId;
         this.user = user;
         this.isDefaultValue = isDefaultValue;
+        this.errorCode = errorCode;
         this.error = error;
         this.fetchTimeUnixMilliseconds = fetchTimeUnixMilliseconds;
         this.matchedTargetingRule = matchedTargetingRule;
         this.matchedPercentageOption = matchedPercentageOption;
     }
 
-    static <T> EvaluationDetails<T> fromError(String key, T defaultValue, Object error, User user) {
-        return new EvaluationDetails<>(defaultValue, key, "", user, true, error, Constants.DISTANT_PAST, null, null);
+    static <T> EvaluationDetails<T> fromError(String key, T defaultValue, EvaluationErrorCode errorCode, Object error, User user) {
+        return new EvaluationDetails<>(defaultValue, key, "", user, true, error, errorCode, Constants.DISTANT_PAST, null, null);
     }
 
     <TR> EvaluationDetails<TR> asTypeSpecific() {
-        return new EvaluationDetails<>((TR) value, key, variationId, user, isDefaultValue, error, fetchTimeUnixMilliseconds, matchedTargetingRule, matchedPercentageOption);
+        return new EvaluationDetails<>((TR) value, key, variationId, user, isDefaultValue, error, errorCode, fetchTimeUnixMilliseconds, matchedTargetingRule, matchedPercentageOption);
     }
 
     /**
@@ -85,6 +88,13 @@ public class EvaluationDetails<T> {
             return error.toString();
         }
         return null;
+    }
+
+    /**
+     * The error code of the evaluation result. If the evaluation was successful, this will be EvaluationErrorCode.NONE.
+     */
+    public EvaluationErrorCode getErrorCode() {
+        return errorCode;
     }
 
     /**

@@ -93,7 +93,7 @@ class RolloutEvaluator {
             }
 
             if (rule.getPercentageOptions() == null || rule.getPercentageOptions().length == 0) {
-                throw new IllegalArgumentException("Targeting rule THEN part is missing or invalid.");
+                throw new InvalidConfigModelException( "Targeting rule THEN part is missing or invalid.");
             }
 
             evaluateLogger.increaseIndentLevel();
@@ -193,7 +193,7 @@ class RolloutEvaluator {
         }
 
         if (comparator == null) {
-            throw new IllegalArgumentException(COMPARISON_OPERATOR_IS_INVALID);
+            throw new InvalidConfigModelException( COMPARISON_OPERATOR_IS_INVALID);
         }
         switch (comparator) {
             case CONTAINS_ANY_OF:
@@ -265,7 +265,7 @@ class RolloutEvaluator {
                 String[] userAttributeAsStringArray = getUserAttributeAsStringArray(userCondition, context, comparisonAttribute, userAttributeValue);
                 return evaluateArrayContains(userCondition, configSalt, contextSalt, userAttributeAsStringArray, negateArrayContains, hashedArrayContains);
             default:
-                throw new IllegalArgumentException(COMPARISON_OPERATOR_IS_INVALID);
+                throw new InvalidConfigModelException( COMPARISON_OPERATOR_IS_INVALID);
         }
     }
 
@@ -399,21 +399,21 @@ class RolloutEvaluator {
         for (String comparisonValueHashedStartsEnds : comparisonValues) {
             int indexOf = ensureComparisonValue(comparisonValueHashedStartsEnds).indexOf("_");
             if (indexOf <= 0) {
-                throw new IllegalArgumentException(COMPARISON_VALUE_IS_MISSING_OR_INVALID);
+                throw new InvalidConfigModelException( COMPARISON_VALUE_IS_MISSING_OR_INVALID);
             }
             String comparedTextLength = comparisonValueHashedStartsEnds.substring(0, indexOf).trim();
             int comparedTextLengthInt;
             try {
                 comparedTextLengthInt = Integer.parseInt(comparedTextLength);
             } catch (NumberFormatException e) {
-                throw new IllegalArgumentException(COMPARISON_VALUE_IS_MISSING_OR_INVALID);
+                throw new InvalidConfigModelException( COMPARISON_VALUE_IS_MISSING_OR_INVALID);
             }
             if (userAttributeValueUTF8.length < comparedTextLengthInt) {
                 continue;
             }
             String comparisonHashValue = comparisonValueHashedStartsEnds.substring(indexOf + 1);
             if (comparisonHashValue.isEmpty()) {
-                throw new IllegalArgumentException(COMPARISON_VALUE_IS_MISSING_OR_INVALID);
+                throw new InvalidConfigModelException( COMPARISON_VALUE_IS_MISSING_OR_INVALID);
             }
             byte[] userValueSubStringByteArray;
             if (UserComparator.HASHED_STARTS_WITH.equals(comparator) || UserComparator.HASHED_NOT_STARTS_WITH.equals(comparator)) {
@@ -550,11 +550,11 @@ class RolloutEvaluator {
         }
 
         if (segment == null) {
-            throw new IllegalArgumentException("Segment reference is invalid.");
+            throw new InvalidConfigModelException( "Segment reference is invalid.");
         }
         String segmentName = segment.getName();
         if (segmentName == null || segmentName.isEmpty()) {
-            throw new IllegalArgumentException("Segment name is missing.");
+            throw new InvalidConfigModelException( "Segment name is missing.");
         }
 
         evaluateLogger.logSegmentEvaluationStart(segmentName);
@@ -564,7 +564,7 @@ class RolloutEvaluator {
 
             SegmentComparator segmentComparator = SegmentComparator.fromId(segmentCondition.getSegmentComparator());
             if (segmentComparator == null) {
-                throw new IllegalArgumentException("Segment comparison operator is invalid.");
+                throw new InvalidConfigModelException( "Segment comparison operator is invalid.");
             }
             switch (segmentComparator) {
                 case IS_IN_SEGMENT:
@@ -574,7 +574,7 @@ class RolloutEvaluator {
                     result = !segmentRulesResult;
                     break;
                 default:
-                    throw new IllegalArgumentException("Segment comparison operator is invalid.");
+                    throw new InvalidConfigModelException( "Segment comparison operator is invalid.");
             }
             evaluateLogger.logSegmentEvaluationResult(segmentCondition, segment, result, segmentRulesResult);
 
@@ -593,7 +593,7 @@ class RolloutEvaluator {
         String prerequisiteFlagKey = prerequisiteFlagCondition.getPrerequisiteFlagKey();
         Setting prerequisiteFlagSetting = context.getSettings().get(prerequisiteFlagKey);
         if (prerequisiteFlagKey == null || prerequisiteFlagKey.isEmpty() || prerequisiteFlagSetting  == null) {
-            throw new IllegalArgumentException("Prerequisite flag key is missing or invalid.");
+            throw new InvalidConfigModelException( "Prerequisite flag key is missing or invalid.");
         }
 
         SettingType settingType = prerequisiteFlagSetting .getType();
@@ -601,7 +601,7 @@ class RolloutEvaluator {
                 (settingType == SettingType.STRING && prerequisiteFlagCondition.getValue().getStringValue() == null) ||
                 (settingType == SettingType.INT && prerequisiteFlagCondition.getValue().getIntegerValue() == null) ||
                 (settingType == SettingType.DOUBLE && prerequisiteFlagCondition.getValue().getDoubleValue() == null)) {
-            throw new IllegalArgumentException("Type mismatch between comparison value '" + prerequisiteFlagCondition.getValue() + "' and prerequisite flag '" + prerequisiteFlagKey + "'.");
+            throw new InvalidConfigModelException( "Type mismatch between comparison value '" + prerequisiteFlagCondition.getValue() + "' and prerequisite flag '" + prerequisiteFlagKey + "'.");
         }
 
         List<String> visitedKeys = context.getVisitedKeys();
@@ -611,7 +611,7 @@ class RolloutEvaluator {
         visitedKeys.add(context.getKey());
         if (visitedKeys.contains(prerequisiteFlagKey)) {
             String dependencyCycle = EvaluateLogger.formatCircularDependencyList(visitedKeys, prerequisiteFlagKey);
-            throw new IllegalArgumentException("Circular dependency detected between the following depending flags: " + dependencyCycle + ".");
+            throw new InvalidConfigModelException( "Circular dependency detected between the following depending flags: " + dependencyCycle + ".");
         }
 
         evaluateLogger.logPrerequisiteFlagEvaluationStart(prerequisiteFlagKey);
@@ -633,7 +633,7 @@ class RolloutEvaluator {
         boolean result;
 
         if (prerequisiteComparator == null) {
-            throw new IllegalArgumentException("Prerequisite Flag comparison operator is invalid.");
+            throw new InvalidConfigModelException( "Prerequisite Flag comparison operator is invalid.");
         }
         switch (prerequisiteComparator) {
             case EQUALS:
@@ -643,7 +643,7 @@ class RolloutEvaluator {
                 result = !conditionValue.equalsBasedOnSettingType(evaluateResult.value, prerequisiteFlagSetting.getType());
                 break;
             default:
-                throw new IllegalArgumentException("Prerequisite Flag comparison operator is invalid.");
+                throw new InvalidConfigModelException( "Prerequisite Flag comparison operator is invalid.");
         }
 
         evaluateLogger.logPrerequisiteFlagEvaluationResult(prerequisiteFlagCondition, evaluateResult.value, result);
@@ -695,19 +695,19 @@ class RolloutEvaluator {
             }
         }
 
-        throw new IllegalArgumentException("Sum of percentage option percentages is less than 100.");
+        throw new InvalidConfigModelException( "Sum of percentage option percentages is less than 100.");
     }
 
     private static <T> T ensureComparisonValue(T value) {
         if (value == null) {
-            throw new IllegalArgumentException(COMPARISON_VALUE_IS_MISSING_OR_INVALID);
+            throw new InvalidConfigModelException( COMPARISON_VALUE_IS_MISSING_OR_INVALID);
         }
         return value;
     }
 
     private static String ensureConfigSalt(String configSalt){
         if(configSalt == null){
-            throw new IllegalArgumentException("Config JSON salt is missing.");
+            throw new InvalidConfigModelException( "Config JSON salt is missing.");
         }
         return configSalt;
     }
@@ -717,13 +717,19 @@ class RolloutEvaluator {
                 || (SettingType.INT.equals(settingType) && settingValue.getIntegerValue() == null )
                 || (SettingType.DOUBLE.equals(settingType) && settingValue.getDoubleValue() == null)
                 || (SettingType.BOOLEAN.equals(settingType) && settingValue.getBooleanValue() == null)) {
-            throw new IllegalArgumentException("Setting value is not of the expected type " + settingType.name() + ".");
+            throw new InvalidConfigModelException( "Setting value is not of the expected type " + settingType.name() + ".");
         }
     }
 }
 
 class RolloutEvaluatorException extends RuntimeException {
     public RolloutEvaluatorException(String message) {
+        super(message);
+    }
+}
+
+class InvalidConfigModelException extends IllegalArgumentException {
+    public InvalidConfigModelException(String message) {
         super(message);
     }
 }
