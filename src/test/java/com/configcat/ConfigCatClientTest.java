@@ -1069,5 +1069,39 @@ class ConfigCatClientTest {
 
         ConfigCatClient.closeAll();
     }
+
+    @Test
+    void getValueAfterCloseWithDefaultUserAndClearedUser() throws IOException {
+        MockWebServer server = new MockWebServer();
+        server.start();
+
+        User user1 = new User.Builder().build("test@test1.com");
+        User user2 = new User.Builder().build("test@test2.com");
+
+        ConfigCatClient cl = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
+            options.pollingMode(PollingModes.manualPoll());
+            options.baseUrl(server.url("/").toString());
+        });
+
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(Helpers.RULES_JSON));
+        cl.forceRefresh();
+
+        cl.setDefaultUser(user1);
+
+        String result = assertDoesNotThrow(() -> cl.getValue(String.class, "key", "fallback"));
+        assertEquals("fake1", result);
+
+        cl.close();
+
+        cl.setDefaultUser(user2);
+
+        result = assertDoesNotThrow(() -> cl.getValue(String.class, "key", "fallback"));
+        assertEquals("fake2", result);
+
+        cl.clearDefaultUser();
+
+        result = assertDoesNotThrow(() -> cl.getValue(String.class, "key", "fallback"));
+        assertEquals("def", result);
+    }
     
 }
