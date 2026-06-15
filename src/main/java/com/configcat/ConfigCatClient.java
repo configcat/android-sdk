@@ -149,7 +149,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
             return this.getSettingsAsync()
                 .thenApply(settingsResult -> {
-                    Result<Setting> checkSettingResult = checkSettingAvailable(settingsResult, key, defaultValue);
+                    Result<Setting, EvaluationErrorCode> checkSettingResult = checkSettingAvailable(settingsResult, key, defaultValue);
                     if (checkSettingResult.error() != null) {
                         EvaluationDetails<Object> evaluationDetails = EvaluationDetails.fromError(key, defaultValue, checkSettingResult.errorCode(), checkSettingResult.error(), user);
                         this.hooks.invokeOnFlagEvaluated(evaluationDetails);
@@ -455,7 +455,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
     private <T> T getValueFromSettingsMap(Class<T> classOfT, SettingResult settingResult, String key, User user, T defaultValue) {
         User userObject = user != null ? user : this.defaultUser;
         try {
-            Result<Setting> checkSettingResult = checkSettingAvailable(settingResult, key, defaultValue);
+            Result<Setting, EvaluationErrorCode> checkSettingResult = checkSettingAvailable(settingResult, key, defaultValue);
             if (checkSettingResult.error() != null) {
                 this.hooks.invokeOnFlagEvaluated(EvaluationDetails.fromError(key, defaultValue, checkSettingResult.errorCode(), checkSettingResult.error(), user));
                 return defaultValue;
@@ -574,7 +574,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         return true;
     }
 
-    private <T> Result<Setting> checkSettingAvailable(SettingResult settingResult, String key, T defaultValue) {
+    private <T> Result<Setting, EvaluationErrorCode> checkSettingAvailable(SettingResult settingResult, String key, T defaultValue) {
         if (settingResult.isEmpty()) {
             FormattableLogMessage errorMessage = ConfigCatLogMessages.getConfigJsonIsNotPresentedWithDefaultValue(key, "defaultValue", defaultValue);
             this.logger.error(1000, errorMessage);
@@ -589,7 +589,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
             return Result.error(errorMessage, null, EvaluationErrorCode.SETTING_KEY_MISSING);
         }
 
-        return Result.success(setting);
+        return Result.success(setting, EvaluationErrorCode.NONE);
     }
 
     /**

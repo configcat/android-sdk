@@ -42,7 +42,7 @@ class ConfigService implements Closeable {
     private ScheduledExecutorService pollScheduler;
     private String cachedEntryString = "";
     private Entry cachedEntry = Entry.EMPTY;
-    private CompletableFuture<Result<Entry>> runningTask;
+    private CompletableFuture<Result<Entry, RefreshErrorCode>> runningTask;
     private final AtomicBoolean initialized = new AtomicBoolean(false);
     private final AtomicBoolean userIndicatedOffline;
     private final AtomicBoolean inForegroundAndHasNetwork;
@@ -96,7 +96,7 @@ class ConfigService implements Closeable {
                         hooks.invokeOnClientReady(determineCacheState());
                         FormattableLogMessage message = ConfigCatLogMessages.getAutoPollMaxInitWaitTimeReached(autoPollingMode.getMaxInitWaitTimeSeconds());
                         logger.warn(4200, message);
-                        completeRunningTask(Result.error(message, cachedEntry, null)); //TODO fix me
+                        completeRunningTask(Result.error(message, cachedEntry, RefreshErrorCode.CLIENT_INIT_TIMED_OUT));
                     }
                 } finally {
                     lock.unlock();
@@ -137,7 +137,8 @@ class ConfigService implements Closeable {
         }
 
         return fetchIfOlder(Constants.DISTANT_FUTURE, false)
-                .thenApply(entryResult -> new RefreshResult(entryResult.error() == null, entryResult.error(), null)); //TODO fixme
+                .thenApply(entryResult -> new RefreshResult(entryResult.error() == null, entryResult.error(),
+                        entryResult.error() == null ? RefreshErrorCode.NONE : entryResult.errorCode()));
     }
 
     public void setOnline() {
@@ -167,7 +168,7 @@ class ConfigService implements Closeable {
         }
     }
 
-    private CompletableFuture<Result<Entry>> fetchIfOlder(long threshold, boolean preferCached) {
+    private CompletableFuture<Result<Entry, RefreshErrorCode>> fetchIfOlder(long threshold, boolean preferCached) {
         lock.lock();
         try {
             Entry fromCache = readCache();
@@ -216,7 +217,7 @@ class ConfigService implements Closeable {
                     writeCache(cachedEntry);
                 }
                 completeRunningTask(response.isFailed()
-                        ? Result.error(response.error(), cachedEntry, null) //TODO fixme
+                        ? Result.error(response.error(), cachedEntry, response.errorCode())
                         : Result.success(cachedEntry));
             }
             setInitialized();
@@ -225,7 +226,7 @@ class ConfigService implements Closeable {
         }
     }
 
-    private void completeRunningTask(Result<Entry> result) {
+    private void completeRunningTask(Result<Entry, RefreshErrorCode> result) {
         runningTask.complete(result);
         runningTask = null;
     }

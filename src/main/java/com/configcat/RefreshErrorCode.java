@@ -3,7 +3,7 @@ package com.configcat;
 /**
  * Specifies the possible config data refresh error codes.
  */
-public enum RefreshErrorCode {
+public enum RefreshErrorCode implements ErrorCode {
 
     /** An unexpected error occurred during the refresh operation. */
     UNEXPECTED_ERROR(-1),
@@ -45,5 +45,10 @@ public enum RefreshErrorCode {
 
     RefreshErrorCode(int code) {
         this.code = code;
+    }
+
+    @Override
+    public int code() {
+        return this.code;
     }
 }

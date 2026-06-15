@@ -3,7 +3,7 @@ package com.configcat;
 /**
  * Specifies the possible evaluation error codes.
  */
-public enum EvaluationErrorCode {
+public enum EvaluationErrorCode implements ErrorCode {
 
     /** An unexpected error occurred during the evaluation. */
     UNEXPECTED_ERROR(-1),
@@ -36,5 +36,10 @@ public enum EvaluationErrorCode {
 
     EvaluationErrorCode(int code) {
         this.code = code;
+    }
+
+    @Override
+    public int code() {
+        return this.code;
     }
 }

@@ -194,7 +194,7 @@ class ConfigFetcher implements Closeable {
             if (responseCode == 200) {
                 String content = readBody(urlConnection.getInputStream());
                 String eTag = readHeaderValue(responseHeaders,"ETag");
-                Result<Config> configResult = deserializeConfig(content, cfRayId);
+                Result<Config, EvaluationErrorCode> configResult = deserializeConfig(content, cfRayId);
                 if (configResult.error() != null) {
                     fetchResponse = FetchResponse.failed(configResult.error(), RefreshErrorCode.INVALID_HTTP_RESPONSE_CONTENT, false, cfRayId);
                 } else {
@@ -275,9 +275,9 @@ class ConfigFetcher implements Closeable {
         return body.toString();
     }
 
-    private Result<Config> deserializeConfig(String json, String cfRayId) {
+    private Result<Config, EvaluationErrorCode> deserializeConfig(String json, String cfRayId) {
         try {
-            return Result.success(Utils.deserializeConfig(json));
+            return Result.success(Utils.deserializeConfig(json), EvaluationErrorCode.NONE);
         } catch (Exception e) {
             FormattableLogMessage message = ConfigCatLogMessages.getFetchReceived200WithInvalidBodyError(cfRayId);
             this.logger.error(1105, message, e);

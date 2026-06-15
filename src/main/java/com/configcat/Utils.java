@@ -64,12 +64,19 @@ final class Constants {
     static final int SDK_KEY_SECTION_LENGTH = 22;
 }
 
-final class Result<T> {
+/**
+ * Common interface for Result.
+ */
+interface ErrorCode {
+    int code();
+}
+
+final class Result<T, E extends ErrorCode> {
     private final T value;
     private final Object error;
-    private final EvaluationErrorCode errorCode;
+    private final E errorCode;
 
-    private Result(T value, Object error, EvaluationErrorCode errorCode) {
+    private Result(T value, Object error, E errorCode) {
         this.value = value;
         this.error = error;
         this.errorCode = errorCode;
@@ -83,14 +90,18 @@ final class Result<T> {
         return this.error;
     }
 
-    EvaluationErrorCode errorCode() {return this.errorCode;}
+    E errorCode() {return this.errorCode;}
 
-    static <T> Result<T> error(Object error, T value, EvaluationErrorCode errorCode) {
+    static <T, E extends ErrorCode> Result<T, E> error(Object error, T value, E errorCode) {
         return new Result<>(value, error, errorCode);
     }
 
-    static <T> Result<T> success(T value) {
-        return new Result<>(value, null, EvaluationErrorCode.NONE);
+    static <T> Result<T, RefreshErrorCode> success(T value) {
+        return new Result<>(value, null, RefreshErrorCode.NONE);
+    }
+
+    static <T, E extends ErrorCode> Result<T, E> success(T value, E errorCode) {
+        return new Result<>(value, null, errorCode);
     }
 }
 
