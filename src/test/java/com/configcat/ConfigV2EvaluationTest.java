@@ -154,7 +154,7 @@ public class ConfigV2EvaluationTest {
         });
 
         EvaluationDetails<String> result = client.getValueDetails(String.class, key, null, null);
-        assertEquals("java.lang.IllegalArgumentException: Circular dependency detected between the following depending flags: " + dependencyCycle + ".", result.getError());
+        assertEquals("com.configcat.InvalidConfigModelException: Circular dependency detected between the following depending flags: " + dependencyCycle + ".", result.getError());
 
         client.close();
     }
