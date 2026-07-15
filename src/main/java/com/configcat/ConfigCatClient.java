@@ -124,9 +124,9 @@ public final class ConfigCatClient implements ConfigurationProvider {
         try {
             return this.getValueDetailsAsync(classOfT, key, user, defaultValue).get();
         } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
             String error = "Thread interrupted.";
             this.logger.error(0, error, e);
+            Thread.currentThread().interrupt();
             return EvaluationDetails.fromError(key, defaultValue, EvaluationErrorCode.UNEXPECTED_ERROR,error + ": " + e.getMessage(), user);
         } catch (Exception e) {
             this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithDefaultValue("getValueDetails", key, "defaultValue", defaultValue), e);

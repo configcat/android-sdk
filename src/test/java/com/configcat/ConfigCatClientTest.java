@@ -513,7 +513,11 @@ class ConfigCatClientTest {
 
         assertTrue(cl.isOffline());
 
-        cl.forceRefresh();
+        RefreshResult refreshResult = cl.forceRefresh();
+
+        assertFalse(refreshResult.isSuccess());
+        assertEquals(RefreshErrorCode.OFFLINE_CLIENT, refreshResult.errorCode());
+        assertEquals("Client is in offline mode, it cannot initiate HTTP calls.", refreshResult.error());
 
         assertEquals(0, server.getRequestCount());
 
