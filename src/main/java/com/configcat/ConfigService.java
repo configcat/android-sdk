@@ -96,7 +96,7 @@ class ConfigService implements Closeable {
                         hooks.invokeOnClientReady(determineCacheState());
                         FormattableLogMessage message = ConfigCatLogMessages.getAutoPollMaxInitWaitTimeReached(autoPollingMode.getMaxInitWaitTimeSeconds());
                         logger.warn(4200, message);
-                        completeRunningTask(Result.error(message, cachedEntry, RefreshErrorCode.CLIENT_INIT_TIMED_OUT));
+                        completeRunningTask(Result.error(message, cachedEntry, RefreshErrorCode.CLIENT_INIT_TIMED_OUT, null));
                     }
                 } finally {
                     lock.unlock();
@@ -133,12 +133,15 @@ class ConfigService implements Closeable {
         if (isOffline()) {
             String offlineWarning = ConfigCatLogMessages.CONFIG_SERVICE_CANNOT_INITIATE_HTTP_CALLS_WARN;
             logger.warn(3200, offlineWarning);
-            return CompletableFuture.completedFuture(new RefreshResult(false, offlineWarning, RefreshErrorCode.OFFLINE_CLIENT));
+            return CompletableFuture.completedFuture(new RefreshResult(false, offlineWarning, RefreshErrorCode.OFFLINE_CLIENT, null));
         }
 
         return fetchIfOlder(Constants.DISTANT_FUTURE, false)
-                .thenApply(entryResult -> new RefreshResult(entryResult.error() == null, entryResult.error(),
-                        entryResult.error() == null ? RefreshErrorCode.NONE : entryResult.errorCode()));
+                .thenApply(entryResult -> {
+                    boolean isSucceed  = entryResult.error() == null;
+                    return  new RefreshResult(isSucceed, entryResult.error(),
+                        isSucceed ? RefreshErrorCode.NONE : entryResult.errorCode(), entryResult.errorException());
+                });
     }
 
     public void setOnline() {
@@ -217,7 +220,7 @@ class ConfigService implements Closeable {
                     writeCache(cachedEntry);
                 }
                 completeRunningTask(response.isFailed()
-                        ? Result.error(response.error(), cachedEntry, response.errorCode())
+                        ? Result.error(response.error(), cachedEntry, response.errorCode(), response.errorException())
                         : Result.success(cachedEntry));
             }
             setInitialized();

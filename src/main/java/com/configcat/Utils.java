@@ -75,11 +75,13 @@ final class Result<T, E extends ErrorCode> {
     private final T value;
     private final Object error;
     private final E errorCode;
+    private final Throwable errorException;
 
-    private Result(T value, Object error, E errorCode) {
+    private Result(T value, Object error, E errorCode, Throwable errorException) {
         this.value = value;
         this.error = error;
         this.errorCode = errorCode;
+        this.errorException = errorException;
     }
 
     T value() {
@@ -92,16 +94,18 @@ final class Result<T, E extends ErrorCode> {
 
     E errorCode() {return this.errorCode;}
 
-    static <T, E extends ErrorCode> Result<T, E> error(Object error, T value, E errorCode) {
-        return new Result<>(value, error, errorCode);
+    Throwable errorException() {return this.errorException;}
+
+    static <T, E extends ErrorCode> Result<T, E> error(Object error, T value, E errorCode,  Throwable errorException) {
+        return new Result<>(value, error, errorCode, errorException);
     }
 
     static <T> Result<T, RefreshErrorCode> success(T value) {
-        return new Result<>(value, null, RefreshErrorCode.NONE);
+        return new Result<>(value, null, RefreshErrorCode.NONE, null);
     }
 
     static <T, E extends ErrorCode> Result<T, E> success(T value, E errorCode) {
-        return new Result<>(value, null, errorCode);
+        return new Result<>(value, null, errorCode, null);
     }
 }
 

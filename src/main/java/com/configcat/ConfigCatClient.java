@@ -127,10 +127,10 @@ public final class ConfigCatClient implements ConfigurationProvider {
             String error = "Thread interrupted.";
             this.logger.error(0, error, e);
             Thread.currentThread().interrupt();
-            return EvaluationDetails.fromError(key, defaultValue, EvaluationErrorCode.UNEXPECTED_ERROR,error + ": " + e.getMessage(), user);
+            return EvaluationDetails.fromError(key, defaultValue, EvaluationErrorCode.UNEXPECTED_ERROR,error + ": " + e.getMessage(), e, user);
         } catch (Exception e) {
             this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithDefaultValue("getValueDetails", key, "defaultValue", defaultValue), e);
-            return EvaluationDetails.fromError(key, defaultValue, EvaluationErrorCode.UNEXPECTED_ERROR, e.getMessage(), user);
+            return EvaluationDetails.fromError(key, defaultValue, EvaluationErrorCode.UNEXPECTED_ERROR, e.getMessage(), e, user);
         }
     }
 
@@ -151,7 +151,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                 .thenApply(settingsResult -> {
                     Result<Setting, EvaluationErrorCode> checkSettingResult = checkSettingAvailable(settingsResult, key, defaultValue);
                     if (checkSettingResult.error() != null) {
-                        EvaluationDetails<Object> evaluationDetails = EvaluationDetails.fromError(key, defaultValue, checkSettingResult.errorCode(), checkSettingResult.error(), user);
+                        EvaluationDetails<Object> evaluationDetails = EvaluationDetails.fromError(key, defaultValue, checkSettingResult.errorCode(), checkSettingResult.error(), null, user);
                         this.hooks.invokeOnFlagEvaluated(evaluationDetails);
                         return evaluationDetails.asTypeSpecific();
                     }
@@ -160,13 +160,13 @@ public final class ConfigCatClient implements ConfigurationProvider {
                 });
         } catch (InvalidConfigModelException e) {
             this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithDefaultValue("getValueDetails", key, "defaultValue", defaultValue), e);
-            return CompletableFuture.completedFuture(EvaluationDetails.fromError(key, defaultValue, EvaluationErrorCode.INVALID_CONFIG_MODEL, e.getMessage(), user));
+            return CompletableFuture.completedFuture(EvaluationDetails.fromError(key, defaultValue, EvaluationErrorCode.INVALID_CONFIG_MODEL, e.getMessage(), null, user));
         } catch (EvaluationException e) {
             this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithDefaultValue("getValueDetails", key, "defaultValue", defaultValue), e);
-            return CompletableFuture.completedFuture(EvaluationDetails.fromError(key, defaultValue, EvaluationErrorCode.SETTING_VALUE_TYPE_MISMATCH, e.getMessage(), user));
+            return CompletableFuture.completedFuture(EvaluationDetails.fromError(key, defaultValue, EvaluationErrorCode.SETTING_VALUE_TYPE_MISMATCH, e.getMessage(),null, user));
         } catch (Exception e) {
             this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithDefaultValue("getValueDetails", key, "defaultValue", defaultValue), e);
-            return CompletableFuture.completedFuture(EvaluationDetails.fromError(key, defaultValue, EvaluationErrorCode.UNEXPECTED_ERROR, e.getMessage(), user));
+            return CompletableFuture.completedFuture(EvaluationDetails.fromError(key, defaultValue, EvaluationErrorCode.UNEXPECTED_ERROR, e.getMessage(), e, user));
         }
     }
 
@@ -339,14 +339,14 @@ public final class ConfigCatClient implements ConfigurationProvider {
         } catch (Exception e) {
             this.logger.error(1003, ConfigCatLogMessages.getForceRefreshError("forceRefresh"), e);
         }
-        return new RefreshResult(false, "An error occurred during the refresh.", RefreshErrorCode.UNEXPECTED_ERROR);
+        return new RefreshResult(false, "An error occurred during the refresh.", RefreshErrorCode.UNEXPECTED_ERROR, null);
     }
 
     @Override
     public CompletableFuture<RefreshResult> forceRefreshAsync() {
         if (configService == null) {
             return CompletableFuture.completedFuture(new RefreshResult(false,
-                    "The ConfigCat SDK is in local-only mode. Calling .forceRefresh() has no effect.", RefreshErrorCode.LOCAL_ONLY_CLIENT));
+                    "The ConfigCat SDK is in local-only mode. Calling .forceRefresh() has no effect.", RefreshErrorCode.LOCAL_ONLY_CLIENT, null));
         }
 
         return configService.refresh();
@@ -457,13 +457,13 @@ public final class ConfigCatClient implements ConfigurationProvider {
         try {
             Result<Setting, EvaluationErrorCode> checkSettingResult = checkSettingAvailable(settingResult, key, defaultValue);
             if (checkSettingResult.error() != null) {
-                this.hooks.invokeOnFlagEvaluated(EvaluationDetails.fromError(key, defaultValue, checkSettingResult.errorCode(), checkSettingResult.error(), user));
+                this.hooks.invokeOnFlagEvaluated(EvaluationDetails.fromError(key, defaultValue, checkSettingResult.errorCode(), checkSettingResult.error(), null, user));
                 return defaultValue;
             }
             return this.evaluate(classOfT, checkSettingResult.value(), key, userObject, settingResult.fetchTime(), settingResult.settings()).getValue();
         } catch (Exception | NoSuchMethodError e) {
             FormattableLogMessage error = ConfigCatLogMessages.getSettingEvaluationFailedForOtherReason(key, "defaultValue", defaultValue);
-            this.hooks.invokeOnFlagEvaluated(EvaluationDetails.fromError(key, defaultValue, EvaluationErrorCode.UNEXPECTED_ERROR, error + " " + e.getMessage(), userObject));
+            this.hooks.invokeOnFlagEvaluated(EvaluationDetails.fromError(key, defaultValue, EvaluationErrorCode.UNEXPECTED_ERROR, error + " " + e.getMessage(), e, userObject));
             this.logger.error(2001, error, e);
             return defaultValue;
         }
@@ -527,6 +527,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                 false,
                 null,
                 EvaluationErrorCode.NONE,
+                null,
                 fetchTime,
                 evaluationResult.targetingRule,
                 evaluationResult.percentageOption);
@@ -578,7 +579,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         if (settingResult.isEmpty()) {
             FormattableLogMessage errorMessage = ConfigCatLogMessages.getConfigJsonIsNotPresentedWithDefaultValue(key, "defaultValue", defaultValue);
             this.logger.error(1000, errorMessage);
-            return Result.error(errorMessage, null, EvaluationErrorCode.CONFIG_JSON_NOT_AVAILABLE);
+            return Result.error(errorMessage, null, EvaluationErrorCode.CONFIG_JSON_NOT_AVAILABLE, null);
         }
 
         Map<String, Setting> settings = settingResult.settings();
@@ -586,7 +587,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         if (setting == null) {
             FormattableLogMessage errorMessage = ConfigCatLogMessages.getSettingEvaluationFailedDueToMissingKey(key, "defaultValue", defaultValue, settings.keySet());
             this.logger.error(1001, errorMessage);
-            return Result.error(errorMessage, null, EvaluationErrorCode.SETTING_KEY_MISSING);
+            return Result.error(errorMessage, null, EvaluationErrorCode.SETTING_KEY_MISSING, null);
         }
 
         return Result.success(setting, EvaluationErrorCode.NONE);
