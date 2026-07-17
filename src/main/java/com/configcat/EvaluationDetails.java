@@ -102,6 +102,13 @@ public class EvaluationDetails<T> {
     }
 
     /**
+     * The error exception object related to the error. If the evaluation was successful, this will be null.
+     */
+    public Throwable getErrorException() {
+        return errorException;
+    }
+
+    /**
      * The last fetch time of the config.json in unix milliseconds format.
      */
     public Long getFetchTimeUnixMilliseconds() {

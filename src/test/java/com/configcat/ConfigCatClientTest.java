@@ -1,6 +1,7 @@
 package com.configcat;
 
 import java9.util.concurrent.CompletableFuture;
+import kotlin.jvm.internal.Ref;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.Test;
@@ -194,9 +195,12 @@ class ConfigCatClientTest {
         server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
         server.enqueue(new MockResponse().setResponseCode(200).setBody("delayed").setBodyDelay(3, TimeUnit.SECONDS));
 
-        cl.forceRefresh();
+        RefreshResult result = cl.forceRefresh();
+        assertEquals(RefreshErrorCode.NONE, result.errorCode());
         assertEquals("fakeValue", cl.getValue(String.class, "fakeKey", null));
-        cl.forceRefresh();
+        result = cl.forceRefresh();
+        assertEquals(RefreshErrorCode.HTTP_REQUEST_TIMEOUT, result.errorCode());
+        assertEquals("Read timed out", result.errorException().getMessage());
         assertEquals("fakeValue", cl.getValue(String.class, "fakeKey", null));
 
         server.close();
@@ -237,9 +241,12 @@ class ConfigCatClientTest {
         server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
         server.enqueue(new MockResponse().setResponseCode(500));
 
-        cl.forceRefresh();
+        RefreshResult result = cl.forceRefresh();
+        assertEquals(RefreshErrorCode.NONE, result.errorCode());
         assertEquals("fakeValue", cl.getValueAsync(String.class, "fakeKey", null).get());
-        cl.forceRefresh();
+        result = cl.forceRefresh();
+        assertEquals(RefreshErrorCode.UNEXPECTED_HTTP_RESPONSE, result.errorCode());
+        assertNull(result.errorException());
         assertEquals("fakeValue", cl.getValueAsync(String.class, "fakeKey", null).get());
 
         server.close();
@@ -262,10 +269,14 @@ class ConfigCatClientTest {
         server.enqueue(new MockResponse().setResponseCode(200).setBody(badJson));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(badJson).setBodyDelay(3, TimeUnit.SECONDS));
 
-        cl.forceRefresh();
+        RefreshResult result = cl.forceRefresh();
+        assertEquals(RefreshErrorCode.INVALID_HTTP_RESPONSE_CONTENT, result.errorCode());
+        assertNull(result.errorException());
         assertSame(def, cl.getValue(String.class, "test", def));
 
-        cl.forceRefresh();
+        result = cl.forceRefresh();
+        assertEquals(RefreshErrorCode.HTTP_REQUEST_TIMEOUT, result.errorCode());
+        assertEquals("Read timed out", result.errorException().getMessage());
         assertSame(def, cl.getValue(String.class, "test", def));
 
         server.shutdown();
@@ -285,7 +296,9 @@ class ConfigCatClientTest {
 
         server.enqueue(new MockResponse().setResponseCode(200).setBody("test").setBodyDelay(3, TimeUnit.SECONDS));
 
-        cl.forceRefresh();
+        RefreshResult result = cl.forceRefresh();
+        assertEquals(RefreshErrorCode.HTTP_REQUEST_TIMEOUT, result.errorCode());
+        assertEquals("Read timed out", result.errorException().getMessage());
 
         server.shutdown();
         cl.close();
@@ -358,7 +371,9 @@ class ConfigCatClientTest {
             options.baseUrl(server.url("/").toString());
         });
 
-        cl.forceRefresh();
+        RefreshResult result = cl.forceRefresh();
+        assertEquals(RefreshErrorCode.UNEXPECTED_HTTP_RESPONSE, result.errorCode());
+        assertNull(result.errorException());
         assertEquals("", cl.getValue(String.class, "fakeKey", ""));
 
         server.close();
@@ -377,7 +392,9 @@ class ConfigCatClientTest {
             options.baseUrl(server.url("/").toString());
         });
 
-        cl.forceRefresh();
+        RefreshResult result = cl.forceRefresh();
+        assertEquals(RefreshErrorCode.UNEXPECTED_HTTP_RESPONSE, result.errorCode());
+        assertNull(result.errorException());
         assertEquals("", cl.getValue(String.class, "fakeKey", ""));
 
         server.close();
@@ -396,7 +413,9 @@ class ConfigCatClientTest {
             options.baseUrl(server.url("/").toString());
         });
 
-        cl.forceRefresh();
+        RefreshResult result = cl.forceRefresh();
+        assertEquals(RefreshErrorCode.UNEXPECTED_HTTP_RESPONSE, result.errorCode());
+        assertNull(result.errorException());
         assertEquals("", cl.getValue(String.class, "fakeKey", ""));
 
         server.close();
@@ -478,19 +497,25 @@ class ConfigCatClientTest {
 
         assertFalse(cl.isOffline());
 
-        cl.forceRefresh();
+        RefreshResult result = cl.forceRefresh();
+        assertEquals(RefreshErrorCode.NONE, result.errorCode());
+        assertNull(result.errorException());
 
         assertEquals(1, server.getRequestCount());
 
         cl.setOffline();
         assertTrue(cl.isOffline());
 
-        cl.forceRefresh();
+        result = cl.forceRefresh();
+        assertEquals(RefreshErrorCode.OFFLINE_CLIENT, result.errorCode());
+        assertNull(result.errorException());
 
         assertEquals(1, server.getRequestCount());
 
         cl.setOnline();
-        cl.forceRefresh();
+        result = cl.forceRefresh();
+        assertEquals(RefreshErrorCode.NONE, result.errorCode());
+        assertNull(result.errorException());
 
         assertEquals(2, server.getRequestCount());
 
@@ -514,7 +539,6 @@ class ConfigCatClientTest {
         assertTrue(cl.isOffline());
 
         RefreshResult refreshResult = cl.forceRefresh();
-
         assertFalse(refreshResult.isSuccess());
         assertEquals(RefreshErrorCode.OFFLINE_CLIENT, refreshResult.errorCode());
         assertEquals("Client is in offline mode, it cannot initiate HTTP calls.", refreshResult.error());
@@ -750,6 +774,8 @@ class ConfigCatClientTest {
             options.baseUrl(server.url("/").toString());
             options.hooks().addOnFlagEvaluated(details -> {
                 assertEquals("", details.getValue());
+                assertEquals(EvaluationErrorCode.CONFIG_JSON_NOT_AVAILABLE, details.getErrorCode());
+                assertNull(details.getErrorException());
                 assertEquals("Config JSON is not present when evaluating setting 'key'. Returning the `defaultValue` parameter that you specified in your application: ''.", details.getError());
                 assertTrue(details.isDefaultValue());
                 called.set(true);
@@ -826,6 +852,7 @@ class ConfigCatClientTest {
         assertTrue((boolean) element.getValue());
         assertFalse(element.isDefaultValue());
         assertNull(element.getError());
+        assertEquals(EvaluationErrorCode.NONE, element.getErrorCode());
         assertEquals("fakeId1", element.getVariationId());
 
         //assert result 2
@@ -834,6 +861,7 @@ class ConfigCatClientTest {
         assertFalse((boolean) element.getValue());
         assertFalse(element.isDefaultValue());
         assertNull(element.getError());
+        assertEquals(EvaluationErrorCode.NONE, element.getErrorCode());
         assertEquals("fakeId2", element.getVariationId());
         server.shutdown();
         cl.close();
@@ -863,6 +891,7 @@ class ConfigCatClientTest {
         assertTrue((boolean) element.getValue());
         assertFalse(element.isDefaultValue());
         assertNull(element.getError());
+        assertEquals(EvaluationErrorCode.NONE, element.getErrorCode());
         assertEquals("fakeId1", element.getVariationId());
 
         //assert result 2
@@ -871,6 +900,7 @@ class ConfigCatClientTest {
         assertFalse((boolean) element.getValue());
         assertFalse(element.isDefaultValue());
         assertNull(element.getError());
+        assertEquals(EvaluationErrorCode.NONE, element.getErrorCode());
         assertEquals("fakeId2", element.getVariationId());
         server.shutdown();
         cl.close();
@@ -990,6 +1020,7 @@ class ConfigCatClientTest {
         EvaluationDetails result = cl.getValueDetails(callType, settingKey, defaultValue);
         assertEquals(EvaluationErrorCode.SETTING_VALUE_TYPE_MISMATCH, result.getErrorCode());
         assertEquals("Only String, Integer, Double or Boolean types are supported.", result.getError());
+        assertNull(result.getErrorException());
 
         server.shutdown();
         cl.close();
