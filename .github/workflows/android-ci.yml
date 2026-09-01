@@ -17,7 +17,7 @@ jobs:
     - uses: actions/checkout@v7
     
     - name: Set up JDK
-      uses: actions/setup-java@v5
+      uses: actions/setup-java@v6
       with:
         java-version: ${{ matrix.java-versions }}
         distribution: zulu
@@ -43,7 +43,7 @@ jobs:
         fetch-depth: 0
     
     - name: Set up JDK
-      uses: actions/setup-java@v5
+      uses: actions/setup-java@v6
       with:
         java-version: 17
         distribution: zulu
@@ -82,7 +82,7 @@ jobs:
     - uses: actions/checkout@v7
 
     - name: Set up JDK
-      uses: actions/setup-java@v5
+      uses: actions/setup-java@v6
       with:
         java-version: 17
         distribution: zulu
@@ -113,7 +113,7 @@ jobs:
     - uses: actions/checkout@v7
 
     - name: Set up JDK
-      uses: actions/setup-java@v5
+      uses: actions/setup-java@v6
       with:
         java-version: 17
         distribution: zulu
