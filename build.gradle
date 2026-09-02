@@ -72,7 +72,7 @@ dependencies {
     testImplementation(libs.logback.classic)
     testImplementation(libs.logback.core)
     testImplementation(libs.mockwebserver)
-    testImplementation(libs.mockito.inline)
+    testImplementation(libs.mockito.core)
     testRuntimeOnly(libs.junit.jupiter.engine)
 }
 
