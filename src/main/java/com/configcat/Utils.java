@@ -100,10 +100,6 @@ final class Result<T, E extends ErrorCode> {
         return new Result<>(value, error, errorCode, errorException);
     }
 
-    static <T> Result<T, RefreshErrorCode> success(T value) {
-        return new Result<>(value, null, RefreshErrorCode.NONE, null);
-    }
-
     static <T, E extends ErrorCode> Result<T, E> success(T value, E errorCode) {
         return new Result<>(value, null, errorCode, null);
     }

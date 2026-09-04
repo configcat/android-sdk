@@ -42,4 +42,14 @@ public enum EvaluationErrorCode implements ErrorCode {
     public int code() {
         return this.code;
     }
+
+    public static EvaluationErrorCode fromException(Throwable exception) {
+        if (exception instanceof InvalidConfigModelException) {
+            return INVALID_CONFIG_MODEL;
+        }
+        if (exception instanceof EvaluationException) {
+            return SETTING_VALUE_TYPE_MISMATCH;
+        }
+        return UNEXPECTED_ERROR;
+    }
 }

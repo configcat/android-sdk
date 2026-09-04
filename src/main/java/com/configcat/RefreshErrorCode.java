@@ -12,7 +12,7 @@ public enum RefreshErrorCode implements ErrorCode {
     NONE(0),
 
     /**
-     * The refresh operation failed because the client is configured to use the `OverrideBehaviour.LocalOnly`
+     * The refresh operation failed because the client is configured to use the `OverrideBehaviour.LOCAL_ONLY`
      * override behavior, which prevents synchronization with the external cache and making HTTP requests.
      */
     LOCAL_ONLY_CLIENT(1),
@@ -38,7 +38,7 @@ public enum RefreshErrorCode implements ErrorCode {
     /** The refresh operation failed because an invalid HTTP response was received (200 OK with an invalid content). */
     INVALID_HTTP_RESPONSE_CONTENT(1105),
 
-    /** Initialization of the SDK timed out. **/
+    /** Client initialization could not complete within `maxInitWaitTimeSeconds`. **/
     CLIENT_INIT_TIMED_OUT(4200);
 
     public final int code;

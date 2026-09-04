@@ -95,14 +95,14 @@ public class EvaluationDetails<T> {
     }
 
     /**
-     * The error code of the evaluation result. If the evaluation was successful, this will be EvaluationErrorCode.NONE.
+     * The code identifying the reason for the error in case the operation failed. (If the evaluation was successful, this will be EvaluationErrorCode.NONE.)
      */
     public EvaluationErrorCode getErrorCode() {
         return errorCode;
     }
 
     /**
-     * The error exception object related to the error. If the evaluation was successful, this will be null.
+     * The exception object related to the error in case the operation failed. (If the evaluation was successful, this will be null.)
      */
     public Throwable getErrorException() {
         return errorException;

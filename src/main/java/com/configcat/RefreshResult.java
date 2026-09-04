@@ -29,10 +29,16 @@ public class RefreshResult {
         return null;
     }
 
+    /**
+     * The code identifying the reason for the error in case the operation failed.
+     */
     public RefreshErrorCode errorCode() {
         return errorCode;
     }
 
+    /**
+     * The exception object related to the error in case the operation failed (if any).
+     */
     public Throwable errorException() {
         return errorException;
     }

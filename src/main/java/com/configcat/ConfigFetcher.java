@@ -198,9 +198,9 @@ class ConfigFetcher implements Closeable {
             if (responseCode == 200) {
                 String content = readBody(urlConnection.getInputStream());
                 String eTag = readHeaderValue(responseHeaders,"ETag");
-                Result<Config, EvaluationErrorCode> configResult = deserializeConfig(content, cfRayId);
+                Result<Config, RefreshErrorCode> configResult = deserializeConfig(content, cfRayId);
                 if (configResult.error() != null) {
-                    fetchResponse = FetchResponse.failed(configResult.error(), RefreshErrorCode.INVALID_HTTP_RESPONSE_CONTENT, null, false, cfRayId);
+                    fetchResponse = FetchResponse.failed(configResult.error(), configResult.errorCode(), configResult.errorException(), false, cfRayId);
                 } else {
                     logger.debug("Fetch was successful: new config fetched.");
                     fetchResponse =  FetchResponse.fetched(new Entry(configResult.value(), eTag, content, System.currentTimeMillis()), cfRayId);
@@ -279,13 +279,13 @@ class ConfigFetcher implements Closeable {
         return body.toString();
     }
 
-    private Result<Config, EvaluationErrorCode> deserializeConfig(String json, String cfRayId) {
+    private Result<Config, RefreshErrorCode> deserializeConfig(String json, String cfRayId) {
         try {
-            return Result.success(Utils.deserializeConfig(json), EvaluationErrorCode.NONE);
+            return Result.success(Utils.deserializeConfig(json), RefreshErrorCode.NONE);
         } catch (Exception e) {
             FormattableLogMessage message = ConfigCatLogMessages.getFetchReceived200WithInvalidBodyError(cfRayId);
             this.logger.error(1105, message, e);
-            return Result.error(message, null, EvaluationErrorCode.INVALID_CONFIG_MODEL, null);
+            return Result.error(message, null, RefreshErrorCode.INVALID_HTTP_RESPONSE_CONTENT, e);
         }
     }
 }

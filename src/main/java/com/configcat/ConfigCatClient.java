@@ -57,8 +57,8 @@ public final class ConfigCatClient implements ConfigurationProvider {
                 monitor = options.context != null ? new AppStateMonitor(options.context, logger) : null;
                 this.configService = new ConfigService(sdkKey, monitor, options.pollingMode, options.cache, logger, fetcher, options.hooks, options.offline);
             } catch (Exception e) {
-                if(fetcher != null) fetcher.close();
-                if(monitor != null) monitor.close();
+                if (fetcher != null) fetcher.close();
+                if (monitor != null) monitor.close();
                 throw e;
             }
         } else {
@@ -83,16 +83,20 @@ public final class ConfigCatClient implements ConfigurationProvider {
         } catch (InterruptedException e) {
             this.logger.error(0, "Thread interrupted.", e);
             Thread.currentThread().interrupt();
+            EvaluationDetails<Object> evaluationDetails = EvaluationDetails.fromError(key, defaultValue, EvaluationErrorCode.fromException(e), e.getMessage(), e, user);
+            this.hooks.invokeOnFlagEvaluated(evaluationDetails);
             return defaultValue;
         } catch (Exception e) {
             this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithDefaultValue("getValue", key, "defaultValue", defaultValue.toString()), e);
+            EvaluationDetails<Object> evaluationDetails = EvaluationDetails.fromError(key, defaultValue, EvaluationErrorCode.fromException(e), e.getMessage(), e, user);
+            this.hooks.invokeOnFlagEvaluated(evaluationDetails);
             return defaultValue;
         }
     }
 
     private static <T> void validateReturnType(Class<T> classOfT) {
         if (!(classOfT == String.class || classOfT == Integer.class || classOfT == int.class || classOfT == Double.class || classOfT == double.class || classOfT == Boolean.class || classOfT == boolean.class)) {
-            throw new EvaluationException("Only String, Integer, Double or Boolean types are supported.");
+            throw new IllegalArgumentException("Only String, Integer, Double or Boolean types are supported.");
         }
     }
 
@@ -127,10 +131,14 @@ public final class ConfigCatClient implements ConfigurationProvider {
             String error = "Thread interrupted.";
             this.logger.error(0, error, e);
             Thread.currentThread().interrupt();
-            return EvaluationDetails.fromError(key, defaultValue, EvaluationErrorCode.UNEXPECTED_ERROR,error + ": " + e.getMessage(), e, user);
+            EvaluationDetails<Object> evaluationDetails = EvaluationDetails.fromError(key, defaultValue, EvaluationErrorCode.UNEXPECTED_ERROR, error + ": " + e.getMessage(), e, user);
+            this.hooks.invokeOnFlagEvaluated(evaluationDetails);
+            return evaluationDetails.asTypeSpecific();
         } catch (Exception e) {
             this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithDefaultValue("getValueDetails", key, "defaultValue", defaultValue), e);
-            return EvaluationDetails.fromError(key, defaultValue, EvaluationErrorCode.UNEXPECTED_ERROR, e.getMessage(), e, user);
+            EvaluationDetails<Object> evaluationDetails =  EvaluationDetails.fromError(key, defaultValue, EvaluationErrorCode.UNEXPECTED_ERROR, e.getMessage(), e, user);
+            this.hooks.invokeOnFlagEvaluated(evaluationDetails);
+            return evaluationDetails.asTypeSpecific();
         }
     }
 
@@ -144,30 +152,27 @@ public final class ConfigCatClient implements ConfigurationProvider {
         if (key == null || key.isEmpty())
             throw new IllegalArgumentException("'key' cannot be null or empty.");
 
-        try {
-            validateReturnType(classOfT);
+        validateReturnType(classOfT);
 
-            return this.getSettingsAsync()
+        return this.getSettingsAsync()
                 .thenApply(settingsResult -> {
-                    Result<Setting, EvaluationErrorCode> checkSettingResult = checkSettingAvailable(settingsResult, key, defaultValue);
-                    if (checkSettingResult.error() != null) {
-                        EvaluationDetails<Object> evaluationDetails = EvaluationDetails.fromError(key, defaultValue, checkSettingResult.errorCode(), checkSettingResult.error(), null, user);
+                    try {
+                        Result<Setting, EvaluationErrorCode> checkSettingResult = checkSettingAvailable(settingsResult, key, defaultValue);
+                        if (checkSettingResult.error() != null) {
+                            EvaluationDetails<Object> evaluationDetails = EvaluationDetails.fromError(key, defaultValue, checkSettingResult.errorCode(), checkSettingResult.error(), null, user);
+                            this.hooks.invokeOnFlagEvaluated(evaluationDetails);
+                            return evaluationDetails.asTypeSpecific();
+                        }
+                        return this.evaluate(classOfT, checkSettingResult.value(),
+                                key, user != null ? user : this.defaultUser, settingsResult.fetchTime(), settingsResult.settings());
+                    } catch (Exception e) {
+                        this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithDefaultValue("getValueDetails", key, "defaultValue", defaultValue), e);
+                        EvaluationDetails<Object> evaluationDetails = EvaluationDetails.fromError(key, defaultValue, EvaluationErrorCode.fromException(e), e.getMessage(), e, user);
                         this.hooks.invokeOnFlagEvaluated(evaluationDetails);
                         return evaluationDetails.asTypeSpecific();
                     }
-                    return this.evaluate(classOfT, checkSettingResult.value(),
-                            key, user != null ? user : this.defaultUser, settingsResult.fetchTime(), settingsResult.settings());
                 });
-        } catch (InvalidConfigModelException e) {
-            this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithDefaultValue("getValueDetails", key, "defaultValue", defaultValue), e);
-            return CompletableFuture.completedFuture(EvaluationDetails.fromError(key, defaultValue, EvaluationErrorCode.INVALID_CONFIG_MODEL, e.getMessage(), null, user));
-        } catch (EvaluationException e) {
-            this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithDefaultValue("getValueDetails", key, "defaultValue", defaultValue), e);
-            return CompletableFuture.completedFuture(EvaluationDetails.fromError(key, defaultValue, EvaluationErrorCode.SETTING_VALUE_TYPE_MISMATCH, e.getMessage(),null, user));
-        } catch (Exception e) {
-            this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithDefaultValue("getValueDetails", key, "defaultValue", defaultValue), e);
-            return CompletableFuture.completedFuture(EvaluationDetails.fromError(key, defaultValue, EvaluationErrorCode.UNEXPECTED_ERROR, e.getMessage(), e, user));
-        }
+
     }
 
     @Override
@@ -295,6 +300,8 @@ public final class ConfigCatClient implements ConfigurationProvider {
         if (variationId == null || variationId.isEmpty())
             throw new IllegalArgumentException("'variationId' cannot be null or empty.");
 
+        validateReturnType(classOfT);
+
         return this.getSettingsAsync()
                 .thenApply(settingsResult -> this.getKeyAndValueFromSettingsMap(classOfT, settingsResult, variationId));
     }
@@ -336,10 +343,12 @@ public final class ConfigCatClient implements ConfigurationProvider {
         } catch (InterruptedException e) {
             logger.error(0, "Thread interrupted.", e);
             Thread.currentThread().interrupt();
+            return new RefreshResult(false, "An error occurred during the refresh.", RefreshErrorCode.UNEXPECTED_ERROR, e);
         } catch (Exception e) {
             this.logger.error(1003, ConfigCatLogMessages.getForceRefreshError("forceRefresh"), e);
+            return new RefreshResult(false, "An error occurred during the refresh.", RefreshErrorCode.UNEXPECTED_ERROR, e);
         }
-        return new RefreshResult(false, "An error occurred during the refresh.", RefreshErrorCode.UNEXPECTED_ERROR, null);
+
     }
 
     @Override
@@ -463,8 +472,8 @@ public final class ConfigCatClient implements ConfigurationProvider {
             return this.evaluate(classOfT, checkSettingResult.value(), key, userObject, settingResult.fetchTime(), settingResult.settings()).getValue();
         } catch (Exception | NoSuchMethodError e) {
             FormattableLogMessage error = ConfigCatLogMessages.getSettingEvaluationFailedForOtherReason(key, "defaultValue", defaultValue);
-            this.hooks.invokeOnFlagEvaluated(EvaluationDetails.fromError(key, defaultValue, EvaluationErrorCode.UNEXPECTED_ERROR, error + " " + e.getMessage(), e, userObject));
             this.logger.error(2001, error, e);
+            this.hooks.invokeOnFlagEvaluated(EvaluationDetails.fromError(key, defaultValue, EvaluationErrorCode.fromException(e), error + " " + e.getMessage(), e, userObject));
             return defaultValue;
         }
     }
@@ -482,7 +491,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                     return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, setting.getSettingsValue(), setting.getType()));
                 }
 
-                if(setting.getTargetingRules() != null) {
+                if (setting.getTargetingRules() != null) {
                     for (TargetingRule targetingRule : setting.getTargetingRules()) {
                         if (targetingRule.getSimpleValue() != null) {
                             if (variationId.equals(targetingRule.getSimpleValue().getVariationId())) {
@@ -501,7 +510,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                     }
                 }
 
-                if( setting.getPercentageOptions() != null) {
+                if (setting.getPercentageOptions() != null) {
                     for (PercentageOption percentageOption : setting.getPercentageOptions()) {
                         if (variationId.equals(percentageOption.getVariationId())) {
                             return new AbstractMap.SimpleEntry<>(settingKey, (T) this.parseObject(classOfT, percentageOption.getValue(), setting.getType()));
@@ -536,8 +545,6 @@ public final class ConfigCatClient implements ConfigurationProvider {
     }
 
     private Object parseObject(Class<?> classOfT, SettingValue settingValue, SettingType settingType) {
-        validateReturnType(classOfT);
-
         if (classOfT == String.class && settingValue.getStringValue() != null && SettingType.STRING.equals(settingType))
             return settingValue.getStringValue();
         else if ((classOfT == Integer.class || classOfT == int.class) && settingValue.getIntegerValue() != null && SettingType.INT.equals(settingType))
@@ -563,7 +570,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         else if (settingType == SettingType.DOUBLE)
             return double.class;
         else
-            throw new EvaluationException("Only String, Integer, Double or Boolean types are supported");
+            throw new InvalidConfigModelException("Only String, Integer, Double or Boolean types are supported");
     }
 
     private boolean checkSettingsAvailable(SettingResult settingResult, String emptyResult) {

@@ -183,12 +183,12 @@ class ConfigService implements Closeable {
             // Cache isn't expired
             if (!cachedEntry.isExpired(threshold)) {
                 setInitialized();
-                return CompletableFuture.completedFuture(Result.success(cachedEntry));
+                return CompletableFuture.completedFuture(Result.success(cachedEntry, RefreshErrorCode.NONE));
             }
             // If we are in offline mode or the caller prefers cached values, do not initiate fetch.
             if (isOffline() || preferCached) {
                 setInitialized();
-                return CompletableFuture.completedFuture(Result.success(cachedEntry));
+                return CompletableFuture.completedFuture(Result.success(cachedEntry, RefreshErrorCode.NONE));
             }
 
             if (runningTask == null) {
@@ -212,7 +212,7 @@ class ConfigService implements Closeable {
                 Entry entry = response.entry();
                 cachedEntry = entry;
                 writeCache(entry);
-                completeRunningTask(Result.success(entry));
+                completeRunningTask(Result.success(entry,RefreshErrorCode.NONE));
                 hooks.invokeOnConfigChanged(entry.getConfig().getEntries());
             } else {
                 if (response.isFetchTimeUpdatable()) {
@@ -221,7 +221,7 @@ class ConfigService implements Closeable {
                 }
                 completeRunningTask(response.isFailed()
                         ? Result.error(response.error(), cachedEntry, response.errorCode(), response.errorException())
-                        : Result.success(cachedEntry));
+                        : Result.success(cachedEntry, RefreshErrorCode.NONE));
             }
             setInitialized();
         } finally {

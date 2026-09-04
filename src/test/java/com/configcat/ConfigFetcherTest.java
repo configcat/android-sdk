@@ -168,7 +168,7 @@ class ConfigFetcherTest {
         assertFalse(response.isFetched());
         assertTrue(response.isFailed());
         assertEquals(RefreshErrorCode.INVALID_HTTP_RESPONSE_CONTENT, response.errorCode());
-        assertNull(response.errorException());
+        assertNotNull(response.errorException());
         assertEquals("Fetching config JSON was successful but the HTTP response content was invalid.", response.error().toString());
 
 
@@ -265,7 +265,7 @@ class ConfigFetcherTest {
         assertTrue(response.isFailed());
         assertTrue(response.error().toString().contains("(Ray ID: 12345)"));
         assertEquals(RefreshErrorCode.INVALID_HTTP_RESPONSE_CONTENT, response.errorCode());
-        assertNull(response.errorException());
+        assertNotNull(response.errorException());
         verify(mockLogger, times(1)).error(anyString(), eq(1105), eq(ConfigCatLogMessages.getFetchReceived200WithInvalidBodyError("12345")), any(), any(Exception.class));
 
         fetcher.close();
