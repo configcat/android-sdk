@@ -358,6 +358,7 @@ class RolloutEvaluator {
         if (userContainsValues.length == 0) {
             return false;
         }
+
         for (String userContainsValue : userContainsValues) {
             String userContainsValueConverted = hashedArrayContains ? getSaltedUserValue(userContainsValue, ensureConfigSalt(configSalt), contextSalt) : userContainsValue;
             for (String inValuesElement : comparisonValues) {

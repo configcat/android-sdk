@@ -22,6 +22,9 @@ public class RefreshResult {
         return success;
     }
 
+    /**
+     * Error message in case the operation failed, otherwise null.
+     */
     public String error() {
         if(error !=  null) {
             return error.toString();

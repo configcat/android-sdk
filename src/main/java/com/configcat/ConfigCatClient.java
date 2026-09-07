@@ -83,7 +83,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
         } catch (InterruptedException e) {
             this.logger.error(0, "Thread interrupted.", e);
             Thread.currentThread().interrupt();
-            EvaluationDetails<Object> evaluationDetails = EvaluationDetails.fromError(key, defaultValue, EvaluationErrorCode.fromException(e), e.getMessage(), e, user);
+            EvaluationDetails<Object> evaluationDetails = EvaluationDetails.fromError(key, defaultValue, EvaluationErrorCode.UNEXPECTED_ERROR, e.getMessage(), e, user);
             this.hooks.invokeOnFlagEvaluated(evaluationDetails);
             return defaultValue;
         } catch (Exception e) {
@@ -125,6 +125,9 @@ public final class ConfigCatClient implements ConfigurationProvider {
     public <T> EvaluationDetails<T> getValueDetails(Class<T> classOfT, String key, User user, T defaultValue) {
         if (key == null || key.isEmpty())
             throw new IllegalArgumentException("'key' cannot be null or empty.");
+
+        validateReturnType(classOfT);
+
         try {
             return this.getValueDetailsAsync(classOfT, key, user, defaultValue).get();
         } catch (InterruptedException e) {
@@ -136,7 +139,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
             return evaluationDetails.asTypeSpecific();
         } catch (Exception e) {
             this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithDefaultValue("getValueDetails", key, "defaultValue", defaultValue), e);
-            EvaluationDetails<Object> evaluationDetails =  EvaluationDetails.fromError(key, defaultValue, EvaluationErrorCode.UNEXPECTED_ERROR, e.getMessage(), e, user);
+            EvaluationDetails<Object> evaluationDetails =  EvaluationDetails.fromError(key, defaultValue, EvaluationErrorCode.fromException(e), e.getMessage(), e, user);
             this.hooks.invokeOnFlagEvaluated(evaluationDetails);
             return evaluationDetails.asTypeSpecific();
         }
@@ -166,7 +169,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                         return this.evaluate(classOfT, checkSettingResult.value(),
                                 key, user != null ? user : this.defaultUser, settingsResult.fetchTime(), settingsResult.settings());
                     } catch (Exception e) {
-                        this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithDefaultValue("getValueDetails", key, "defaultValue", defaultValue), e);
+                        this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithDefaultValue("getValueDetailsAsync", key, "defaultValue", defaultValue), e);
                         EvaluationDetails<Object> evaluationDetails = EvaluationDetails.fromError(key, defaultValue, EvaluationErrorCode.fromException(e), e.getMessage(), e, user);
                         this.hooks.invokeOnFlagEvaluated(evaluationDetails);
                         return evaluationDetails.asTypeSpecific();
@@ -282,6 +285,8 @@ public final class ConfigCatClient implements ConfigurationProvider {
     public <T> Map.Entry<String, T> getKeyAndValue(Class<T> classOfT, String variationId) {
         if (variationId == null || variationId.isEmpty())
             throw new IllegalArgumentException("'variationId' cannot be null or empty.");
+
+        validateReturnType(classOfT);
 
         try {
             return this.getKeyAndValueAsync(classOfT, variationId).get();
