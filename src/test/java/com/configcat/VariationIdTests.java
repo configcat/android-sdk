@@ -42,6 +42,7 @@ class VariationIdTests {
         server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
         EvaluationDetails<Boolean> valueDetails = client.getValueDetails(Boolean.class, "key1", null);
         assertEquals("fakeId1", valueDetails.getVariationId());
+        assertEquals(EvaluationErrorCode.NONE, valueDetails.getErrorCode());
     }
 
     @Test
@@ -49,6 +50,7 @@ class VariationIdTests {
         server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
         EvaluationDetails<Boolean> valueDetails = client.getValueDetailsAsync(Boolean.class, "key2", null).get();
         assertEquals("fakeId2", valueDetails.getVariationId());
+        assertEquals(EvaluationErrorCode.NONE, valueDetails.getErrorCode());
     }
 
     @Test
@@ -56,6 +58,7 @@ class VariationIdTests {
         server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON));
         EvaluationDetails<Boolean> valueDetails = client.getValueDetails(Boolean.class, "nonexisting", false);
         assertEquals("", valueDetails.getVariationId());
+        assertEquals(EvaluationErrorCode.SETTING_KEY_MISSING, valueDetails.getErrorCode());
     }
 
     @Test
@@ -65,8 +68,11 @@ class VariationIdTests {
         List<EvaluationDetails<?>> allValueDetails = client.getAllValueDetails(null);
         assertEquals(3, allValueDetails.size());
         assertEquals("fakeId1", allValueDetails.get(0).getVariationId());
+        assertEquals(EvaluationErrorCode.NONE, allValueDetails.get(0).getErrorCode());
         assertEquals("fakeId2", allValueDetails.get(1).getVariationId());
+        assertEquals(EvaluationErrorCode.NONE, allValueDetails.get(1).getErrorCode());
         assertEquals("fakeId3", allValueDetails.get(2).getVariationId());
+        assertEquals(EvaluationErrorCode.NONE, allValueDetails.get(2).getErrorCode());
 
     }
 
@@ -85,8 +91,11 @@ class VariationIdTests {
         List<EvaluationDetails<?>> allValueDetails = client.getAllValueDetailsAsync(null).get();
         assertEquals(3, allValueDetails.size());
         assertEquals("fakeId1", allValueDetails.get(0).getVariationId());
+        assertEquals(EvaluationErrorCode.NONE, allValueDetails.get(0).getErrorCode());
         assertEquals("fakeId2", allValueDetails.get(1).getVariationId());
+        assertEquals(EvaluationErrorCode.NONE, allValueDetails.get(1).getErrorCode());
         assertEquals("fakeId3", allValueDetails.get(2).getVariationId());
+        assertEquals(EvaluationErrorCode.NONE, allValueDetails.get(2).getErrorCode());
 
     }
 

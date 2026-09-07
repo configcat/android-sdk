@@ -78,6 +78,9 @@ class ConfigFetcherTest {
 
         FetchResponse response = fetch.fetchAsync(null).get();
         assertTrue(response.isFailed());
+        assertEquals(RefreshErrorCode.HTTP_REQUEST_TIMEOUT, response.errorCode());
+        assertEquals("Request timed out while trying to fetch config JSON. Timeout values: [connect: 10000ms, read: 1000ms]", response.error().toString());
+        assertEquals("Read timed out", response.errorException().getMessage());
         assertEquals(Entry.EMPTY, response.entry());
 
         fetch.close();
@@ -135,6 +138,8 @@ class ConfigFetcherTest {
 
         FetchResponse response = fetcher.fetchAsync(null).get();
         assertTrue(response.isFetched());
+        assertNull(response.error());
+        assertEquals(RefreshErrorCode.NONE, response.errorCode());
         assertEquals("fakeValue", response.entry().getConfig().getEntries().get("fakeKey").getSettingsValue().getStringValue());
 
         fetcher.close();
@@ -161,7 +166,11 @@ class ConfigFetcherTest {
 
         FetchResponse response = fetcher.fetchAsync(null).get();
         assertFalse(response.isFetched());
+        assertTrue(response.isFailed());
+        assertEquals(RefreshErrorCode.INVALID_HTTP_RESPONSE_CONTENT, response.errorCode());
+        assertNotNull(response.errorException());
         assertEquals("Fetching config JSON was successful but the HTTP response content was invalid.", response.error().toString());
+
 
         fetcher.close();
     }
@@ -200,6 +209,8 @@ class ConfigFetcherTest {
 
         FetchResponse response = fetcher.fetchAsync("fakeETag").get();
         assertTrue(response.isFailed());
+        assertEquals(RefreshErrorCode.INVALID_SDK_KEY, response.errorCode());
+        assertNull(response.errorException());
         assertTrue(response.error().toString().contains("(Ray ID: 12345)"));
 
         verify(mockLogger, times(1)).error(anyString(),  eq(1100), eq(ConfigCatLogMessages.getFetchFailedDueToInvalidSDKKey("12345")));
@@ -226,7 +237,8 @@ class ConfigFetcherTest {
         FetchResponse response = fetcher.fetchAsync("fakeETag").get();
 
         assertTrue(response.isNotModified());
-
+        assertNull(response.error());
+        assertEquals(RefreshErrorCode.NONE, response.errorCode());
         verify(mockLogger, times(1)).debug(anyString(), eq(0), eq(String.format("Fetch was successful: config not modified. %s", ConfigCatLogMessages.getCFRayIdPostFix("12345"))));
 
         fetcher.close();
@@ -252,7 +264,8 @@ class ConfigFetcherTest {
 
         assertTrue(response.isFailed());
         assertTrue(response.error().toString().contains("(Ray ID: 12345)"));
-
+        assertEquals(RefreshErrorCode.INVALID_HTTP_RESPONSE_CONTENT, response.errorCode());
+        assertNotNull(response.errorException());
         verify(mockLogger, times(1)).error(anyString(), eq(1105), eq(ConfigCatLogMessages.getFetchReceived200WithInvalidBodyError("12345")), any(), any(Exception.class));
 
         fetcher.close();
@@ -280,7 +293,8 @@ class ConfigFetcherTest {
         assertTrue(response.isFailed());
         assertTrue(response.error().toString().contains("Request timed out while trying to fetch config JSON."));
         assertTrue(response.error().toString().contains("(Ray ID: timeout-ray-123)"));
-
+        assertEquals(RefreshErrorCode.HTTP_REQUEST_TIMEOUT, response.errorCode());
+        assertEquals("Read timed out", response.errorException().getMessage());
         verify(mockLogger, times(1)).error(anyString(), eq(1102), eq(ConfigCatLogMessages.getFetchFailedDueToRequestTimeout(10000, 1000, "timeout-ray-123")), any(), any(Exception.class));
 
         fetcher.close();
@@ -312,6 +326,8 @@ class ConfigFetcherTest {
         assertTrue(response.isFailed());
         assertTrue(response.error().toString().contains("Unexpected error occurred while trying to fetch config JSON."));
         assertTrue(response.error().toString().contains("(Ray ID: unexpected-ray-456)"));
+        assertEquals(RefreshErrorCode.HTTP_REQUEST_FAILURE, response.errorCode());
+        assertEquals("Premature EOF", response.errorException().getMessage());
 
         fetcher.close();
     }
