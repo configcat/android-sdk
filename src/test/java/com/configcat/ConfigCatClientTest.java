@@ -699,6 +699,19 @@ class ConfigCatClientTest {
     }
 
     @Test
+    void forceRefreshReturnsLocalOnlyError() throws IOException {
+        ConfigCatClient client = ConfigCatClient.get("local-only", options ->
+                options.flagOverrides(OverrideDataSource.map(Collections.emptyMap()), OverrideBehaviour.LOCAL_ONLY));
+
+        RefreshResult result = client.forceRefresh();
+
+        assertFalse(result.isSuccess());
+        assertEquals(RefreshErrorCode.LOCAL_ONLY_CLIENT, result.errorCode());
+        assertNull(result.errorException());
+        client.close();
+    }
+
+    @Test
     void testHooksAutoPollSub() throws IOException {
         MockWebServer server = new MockWebServer();
         server.start();
@@ -1136,6 +1149,31 @@ class ConfigCatClientTest {
 
         result = assertDoesNotThrow(() -> cl.getValue(String.class, "key", "fallback"));
         assertEquals("def", result);
+    }
+
+    @Test
+    void getValueDetailsReturnsTypeMismatchError() throws IOException {
+        MockWebServer server = new MockWebServer();
+        server.start();
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(TEST_JSON_TYPES));
+        AtomicReference<EvaluationDetails<Object>> hookDetails = new AtomicReference<>();
+
+        ConfigCatClient client = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
+            options.pollingMode(PollingModes.lazyLoad());
+            options.baseUrl(server.url("/").toString());
+            options.hooks().addOnFlagEvaluated(hookDetails::set);
+        });
+
+        EvaluationDetails<String> result = client.getValueDetails(String.class, "fakeKeyBoolean", "default");
+
+        assertEquals("default", result.getValue());
+        assertTrue(result.isDefaultValue());
+        assertEquals(EvaluationErrorCode.SETTING_VALUE_TYPE_MISMATCH, result.getErrorCode());
+        assertInstanceOf(EvaluationException.class, result.getErrorException());
+        assertSame(result.getErrorException(), hookDetails.get().getErrorException());
+        assertSame(result.getErrorCode(), hookDetails.get().getErrorCode());
+        server.shutdown();
+        client.close();
     }
     
 }
