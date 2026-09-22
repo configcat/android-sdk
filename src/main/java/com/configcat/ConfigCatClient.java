@@ -77,18 +77,19 @@ public final class ConfigCatClient implements ConfigurationProvider {
             throw new IllegalArgumentException("'key' cannot be null or empty.");
 
         validateReturnType(classOfT);
+        User userObject = getEvaluateUser(user);
 
         try {
-            return this.getValueAsync(classOfT, key, user, defaultValue).get();
+            return this.getValueAsync(classOfT, key, userObject, defaultValue).get();
         } catch (InterruptedException e) {
             this.logger.error(0, "Thread interrupted.", e);
             Thread.currentThread().interrupt();
-            EvaluationDetails<Object> evaluationDetails = EvaluationDetails.fromError(key, defaultValue, EvaluationErrorCode.UNEXPECTED_ERROR, e.getMessage(), e, user);
+            EvaluationDetails<Object> evaluationDetails = EvaluationDetails.fromError(key, defaultValue, EvaluationErrorCode.UNEXPECTED_ERROR, e.getMessage(), e, userObject);
             this.hooks.invokeOnFlagEvaluated(evaluationDetails);
             return defaultValue;
         } catch (Exception e) {
             this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithDefaultValue("getValue", key, "defaultValue", defaultValue.toString()), e);
-            EvaluationDetails<Object> evaluationDetails = EvaluationDetails.fromError(key, defaultValue, EvaluationErrorCode.fromException(e), e.getMessage(), e, user);
+            EvaluationDetails<Object> evaluationDetails = EvaluationDetails.fromError(key, defaultValue, EvaluationErrorCode.fromException(e), e.getMessage(), e, userObject);
             this.hooks.invokeOnFlagEvaluated(evaluationDetails);
             return defaultValue;
         }
@@ -128,18 +129,20 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
         validateReturnType(classOfT);
 
+        User userObject = getEvaluateUser(user);
+
         try {
-            return this.getValueDetailsAsync(classOfT, key, user, defaultValue).get();
+            return this.getValueDetailsAsync(classOfT, key, userObject, defaultValue).get();
         } catch (InterruptedException e) {
             String error = "Thread interrupted.";
             this.logger.error(0, error, e);
             Thread.currentThread().interrupt();
-            EvaluationDetails<Object> evaluationDetails = EvaluationDetails.fromError(key, defaultValue, EvaluationErrorCode.UNEXPECTED_ERROR, error + ": " + e.getMessage(), e, user);
+            EvaluationDetails<Object> evaluationDetails = EvaluationDetails.fromError(key, defaultValue, EvaluationErrorCode.UNEXPECTED_ERROR, error + ": " + e.getMessage(), e, userObject);
             this.hooks.invokeOnFlagEvaluated(evaluationDetails);
             return evaluationDetails.asTypeSpecific();
         } catch (Exception e) {
             this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithDefaultValue("getValueDetails", key, "defaultValue", defaultValue), e);
-            EvaluationDetails<Object> evaluationDetails =  EvaluationDetails.fromError(key, defaultValue, EvaluationErrorCode.fromException(e), e.getMessage(), e, user);
+            EvaluationDetails<Object> evaluationDetails =  EvaluationDetails.fromError(key, defaultValue, EvaluationErrorCode.fromException(e), e.getMessage(), e, userObject);
             this.hooks.invokeOnFlagEvaluated(evaluationDetails);
             return evaluationDetails.asTypeSpecific();
         }
@@ -159,18 +162,19 @@ public final class ConfigCatClient implements ConfigurationProvider {
 
         return this.getSettingsAsync()
                 .thenApply(settingsResult -> {
+                    User userObject = getEvaluateUser(user);
                     try {
                         Result<Setting, EvaluationErrorCode> checkSettingResult = checkSettingAvailable(settingsResult, key, defaultValue);
                         if (checkSettingResult.error() != null) {
-                            EvaluationDetails<Object> evaluationDetails = EvaluationDetails.fromError(key, defaultValue, checkSettingResult.errorCode(), checkSettingResult.error(), null, user);
+                            EvaluationDetails<Object> evaluationDetails = EvaluationDetails.fromError(key, defaultValue, checkSettingResult.errorCode(), checkSettingResult.error(), null, userObject);
                             this.hooks.invokeOnFlagEvaluated(evaluationDetails);
                             return evaluationDetails.asTypeSpecific();
                         }
                         return this.evaluate(classOfT, checkSettingResult.value(),
-                                key, user != null ? user : this.defaultUser, settingsResult.fetchTime(), settingsResult.settings());
+                                key, userObject, settingsResult.fetchTime(), settingsResult.settings());
                     } catch (Exception e) {
                         this.logger.error(1002, ConfigCatLogMessages.getSettingEvaluationErrorWithDefaultValue("getValueDetailsAsync", key, "defaultValue", defaultValue), e);
-                        EvaluationDetails<Object> evaluationDetails = EvaluationDetails.fromError(key, defaultValue, EvaluationErrorCode.fromException(e), e.getMessage(), e, user);
+                        EvaluationDetails<Object> evaluationDetails = EvaluationDetails.fromError(key, defaultValue, EvaluationErrorCode.fromException(e), e.getMessage(), e, userObject);
                         this.hooks.invokeOnFlagEvaluated(evaluationDetails);
                         return evaluationDetails.asTypeSpecific();
                     }
@@ -210,7 +214,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                         if (!checkSettingsAvailable(settingsResult, "empty map")) {
                             return new HashMap<>();
                         }
-                        User userObject = user != null ? user : this.defaultUser;
+                        User userObject = getEvaluateUser(user);
                         Map<String, Setting> settingMap = settingsResult.settings();
                         Collection<String> keys = settingMap.keySet();
                         Map<String, Object> result = new HashMap<>();
@@ -264,12 +268,13 @@ public final class ConfigCatClient implements ConfigurationProvider {
                         }
                         Map<String, Setting> settings = settingResult.settings();
                         List<EvaluationDetails<?>> result = new ArrayList<>();
+                        User userObject = getEvaluateUser(user);
 
                         for (String key : settings.keySet()) {
                             Setting setting = settings.get(key);
 
                             EvaluationDetails<?> evaluationDetails = this.evaluate(this.classBySettingType(Objects.requireNonNull(setting).getType()), setting,
-                                    key, user != null ? user : this.defaultUser, settingResult.fetchTime(), settings);
+                                    key, userObject, settingResult.fetchTime(), settings);
                             result.add(evaluationDetails);
                         }
 
@@ -459,11 +464,11 @@ public final class ConfigCatClient implements ConfigurationProvider {
     }
 
     private <T> T getValueFromSettingsMap(Class<T> classOfT, SettingResult settingResult, String key, User user, T defaultValue) {
-        User userObject = user != null ? user : this.defaultUser;
+        User userObject = getEvaluateUser(user);
         try {
             Result<Setting, EvaluationErrorCode> checkSettingResult = checkSettingAvailable(settingResult, key, defaultValue);
             if (checkSettingResult.error() != null) {
-                this.hooks.invokeOnFlagEvaluated(EvaluationDetails.fromError(key, defaultValue, checkSettingResult.errorCode(), checkSettingResult.error(), null, user));
+                this.hooks.invokeOnFlagEvaluated(EvaluationDetails.fromError(key, defaultValue, checkSettingResult.errorCode(), checkSettingResult.error(), null, userObject));
                 return defaultValue;
             }
             return this.evaluate(classOfT, checkSettingResult.value(), key, userObject, settingResult.fetchTime(), settingResult.settings()).getValue();
@@ -502,7 +507,7 @@ public final class ConfigCatClient implements ConfigurationProvider {
                                 }
                             }
                         } else {
-                            throw new UnsupportedOperationException("Targeting rule THEN part is missing or invalid.");
+                            throw new InvalidConfigModelException("Targeting rule THEN part is missing or invalid.");
                         }
                     }
                 }
@@ -595,6 +600,16 @@ public final class ConfigCatClient implements ConfigurationProvider {
         }
 
         return Result.success(setting, EvaluationErrorCode.NONE);
+    }
+
+    /**
+     * Checks the user for evaluation if the user null return with the default user.
+     *
+     * @param user The user for evaluation.
+     * @return if the user null return with the default user else with the user.
+     */
+    private User getEvaluateUser(final User user) {
+        return user != null ? user : defaultUser;
     }
 
     /**
