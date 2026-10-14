@@ -104,7 +104,11 @@ class ConfigService implements Closeable {
             }, autoPollingMode.getMaxInitWaitTimeSeconds(), TimeUnit.SECONDS);
         } else {
             // Sync up with cache before reporting ready state
-            cachedEntry = readCache();
+            Entry fromCache = readCache();
+            if (!fromCache.isEmpty() && !fromCache.getETag().equals(cachedEntry.getETag())){
+                cachedEntry = fromCache;
+                hooks.invokeOnConfigChanged(fromCache.getConfig().getEntries());
+            }
             setInitialized();
         }
     }

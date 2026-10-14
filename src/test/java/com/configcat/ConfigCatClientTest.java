@@ -745,14 +745,17 @@ class ConfigCatClientTest {
     @Test
     void testReadyHookManualPollWithCache() throws IOException {
         AtomicReference<ClientCacheState> ready = new AtomicReference<>(null);
+        AtomicBoolean changed = new AtomicBoolean(false);
         ConfigCache cache = new SingleValueCache(Helpers.cacheValueFromConfigJson(String.format(TEST_JSON, "test")));
 
         ConfigCatClient cl = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
             options.pollingMode(PollingModes.manualPoll());
             options.cache(cache);
             options.hooks().addOnClientReady(ready::set);
+            options.hooks().addOnConfigChanged(map -> changed.set(true));
         });
 
+        assertTrue(changed.get());
         assertEquals(ClientCacheState.HAS_CACHED_FLAG_DATA_ONLY, ready.get());
 
         cl.close();
