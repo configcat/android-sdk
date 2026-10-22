@@ -256,10 +256,8 @@ class ConfigFetcher implements Closeable {
             return null;
         }
         for (Map.Entry<String, List<String>> entry : responseHeaders.entrySet()) {
-            if (entry.getKey() != null && entry.getKey().equalsIgnoreCase(headerName)) {
-                if (entry.getValue() != null && !entry.getValue().isEmpty()) {
-                    return entry.getValue().get(0);
-                }
+            if (entry.getKey() != null && entry.getKey().equalsIgnoreCase(headerName) && entry.getValue() != null && !entry.getValue().isEmpty()) {
+                return entry.getValue().get(0);
             }
         }
         return null;
