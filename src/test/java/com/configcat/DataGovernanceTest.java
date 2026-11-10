@@ -11,7 +11,7 @@ import java.util.concurrent.ExecutionException;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class DataGovernanceTest {
-    private static final String JsonTemplate = "{ p: { u: \"%s\", r: %d, s: \"test-salt\"  }, f: {} }";
+    private static final String JSON_TEMPLATE = "{ p: { u: \"%s\", r: %d, s: \"test-salt\"  }, f: {} }";
     private final ConfigCatLogger logger = new ConfigCatLogger(LoggerFactory.getLogger(DataGovernanceTest.class));
 
     @Test
@@ -20,7 +20,7 @@ class DataGovernanceTest {
         String url = server.url("/").toString();
         ConfigFetcher fetcher = this.createFetcher(url, false);
         // Arrange
-        String body = String.format(JsonTemplate, url, 0);
+        String body = String.format(JSON_TEMPLATE, url, 0);
         server.enqueue(new MockResponse().setResponseCode(200).setBody(body));
 
         // Act
@@ -41,7 +41,7 @@ class DataGovernanceTest {
         String url = server.url("/").toString();
         ConfigFetcher fetcher = this.createFetcher(url, false);
         // Arrange
-        String body = String.format(JsonTemplate, url, 1);
+        String body = String.format(JSON_TEMPLATE, url, 1);
         server.enqueue(new MockResponse().setResponseCode(200).setBody(body));
 
         // Act
@@ -63,7 +63,7 @@ class DataGovernanceTest {
         ConfigFetcher fetcher = this.createFetcher(url, false);
 
         // Arrange
-        String body = String.format(JsonTemplate, url, 2);
+        String body = String.format(JSON_TEMPLATE, url, 2);
         server.enqueue(new MockResponse().setResponseCode(200).setBody(body));
 
         // Act
@@ -87,10 +87,10 @@ class DataGovernanceTest {
         ConfigFetcher fetcher = this.createFetcher(firstServerUrl, false);
 
         // Arrange
-        String firstBody = String.format(JsonTemplate, secondServerUrl, 1);
+        String firstBody = String.format(JSON_TEMPLATE, secondServerUrl, 1);
         firstServer.enqueue(new MockResponse().setResponseCode(200).setBody(firstBody));
 
-        String secondBody = String.format(JsonTemplate, secondServerUrl, 0);
+        String secondBody = String.format(JSON_TEMPLATE, secondServerUrl, 0);
         secondServer.enqueue(new MockResponse().setResponseCode(200).setBody(secondBody));
 
         // Act
@@ -117,10 +117,10 @@ class DataGovernanceTest {
         ConfigFetcher fetcher = this.createFetcher(firstServerUrl, false);
 
         // Arrange
-        String firstBody = String.format(JsonTemplate, secondServerUrl, 2);
+        String firstBody = String.format(JSON_TEMPLATE, secondServerUrl, 2);
         firstServer.enqueue(new MockResponse().setResponseCode(200).setBody(firstBody));
 
-        String secondBody = String.format(JsonTemplate, secondServerUrl, 0);
+        String secondBody = String.format(JSON_TEMPLATE, secondServerUrl, 0);
         secondServer.enqueue(new MockResponse().setResponseCode(200).setBody(secondBody));
 
         // Act
@@ -147,11 +147,11 @@ class DataGovernanceTest {
         ConfigFetcher fetcher = this.createFetcher(firstServerUrl, false);
 
         // Arrange
-        String firstBody = String.format(JsonTemplate, secondServerUrl, 1);
+        String firstBody = String.format(JSON_TEMPLATE, secondServerUrl, 1);
         firstServer.enqueue(new MockResponse().setResponseCode(200).setBody(firstBody));
         firstServer.enqueue(new MockResponse().setResponseCode(200).setBody(firstBody));
 
-        String secondBody = String.format(JsonTemplate, firstServerUrl, 1);
+        String secondBody = String.format(JSON_TEMPLATE, firstServerUrl, 1);
         secondServer.enqueue(new MockResponse().setResponseCode(200).setBody(secondBody));
 
         // Act
@@ -178,7 +178,7 @@ class DataGovernanceTest {
         ConfigFetcher fetcher = this.createFetcher(firstServerUrl, true);
 
         // Arrange
-        String firstBody = String.format(JsonTemplate, secondServerUrl, 1);
+        String firstBody = String.format(JSON_TEMPLATE, secondServerUrl, 1);
         firstServer.enqueue(new MockResponse().setResponseCode(200).setBody(firstBody));
         firstServer.enqueue(new MockResponse().setResponseCode(200).setBody(firstBody));
 
@@ -215,10 +215,10 @@ class DataGovernanceTest {
         ConfigFetcher fetcher = this.createFetcher(firstServerUrl, true);
 
         // Arrange
-        String firstBody = String.format(JsonTemplate, secondServerUrl, 2);
+        String firstBody = String.format(JSON_TEMPLATE, secondServerUrl, 2);
         firstServer.enqueue(new MockResponse().setResponseCode(200).setBody(firstBody));
 
-        String secondBody = String.format(JsonTemplate, secondServerUrl, 0);
+        String secondBody = String.format(JSON_TEMPLATE, secondServerUrl, 0);
         secondServer.enqueue(new MockResponse().setResponseCode(200).setBody(secondBody));
 
         // Act
