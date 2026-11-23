@@ -15,13 +15,19 @@ final class Helpers {
     static String cacheValueFromConfigJson(String json) {
         Config config = Utils.gson.fromJson(json, Config.class);
         Entry entry = new Entry(config, "fakeTag", json, System.currentTimeMillis());
-        return entry.serialize();
+        return entry.getCacheString();
     }
 
     static String cacheValueFromConfigJsonAndTime(String json, long time) {
         Config config = Utils.gson.fromJson(json, Config.class);
         Entry entry = new Entry(config, "fakeTag", json, time);
-        return entry.serialize();
+        return entry.getCacheString();
+    }
+
+    static String cacheValueFromConfigJsonWithEtagAndTime(String json, String etag, long time) {
+        Config config = Utils.gson.fromJson(json, Config.class);
+        Entry entry = new Entry(config, etag, json, time);
+        return entry.getCacheString();
     }
 
     static void waitFor(Supplier<Boolean> predicate) throws InterruptedException {

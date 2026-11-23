@@ -28,6 +28,7 @@ import static org.mockito.Mockito.*;
 class ConfigCatClientTest {
 
     private static final String TEST_JSON = "{ p: { s: 'test-salt' }, f: { fakeKey: {  t: 1, v: {s: 'fakeValue'}, s: 0, p: [] ,r: [] } } }";
+    private static final String TEST_JSON_FORMAT_VALUE = "{ p: { s: 'test-salt' }, f: { fakeKey: {  t: 1, v: {s: %s}, s: 0, p: [] ,r: [] } } }";
     private static final String TEST_JSON_MULTIPLE = "{ p: { s: 'test-salt' }, f: { key1: { t: 0, v: {b: true}, i: 'fakeId1', p: [] ,r: [] }, key2: { t: 0, v: {b: false}, i: 'fakeId2', p: [] ,r: [] } } }";
     private static final String TEST_JSON_TYPES = "{ p: { s: 'test-salt' }, f: { fakeKeyString: {  t: 1, v: {s: 'fakeValueString'}, s: 0, p: [] ,r: [] }, fakeKeyInt: {  t: 2, v: {i: 1}, s: 0, p: [] ,r: [] }, fakeKeyDouble: {  t: 3, v: {d: 2.1}, s: 0, p: [] ,r: [] }, fakeKeyBoolean: {  t: 0, v: {b: true}, s: 0, p: [] ,r: [] } } }";
 
@@ -1177,6 +1178,28 @@ class ConfigCatClientTest {
         assertSame(result.getErrorCode(), hookDetails.get().getErrorCode());
         server.shutdown();
         client.close();
+    }
+
+    @Test
+    void testOlderExternalCacheEntryDoesNotReplaceNewerInMemoryEntry() throws IOException {
+        long now = System.currentTimeMillis();
+        String newer = Helpers.cacheValueFromConfigJsonAndTime(String.format(TEST_JSON_FORMAT_VALUE, "newer"), now);
+        String older = Helpers.cacheValueFromConfigJsonAndTime(String.format(TEST_JSON_FORMAT_VALUE, "older"), now - 60000);
+        SingleValueCache cache = new SingleValueCache(newer);
+
+        ConfigCatClient cl = ConfigCatClient.get(Helpers.SDK_KEY, options -> {
+            options.pollingMode(PollingModes.manualPoll());
+            options.cache(cache);
+        });
+
+        Map<String, Object> values = cl.getAllValues();
+        assertEquals("newer", values.get("fakeKey"));
+
+        cache.write("fakeCacheKey", older);
+        values = cl.getAllValues();
+        assertEquals("newer", values.get("fakeKey"));
+
+        cl.close();
     }
     
 }
