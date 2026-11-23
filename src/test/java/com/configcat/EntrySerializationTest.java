@@ -17,7 +17,7 @@ public class EntrySerializationTest {
         long fetchTime = System.currentTimeMillis();
         Entry entry = new Entry(config, "fakeTag", json, fetchTime);
 
-        String serializedString = entry.serialize();
+        String serializedString = entry.getCacheString();
 
         assertEquals(String.format(SERIALIZED_DATA, fetchTime, "fakeTag", json), serializedString);
     }
@@ -28,7 +28,7 @@ public class EntrySerializationTest {
 
         Config config = Utils.gson.fromJson(payloadTestConfigJson, Config.class);
         Entry entry = new Entry(config, "test-etag", payloadTestConfigJson, 1686756435844L);
-        String serializedString = entry.serialize();
+        String serializedString = entry.getCacheString();
 
         assertEquals("1686756435844\ntest-etag\n" + payloadTestConfigJson, serializedString);
     }
@@ -42,7 +42,7 @@ public class EntrySerializationTest {
 
         assertNotNull(entry);
         assertEquals("fakeTag", entry.getETag());
-        assertEquals(json, entry.getConfigJson());
+        assertEquals(currentTimeMillis + "\nfakeTag\n" + json, entry.getCacheString());
         assertEquals(1, entry.getConfig().getEntries().size());
         assertEquals(currentTimeMillis, entry.getFetchTime());
     }
@@ -84,7 +84,7 @@ public class EntrySerializationTest {
         long currentTimeMillis = System.currentTimeMillis();
         Exception assertThrows = assertThrows(Exception.class, () -> Entry.fromString(String.format(SERIALIZED_DATA, currentTimeMillis / 1000, "fakeTag", "")));
 
-        assertEquals("Empty config jsom value.", assertThrows.getMessage());
+        assertEquals("Empty config json value.", assertThrows.getMessage());
 
         assertThrows = assertThrows(Exception.class, () -> Entry.fromString(String.format(SERIALIZED_DATA, currentTimeMillis / 1000, "fakeTag", "wrongjson")));
 
